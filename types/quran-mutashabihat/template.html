@@ -1,0 +1,155 @@
+<div class="mutashabihat-app" dir="rtl">
+  <!-- Top App Bar: Badges, Mode Toggles, and Hint Trigger -->
+  <header class="app-header">
+    <div class="header-main">
+      <div class="meta-badge" id="verse-meta-badge">
+        <span class="quran-icon">📖</span>
+        <span class="badge-text" id="badge-surah-title">متشابهات الآيات</span>
+      </div>
+      <div class="mode-toggles" role="group" aria-label="أنماط الاختبار">
+        <button type="button" class="mode-btn" data-mode="pivotal_completion" data-submode="choice" title="إكمال اللفظ المفصلي عبر الاختيارات">
+          إكمال (خيارات)
+        </button>
+        <button type="button" class="mode-btn" data-mode="pivotal_completion" data-submode="typing" title="إكمال اللفظ المفصلي كتابة">
+          إكمال (كتابة)
+        </button>
+        <button type="button" class="mode-btn" data-mode="surah_identification" title="تحديد السورة الحاضنة لهذا اللفظ">
+          تحديد السورة
+        </button>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <button type="button" class="hint-toggle-btn" id="hint-btn" title="عرض التلميح السياقي (H)">
+        <span class="hint-icon">💡</span>
+        <span>تلميح</span>
+        <kbd class="kbd-badge">H</kbd>
+      </button>
+    </div>
+  </header>
+
+  <!-- Contextual Hint Box (collapsible) -->
+  <aside class="hint-box hidden" id="hint-container" aria-live="polite">
+    <div class="hint-content">
+      <strong class="hint-label">تلميح سياقي:</strong>
+      <span id="hint-text"></span>
+    </div>
+  </aside>
+
+  <!-- Mushaf Verse Framing Container -->
+  <section class="mushaf-frame" aria-label="نص الآية القرآنية">
+    <div class="mushaf-inner">
+      <div class="mushaf-corner top-right"></div>
+      <div class="mushaf-corner top-left"></div>
+      <div class="mushaf-corner bottom-right"></div>
+      <div class="mushaf-corner bottom-left"></div>
+
+      <!-- Mode-specific prompt/question title -->
+      <div class="surah-question-banner hidden" id="surah-question-banner">
+        في أي سورة ورد هذا الموضع بهذا اللفظ؟
+      </div>
+
+      <!-- Uthmani Verse Text Flow -->
+      <div class="verse-display quran-text" id="verse-display">
+        <!-- Injected dynamically based on active mode -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Interaction Area (Answer Mode) -->
+  <section class="interactive-area only-answer" id="answer-section">
+    <!-- Choice Mode (Pivotal or Surah) -->
+    <div class="options-container" id="options-group" role="group">
+      <!-- Injected option buttons -->
+    </div>
+
+    <!-- Typing Mode (Recall) -->
+    <div class="typing-container hidden" id="typing-group">
+      <div class="typing-row">
+        <input
+          type="text"
+          id="arabic-typing-input"
+          class="arabic-input"
+          placeholder="اكتب اللفظ المفصلي هنا..."
+          dir="rtl"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+        <button type="button" id="submit-typing-btn" class="submit-btn">
+          تحقق
+          <kbd class="kbd-badge">↵</kbd>
+        </button>
+      </div>
+      <div class="typing-hint e-muted">
+        يمكنك الكتابة بالعربية القياسية دون الحاجة للتشكيل أو الرسم العثماني
+      </div>
+    </div>
+  </section>
+
+  <!-- Post-Answer Matrix & Pedagogical Explanations (Result Mode) -->
+  <section class="result-area only-result" id="result-section">
+    <!-- Feedback Banner -->
+    <div class="verdict-banner" id="verdict-banner">
+      <div class="verdict-status" id="verdict-status"></div>
+      <div class="verdict-timing e-muted" id="verdict-timing"></div>
+    </div>
+
+    <!-- Sibling Comparison Matrix (المقارنة والضبط) -->
+    <div class="comparison-card">
+      <div class="card-header-bar">
+        <span class="icon">⚖️</span>
+        <h3 class="section-title">مصفوفة المقارنة والضبط بين المواضع المتشابهة</h3>
+      </div>
+      <div class="sibling-list" id="sibling-matrix-list">
+        <!-- Rendered sibling verses with highlighted pivotal spans -->
+      </div>
+    </div>
+
+    <!-- Mnemonic Rule Box (قاعدة الضبط والتقعيد) -->
+    <div class="mnemonic-box hidden" id="mnemonic-container">
+      <div class="mnemonic-header">
+        <span class="mnemonic-icon">📜</span>
+        <h3 class="mnemonic-title">قاعدة الضبط والتقعيد البلاغي والسياقي</h3>
+      </div>
+      <div class="mnemonic-body prose" id="mnemonic-content">
+        <!-- Markdown rendered mnemonic rule -->
+      </div>
+    </div>
+
+    <!-- FSRS Spaced-Repetition Suggestion & Instant Rating Bar -->
+    <div class="fsrs-suggestion-card" id="fsrs-rating-container">
+      <div class="fsrs-header">
+        <span class="fsrs-label">التقييم المقترح للتكرار المتباعد (FSRS):</span>
+        <span class="fsrs-recommended-badge" id="fsrs-recommended-name">جيد</span>
+      </div>
+      <div class="fsrs-buttons-row" role="group" aria-label="خيارات التقييم">
+        <button type="button" class="fsrs-btn fsrs-again" data-rating="1">
+          <span class="r-num">1</span>
+          <span class="r-name">أعد</span>
+          <span class="r-eng">Again</span>
+        </button>
+        <button type="button" class="fsrs-btn fsrs-hard" data-rating="2">
+          <span class="r-num">2</span>
+          <span class="r-name">صعب</span>
+          <span class="r-eng">Hard</span>
+        </button>
+        <button type="button" class="fsrs-btn fsrs-good" data-rating="3">
+          <span class="r-num">3</span>
+          <span class="r-name">جيد</span>
+          <span class="r-eng">Good</span>
+        </button>
+        <button type="button" class="fsrs-btn fsrs-easy" data-rating="4">
+          <span class="r-num">4</span>
+          <span class="r-name">ممتاز</span>
+          <span class="r-eng">Easy</span>
+        </button>
+      </div>
+      <div class="fsrs-keyboard-hint e-muted">
+        استخدم الأرقام <kbd>1</kbd>–<kbd>4</kbd> أو <kbd>Space</kbd> للتأكيد السريع والانتقال للبطاقة التالية
+      </div>
+    </div>
+  </section>
+</div>
+

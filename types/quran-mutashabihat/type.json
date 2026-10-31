@@ -1,0 +1,59 @@
+{
+  "id": "quran-mutashabihat",
+  "name": "Quranic Mutashabihat",
+  "description": "Complete a verse's pivotal wording and tell similar verses apart. Built for Quran memorizers.",
+  "fields": [
+    {
+      "name": "titleAr",
+      "kind": "text",
+      "description": "عنوان مختصر يظهر في قوائم البطاقات، مثل: سورة البقرة · آية ١٢٦ · إكمال. في نمط تحديد السورة اذكر اللفظ المفصلي فقط دون اسم السورة أو رقم الآية."
+    },
+    {
+      "name": "targetVerseId",
+      "kind": "text",
+      "required": true,
+      "private": true,
+      "description": "معرف الآية المستهدفة في موضع الاختبار"
+    },
+    {
+      "name": "mode",
+      "kind": "text",
+      "default": "pivotal_completion",
+      "description": "نمط الاختبار: إكمال الموضع المفصلي (pivotal_completion) أو تحديد السورة (surah_identification)"
+    },
+    {
+      "name": "siblings",
+      "kind": "json",
+      "required": true,
+      "private": true,
+      "description": "قائمة المواضع المتشابهة في المجموعة"
+    },
+    {
+      "name": "extraDistractorsUthmani",
+      "kind": "list",
+      "private": true,
+      "description": "خيارات مشتتة إضافية بالرسم العثماني"
+    },
+    {
+      "name": "mnemonicRuleAr",
+      "kind": "markdown",
+      "private": true,
+      "description": "قاعدة الضبط والتقعيد البلاغي أو السياقي (تظهر بعد الإجابة)"
+    },
+    {
+      "name": "hintAr",
+      "kind": "text",
+      "description": "تلميح سياقي اختياري قبل الإجابة"
+    },
+    {
+      "name": "inputSubmode",
+      "kind": "text",
+      "default": "choice",
+      "description": "نمط الإدخال في نمط الإكمال: خيارات (choice) أو كتابة (typing)"
+    }
+  ],
+  "titleField": "titleAr",
+  "grader": {
+    "kind": "script"
+  }
+}

@@ -14,12 +14,16 @@ test("app page has a strict CSP; card documents (saved and unsaved) are sandboxe
   mkdirSync(join(dist, "assets"), { recursive: true });
   writeFileSync(join(dist, "index.html"), "<!doctype html><script src=\"/theme-boot.js\"></script>");
   writeFileSync(join(dist, "assets", "a.js"), "1");
+  mkdirSync(join(dist, "fonts"), { recursive: true });
+  writeFileSync(join(dist, "fonts", "AmiriQuran-Regular.woff2"), "font");
   const app = createApp(e, { webDist: dist });
 
   const csp = (await app.request("/decks")).headers.get("content-security-policy") ?? "";
   assert.match(csp, /script-src 'self'(;|$)/, "no inline or eval scripts on the app page");
   assert.match(csp, /object-src 'none'/);
   assert.equal((await app.request("/assets/a.js")).headers.get("content-security-policy"), null);
+  // Card frames have an opaque origin, so @font-face needs CORS even for same-origin paths.
+  assert.equal((await app.request("/fonts/AmiriQuran-Regular.woff2")).headers.get("access-control-allow-origin"), "*");
 
   assert.equal((await app.request("/frame/basic")).headers.get("content-security-policy"), "sandbox allow-scripts");
   const made = await (await app.request("/api/frame-doc", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ html: "<p>draft</p>" }) })).json();

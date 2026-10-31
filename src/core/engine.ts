@@ -80,6 +80,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const BUILTIN_TYPES_DIR = join(ROOT, "types");
 export const BUILTIN_SCHEDULERS_DIR = join(ROOT, "schedulers");
 
+/** Shipped types that start in a folder instead of the Built-in shelf. */
+const BUILTIN_TYPE_FOLDERS: Record<string, string> = { "quran-mutashabihat": "Islamic" };
+const BUILTIN_TYPE_FOLDERS_KEY = "builtin_type_folders";
+
 const now = () => new Date();
 const iso = (d = now()) => d.toISOString();
 const json = (v: unknown) => JSON.stringify(v ?? null);
@@ -358,6 +362,7 @@ export class Etude {
     const home = resolve(opts.home ?? process.env.ETUDE_HOME ?? join(homedir(), ".etude"));
     const e = new Etude(db, media, path, home);
     e.syncBuiltinTypes(opts.builtinTypesDir ?? BUILTIN_TYPES_DIR);
+    e.applyBuiltinTypeFolders();
     e.syncBuiltinSchedulers(opts.builtinSchedulersDir ?? BUILTIN_SCHEDULERS_DIR);
     // Rows saved by an older version (still running elsewhere, or restored) have blank titles and search text.
     e.reindexItems(db.get("SELECT value FROM meta WHERE key = 'item_index'")?.value === ITEM_INDEX_VERSION ? { blank: true } : {});
@@ -957,6 +962,24 @@ export class Etude {
     this.builtinDir = dir;
   }
   private builtinDir = BUILTIN_TYPES_DIR;
+
+  /**
+   * Puts certain shipped types in a folder on first open. A one-time marker keeps a later move by
+   * the user (including out of the folder) from being undone.
+   */
+  private applyBuiltinTypeFolders() {
+    if (this.db.get("SELECT 1 AS x FROM meta WHERE key = ?", BUILTIN_TYPE_FOLDERS_KEY)) return;
+    const pending = Object.entries(BUILTIN_TYPE_FOLDERS).filter(
+      ([id]) => this.db.get("SELECT 1 AS x FROM types WHERE id = ?", id) && !this.db.get("SELECT 1 AS x FROM type_placement WHERE type_id = ?", id),
+    );
+    this.db.tx(() => {
+      for (const [id, folder] of pending) {
+        this.createTypeFolder(folder);
+        this.db.run("INSERT INTO type_placement (type_id, folder) VALUES (?, ?)", id, folder);
+      }
+      this.db.run("INSERT INTO meta (key, value) VALUES (?, '1') ON CONFLICT(key) DO UPDATE SET value = excluded.value", BUILTIN_TYPE_FOLDERS_KEY);
+    });
+  }
 
   /**
    * Every stored type. `shipped`: a type with this id ships in the built-in types directory.

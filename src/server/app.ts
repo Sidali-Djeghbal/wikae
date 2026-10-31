@@ -753,8 +753,11 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
     app.get("*", (c) => {
       const rel = normalize(c.req.path).replace(/^[\\/]+/, "");
       const full = resolve(dist, rel);
-      if (rel && full.startsWith(resolve(dist) + sep) && existsSync(full) && statSync(full).isFile())
-        return withAppCsp(sendFile(c, full, { cache: rel.startsWith("assets/") ? "public, max-age=31536000, immutable" : "no-cache" }), full);
+      if (rel && full.startsWith(resolve(dist) + sep) && existsSync(full) && statSync(full).isFile()) {
+        // Card frames have an opaque origin, so fonts they load need CORS.
+        const font = /\.(?:woff2?|ttf|otf)$/i.test(rel);
+        return withAppCsp(sendFile(c, full, { cors: font, cache: rel.startsWith("assets/") ? "public, max-age=31536000, immutable" : "no-cache" }), full);
+      }
       return withAppCsp(sendFile(c, join(dist, "index.html")), "index.html");
     });
   }

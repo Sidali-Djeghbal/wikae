@@ -205,5 +205,48 @@
       "extra": "Gray's labels are from 1918: today the pulmonary artery here is usually called the **pulmonary trunk**. The right lung sits on the viewer's left, because \"right\" means the patient's right."
     },
     "source": "Henry Gray, Anatomy of the Human Body (1918), Fig. 490. Public domain, via Wikimedia Commons."
+  },
+  {
+    "id": "showcase.quran.baqarah",
+    "type": "quran-mutashabihat",
+    "deck": "Etude Showcase::1 Recall",
+    "tags": [
+      "showcase",
+      "topic::quran"
+    ],
+    "fields": {
+      "titleAr": "سورة البقرة · آية ١٢٦ · إكمال",
+      "mode": "pivotal_completion",
+      "targetVerseId": "baqarah_126",
+      "siblings": [
+        {
+          "id": "baqarah_126",
+          "surahNumber": 2,
+          "surahNameAr": "البقرة",
+          "ayahNumber": 126,
+          "prefixUthmani": "وَإِذْ قَالَ إِبْرَٰهِـۧمُ رَبِّ ٱجْعَلْ هَـٰذَا",
+          "pivotalUthmani": "بَلَدًا ءَامِنًا",
+          "suffixUthmani": "وَٱرْزُقْ أَهْلَهُۥ مِنَ ٱلثَّمَرَٰتِ",
+          "textUthmani": "وَإِذْ قَالَ إِبْرَٰهِـۧمُ رَبِّ ٱجْعَلْ هَـٰذَا بَلَدًا ءَامِنًا وَٱرْزُقْ أَهْلَهُۥ مِنَ ٱلثَّمَرَٰتِ",
+          "pivotalNormalized": "بلدا آمنا"
+        },
+        {
+          "id": "ibrahim_35",
+          "surahNumber": 14,
+          "surahNameAr": "إبراهيم",
+          "ayahNumber": 35,
+          "prefixUthmani": "وَإِذْ قَالَ إِبْرَٰهِيمُ رَبِّ ٱجْعَلْ هَـٰذَا",
+          "pivotalUthmani": "ٱلْبَلَدَ ءَامِنًا",
+          "suffixUthmani": "وَٱجْنُبْنِى وَبَنِىَّ أَن نَّعْبُدَ ٱلْأَصْنَامَ",
+          "textUthmani": "وَإِذْ قَالَ إِبْرَٰهِيمُ رَبِّ ٱجْعَلْ هَـٰذَا ٱلْبَلَدَ ءَامِنًا وَٱجْنُبْنِى وَبَنِىَّ أَن نَّعْبُدَ ٱلْأَصْنَامَ",
+          "pivotalNormalized": "البلد آمنا"
+        }
+      ],
+      "extraDistractorsUthmani": [],
+      "mnemonicRuleAr": "في سورة البقرة جاءت نكرة (بَلَدًا ءَامِنًا) لأن الدعوة كانت قبل عمارة مكة واستقرار الناس فيها، وفي سورة إبراهيم جاءت معرفة بالألف واللام (ٱلْبَلَدَ ءَامِنًا) بعد أن أصبحت مكة بلداً معموراً ومستقراً.",
+      "hintAr": "تذكر التدرج الزمني لعمارة مكة بين التنكير والتعريف.",
+      "inputSubmode": "choice"
+    },
+    "source": "القرآن الكريم - مصحف المدينة النبوية (مجمع الملك فهد)"
   }
 ]
