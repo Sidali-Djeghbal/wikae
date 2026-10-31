@@ -3,155 +3,206 @@ title: الدعم والمساعدة · Support
 description: الدعم والمساعدة لتطبيق وِكَاء: الأسئلة الشائعة، والتواصل، وإدارة البيانات والخصوصية.
 -->
 <div data-lang="ar">
-<section class="pg-hero">
-  <div class="wrap">
-    <p class="opus fade-up">الدعم والمساعدة <span>فريق وِكَاء معك</span></p>
-    <h1 class="fade-up" style="animation-delay:.1s">كيف يمكننا مساعدتك؟</h1>
-    <p class="lede fade-up" style="animation-delay:.2s">راسلنا عبر <a class="pg-mail" href="mailto:contact@djeghbal.me">contact@djeghbal.me</a> مع تفاصيل ما كنت تقوم به والنتيجة التي ظهرت لك. إرفاق لقطة شاشة يساعدنا في سرعة الحل. نقرأ كل رسالة ونجيب عليها في أقرب وقت.</p>
-    <div class="hero-cta fade-up" style="animation-delay:.3s">
-      <a class="btn btn-primary btn-lg" href="mailto:contact@djeghbal.me">مراسلة contact@djeghbal.me</a>
-      <a class="textlink" href="https://github.com/Sidali-Djeghbal/wikae/issues">الإبلاغ عن مشكلة في GitHub <span aria-hidden="true">←</span></a>
+  <section class="pg-hero">
+    <div class="wrap">
+      <p class="opus fade-up">الدعم والمساعدة <span>فريق وِكَاء معك</span></p>
+      <h1 class="fade-up" style="animation-delay:.1s">كيف يمكننا مساعدتك؟</h1>
+      <p class="lede fade-up" style="animation-delay:.2s">راسلنا عبر <a class="pg-mail"
+          href="mailto:contact@djeghbal.me">contact@djeghbal.me</a> مع تفاصيل ما كنت تقوم به والنتيجة التي ظهرت لك.
+        إرفاق لقطة شاشة يساعدنا في سرعة الحل. نقرأ كل رسالة ونجيب عليها في أقرب وقت.</p>
+      <div class="hero-cta fade-up" style="animation-delay:.3s">
+        <a class="btn btn-primary btn-lg" href="mailto:contact@djeghbal.me">مراسلة contact@djeghbal.me</a>
+        <a class="textlink" href="https://github.com/Sidali-Djeghbal/wikae/issues">الإبلاغ عن مشكلة في GitHub <span
+            aria-hidden="true">←</span></a>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="pg-section">
-  <div class="wrap pg-grid">
-    <div class="pg-col">
-      <p class="opus">أولاً <span>الأسئلة المتكررة</span></p>
-      <h2>الأسئلة الشائعة</h2>
+  <section class="pg-section">
+    <div class="wrap pg-grid">
+      <div class="pg-col">
+        <p class="opus">أولاً <span>الأسئلة المتكررة</span></p>
+        <h2>الأسئلة الشائعة</h2>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>هل تطبيق وِكَاء مجاني؟</summary>
+          <p>نعم، وِكَاء مجاني ومفتوح المصدر بالكامل تحت رخصة AGPL-3.0، بدون أي إعلانات أو رسوم خفية. جميع ميزات الحفظ
+            والتكرار المتباعد والتقييم متاحة للجميع مجاناً.</p>
+        </details>
+        <details>
+          <summary>هل أحتاج إلى إنشاء حساب لاستخدام التطبيق؟</summary>
+          <p>لا. يعمل وِكَاء بالكامل دون الحاجة لأي حساب. تُحفظ مجموعاتك وبطاقاتك وسجل مراجعاتك محلياً على جهازك في أمان
+            وخصوصية تامة.</p>
+        </details>
+        <details>
+          <summary>أين يتم تخزين بياناتي وحزمي؟</summary>
+          <p>على جهازك فقط. في الهواتف الذكية تُخزن داخل مساحة التخزين المعزولة للتطبيق، وعلى الحاسوب تُخزن في مجلد
+            <code>.wikae</code> (أو <code>.etude</code>) في مجلدك الشخصي الرئيسي.</p>
+        </details>
+        <details>
+          <summary>كيف أحتفظ بنسخة احتياطية أو أنقل مجموعتي؟</summary>
+          <p>يمكنك تصدير أي حزمة كملف حزمة مستقل (من داخل الحزمة: إدارة ← تصدير كحزمة)، أو نسخ قاعدة البيانات بالكامل
+            عبر أمر سطر الأوامر <code>wikae db backup</code> على حاسوبك.</p>
+        </details>
+        <details>
+          <summary>كيف أنقل حزمي وسجل مراجعاتي من برنامج Anki (Anki)؟</summary>
+          <p>استورد ملف <code>.apkg</code> أو <code>.colpkg</code> مباشرة من صفحة الحزم في التطبيق أو عبر سطر الأوامر
+            <code>wikae anki import</code>. تنتقل الملاحظات والبطاقات والوسائط الصوتية وسجل المراجعات التاريخي بالكامل.
+          </p>
+        </details>
+        <details>
+          <summary>كيف يعمل التصحيح بالذكاء الاصطناعي؟ وأين تذهب إجابتي؟</summary>
+          <p>التصحيح بالذكاء الاصطناعي معطل افتراضياً حتى تقوم بتفعيله يدوياً في الإعدادات وإدخال مفتاح API الخاص بك
+            (OpenRouter أو OpenAI أو خادم محلي مثل Ollama). تنتقل الإجابة مباشرة بين جهازك ومزود الخدمة دون أي وسيط
+            خارجي.</p>
+        </details>
+        <details>
+          <summary>هل تثبيت أنواع البطاقات من المتجر آمن؟</summary>
+          <p>نعم. تُنفذ قوالب البطاقات داخل بيئة معزولة ومحمية (Sandbox). لا تملك أي بطاقة صلاحية الوصول إلى شبكة
+            الإنترنت أو ملفات النظام أو حزمك الأخرى.</p>
+        </details>
+      </div>
     </div>
-    <div class="faq">
-      <details>
-        <summary>هل تطبيق وِكَاء مجاني؟</summary>
-        <p>نعم، وِكَاء مجاني ومفتوح المصدر بالكامل تحت رخصة AGPL-3.0، بدون أي إعلانات أو رسوم خفية. جميع ميزات الحفظ والتكرار المتباعد والتقييم متاحة للجميع مجاناً.</p>
-      </details>
-      <details>
-        <summary>هل أحتاج إلى إنشاء حساب لاستخدام التطبيق؟</summary>
-        <p>لا. يعمل وِكَاء بالكامل دون الحاجة لأي حساب. تُحفظ مجموعاتك وبطاقاتك وسجل مراجعاتك محلياً على جهازك في أمان وخصوصية تامة.</p>
-      </details>
-      <details>
-        <summary>أين يتم تخزين بياناتي وحزمي؟</summary>
-        <p>على جهازك فقط. في الهواتف الذكية تُخزن داخل مساحة التخزين المعزولة للتطبيق، وعلى الحاسوب تُخزن في مجلد <code>.wikae</code> (أو <code>.etude</code>) في مجلدك الشخصي الرئيسي.</p>
-      </details>
-      <details>
-        <summary>كيف أحتفظ بنسخة احتياطية أو أنقل مجموعتي؟</summary>
-        <p>يمكنك تصدير أي حزمة كملف حزمة مستقل (من داخل الحزمة: إدارة ← تصدير كحزمة)، أو نسخ قاعدة البيانات بالكامل عبر أمر سطر الأوامر <code>wikae db backup</code> على حاسوبك.</p>
-      </details>
-      <details>
-        <summary>كيف أنقل حزمي وسجل مراجعاتي من برنامج آنكي (Anki)؟</summary>
-        <p>استورد ملف <code>.apkg</code> أو <code>.colpkg</code> مباشرة من صفحة الحزم في التطبيق أو عبر سطر الأوامر <code>wikae anki import</code>. تنتقل الملاحظات والبطاقات والوسائط الصوتية وسجل المراجعات التاريخي بالكامل.</p>
-      </details>
-      <details>
-        <summary>كيف يعمل التصحيح بالذكاء الاصطناعي؟ وأين تذهب إجابتي؟</summary>
-        <p>التصحيح بالذكاء الاصطناعي معطل افتراضياً حتى تقوم بتفعيله يدوياً في الإعدادات وإدخال مفتاح API الخاص بك (OpenRouter أو OpenAI أو خادم محلي مثل Ollama). تنتقل الإجابة مباشرة بين جهازك ومزود الخدمة دون أي وسيط خارجي.</p>
-      </details>
-      <details>
-        <summary>هل تثبيت أنواع البطاقات من المتجر آمن؟</summary>
-        <p>نعم. تُنفذ قوالب البطاقات داخل بيئة معزولة ومحمية (Sandbox). لا تملك أي بطاقة صلاحية الوصول إلى شبكة الإنترنت أو ملفات النظام أو حزمك الأخرى.</p>
-      </details>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section class="pg-section" id="delete">
-  <div class="wrap pg-grid">
-    <div class="pg-col">
-      <p class="opus">ثانياً <span>بياناتك وخصوصيتك</span></p>
-      <h2>التحكم الكامل في البيانات</h2>
+  <section class="pg-section" id="delete">
+    <div class="wrap pg-grid">
+      <div class="pg-col">
+        <p class="opus">ثانياً <span>بياناتك وخصوصيتك</span></p>
+        <h2>التحكم الكامل في البيانات</h2>
+      </div>
+      <div class="pg-prose">
+        <p>بما أنك لا تحتاج إلى حساب خارجي لاستخدام وِكَاء، فإننا لا نخزن أي شيء عنك على خوادمنا. بياناتك ملكك وحدك
+          ومحفوظة محلياً على أجهزتك.</p>
+        <p>لحذف بياناتك بالكامل في أي وقت:</p>
+        <ol class="steps">
+          <li>
+            <div>
+              <h3>على الهاتف المحمول</h3>
+              <p>إلغاء تثبيت التطبيق يحذف كامل المجموعة وسجل المراجعات من ذاكرة الهاتف فوراً.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h3>على الحاسوب</h3>
+              <p>حذف مجلد <code>.wikae</code> أو <code>.etude</code> من مجلد المستخدم الرئيسي يزيل قاعدة البيانات
+                والملفات والوسائط نهائياً.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
     </div>
-    <div class="pg-prose">
-      <p>بما أنك لا تحتاج إلى حساب خارجي لاستخدام وِكَاء، فإننا لا نخزن أي شيء عنك على خوادمنا. بياناتك ملكك وحدك ومحفوظة محلياً على أجهزتك.</p>
-      <p>لحذف بياناتك بالكامل في أي وقت:</p>
-      <ol class="steps">
-        <li><div><h3>على الهاتف المحمول</h3><p>إلغاء تثبيت التطبيق يحذف كامل المجموعة وسجل المراجعات من ذاكرة الهاتف فوراً.</p></div></li>
-        <li><div><h3>على الحاسوب</h3><p>حذف مجلد <code>.wikae</code> أو <code>.etude</code> من مجلد المستخدم الرئيسي يزيل قاعدة البيانات والملفات والوسائط نهائياً.</p></div></li>
-      </ol>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section class="cta">
-  <div class="wrap">
-    <h2>هل تحتاج لمساعدة إضافية؟</h2>
-    <p class="cta-sub">راسلنا على <a href="mailto:contact@djeghbal.me">contact@djeghbal.me</a> أو افتح تذكرة على GitHub وسنسعد بخدمتك.</p>
-  </div>
-</section>
+  <section class="cta">
+    <div class="wrap">
+      <h2>هل تحتاج لمساعدة إضافية؟</h2>
+      <p class="cta-sub">راسلنا على <a href="mailto:contact@djeghbal.me">contact@djeghbal.me</a> أو افتح تذكرة على
+        GitHub وسنسعد بخدمتك.</p>
+    </div>
+  </section>
 </div>
 
 <div data-lang="en">
-<section class="pg-hero">
-  <div class="wrap">
-    <p class="opus fade-up">Support <span>Help with Wikae</span></p>
-    <h1 class="fade-up" style="animation-delay:.1s">How can we help?</h1>
-    <p class="lede fade-up" style="animation-delay:.2s">Write to <a class="pg-mail" href="mailto:contact@djeghbal.me">contact@djeghbal.me</a> with what you were doing, what you expected, and what happened. A screenshot helps. We read and answer every message promptly.</p>
-    <div class="hero-cta fade-up" style="animation-delay:.3s">
-      <a class="btn btn-primary btn-lg" href="mailto:contact@djeghbal.me">Email contact@djeghbal.me</a>
-      <a class="textlink" href="https://github.com/Sidali-Djeghbal/wikae/issues">Report an issue on GitHub <span aria-hidden="true">→</span></a>
+  <section class="pg-hero">
+    <div class="wrap">
+      <p class="opus fade-up">Support <span>Help with Wikae</span></p>
+      <h1 class="fade-up" style="animation-delay:.1s">How can we help?</h1>
+      <p class="lede fade-up" style="animation-delay:.2s">Write to <a class="pg-mail"
+          href="mailto:contact@djeghbal.me">contact@djeghbal.me</a> with what you were doing, what you expected, and
+        what happened. A screenshot helps. We read and answer every message promptly.</p>
+      <div class="hero-cta fade-up" style="animation-delay:.3s">
+        <a class="btn btn-primary btn-lg" href="mailto:contact@djeghbal.me">Email contact@djeghbal.me</a>
+        <a class="textlink" href="https://github.com/Sidali-Djeghbal/wikae/issues">Report an issue on GitHub <span
+            aria-hidden="true">→</span></a>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="pg-section">
-  <div class="wrap pg-grid">
-    <div class="pg-col">
-      <p class="opus">I. <span>Questions</span></p>
-      <h2>Common questions.</h2>
+  <section class="pg-section">
+    <div class="wrap pg-grid">
+      <div class="pg-col">
+        <p class="opus">I. <span>Questions</span></p>
+        <h2>Common questions.</h2>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>Is Wikae free?</summary>
+          <p>Yes. Wikae is free and open source under the AGPL-3.0 license, with no advertisements and no paywalled
+            features. All memorization tools, FSRS-6 scheduling, and grading capabilities are free for everyone.</p>
+        </details>
+        <details>
+          <summary>Do I need an account?</summary>
+          <p>No. Wikae works completely offline without requiring any account. All your decks, cards, and review
+            histories remain strictly on your local device.</p>
+        </details>
+        <details>
+          <summary>Where is my collection stored?</summary>
+          <p>On your local device only. On mobile devices, it lives in the app's sandboxed storage. On desktop
+            computers, it is in the <code>.wikae</code> (or <code>.etude</code>) folder in your home directory.</p>
+        </details>
+        <details>
+          <summary>How do I back up or transfer my collection?</summary>
+          <p>You can export any deck as a standalone pack file (inside the deck: Manage → Export as pack), or back up
+            the entire database using <code>wikae db backup</code> on your computer.</p>
+        </details>
+        <details>
+          <summary>How do I import decks from Anki?</summary>
+          <p>Import your <code>.apkg</code> or <code>.colpkg</code> file directly from the Decks page, or via the
+            command line with <code>wikae anki import</code>. Notes, cards, media, and complete review logs carry over
+            seamlessly.</p>
+        </details>
+        <details>
+          <summary>How does AI grading work, and where does my answer go?</summary>
+          <p>AI grading is disabled by default until you enable it in Settings and provide your own API key (OpenRouter,
+            OpenAI, or a local engine like Ollama). Requests travel directly from your device to the provider with no
+            middleman.</p>
+        </details>
+        <details>
+          <summary>Is it safe to install card types from the Market?</summary>
+          <p>Yes. Card types run in sealed, sandboxed iframes. They cannot access the internet, your system files, or
+            other cards in your collection.</p>
+        </details>
+      </div>
     </div>
-    <div class="faq">
-      <details>
-        <summary>Is Wikae free?</summary>
-        <p>Yes. Wikae is free and open source under the AGPL-3.0 license, with no advertisements and no paywalled features. All memorization tools, FSRS-6 scheduling, and grading capabilities are free for everyone.</p>
-      </details>
-      <details>
-        <summary>Do I need an account?</summary>
-        <p>No. Wikae works completely offline without requiring any account. All your decks, cards, and review histories remain strictly on your local device.</p>
-      </details>
-      <details>
-        <summary>Where is my collection stored?</summary>
-        <p>On your local device only. On mobile devices, it lives in the app's sandboxed storage. On desktop computers, it is in the <code>.wikae</code> (or <code>.etude</code>) folder in your home directory.</p>
-      </details>
-      <details>
-        <summary>How do I back up or transfer my collection?</summary>
-        <p>You can export any deck as a standalone pack file (inside the deck: Manage → Export as pack), or back up the entire database using <code>wikae db backup</code> on your computer.</p>
-      </details>
-      <details>
-        <summary>How do I import decks from Anki?</summary>
-        <p>Import your <code>.apkg</code> or <code>.colpkg</code> file directly from the Decks page, or via the command line with <code>wikae anki import</code>. Notes, cards, media, and complete review logs carry over seamlessly.</p>
-      </details>
-      <details>
-        <summary>How does AI grading work, and where does my answer go?</summary>
-        <p>AI grading is disabled by default until you enable it in Settings and provide your own API key (OpenRouter, OpenAI, or a local engine like Ollama). Requests travel directly from your device to the provider with no middleman.</p>
-      </details>
-      <details>
-        <summary>Is it safe to install card types from the Market?</summary>
-        <p>Yes. Card types run in sealed, sandboxed iframes. They cannot access the internet, your system files, or other cards in your collection.</p>
-      </details>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section class="pg-section" id="delete">
-  <div class="wrap pg-grid">
-    <div class="pg-col">
-      <p class="opus">II. <span>Your data</span></p>
-      <h2>Data deletion & privacy.</h2>
+  <section class="pg-section" id="delete">
+    <div class="wrap pg-grid">
+      <div class="pg-col">
+        <p class="opus">II. <span>Your data</span></p>
+        <h2>Data deletion & privacy.</h2>
+      </div>
+      <div class="pg-prose">
+        <p>Because Wikae requires no external account, we store zero personal data about you on our servers. Your data
+          belongs entirely to you on your local devices.</p>
+        <p>To delete your data completely at any time:</p>
+        <ol class="steps">
+          <li>
+            <div>
+              <h3>On mobile</h3>
+              <p>Uninstalling the application permanently deletes your collection and review history from device
+                storage.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <h3>On computer</h3>
+              <p>Removing the <code>.wikae</code> or <code>.etude</code> directory in your user home folder erases the
+                database, logs, and media files.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
     </div>
-    <div class="pg-prose">
-      <p>Because Wikae requires no external account, we store zero personal data about you on our servers. Your data belongs entirely to you on your local devices.</p>
-      <p>To delete your data completely at any time:</p>
-      <ol class="steps">
-        <li><div><h3>On mobile</h3><p>Uninstalling the application permanently deletes your collection and review history from device storage.</p></div></li>
-        <li><div><h3>On computer</h3><p>Removing the <code>.wikae</code> or <code>.etude</code> directory in your user home folder erases the database, logs, and media files.</p></div></li>
-      </ol>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section class="cta">
-  <div class="wrap">
-    <h2>Still need help?</h2>
-    <p class="cta-sub">Email <a href="mailto:contact@djeghbal.me">contact@djeghbal.me</a> or open an issue on GitHub and we will be happy to assist.</p>
-  </div>
-</section>
+  <section class="cta">
+    <div class="wrap">
+      <h2>Still need help?</h2>
+      <p class="cta-sub">Email <a href="mailto:contact@djeghbal.me">contact@djeghbal.me</a> or open an issue on GitHub
+        and we will be happy to assist.</p>
+    </div>
+  </section>
 </div>

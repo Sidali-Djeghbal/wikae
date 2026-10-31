@@ -2,7 +2,7 @@
    Spaced-repetition practice for Quran, Mutashabihat and knowledge.
    Clean Islamic typography, emerald accents, and responsive light/dark themes. */
 
-@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
 @font-face { font-family: "Inter"; src: url("fonts/inter.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
 @font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
@@ -543,9 +543,10 @@ html[dir="rtl"] .hero h1 {
   display: block;
   white-space: normal;
 }
+/* Base hero emphasis element (both Arabic & English): Black text and black underline in light mode */
 .hero h1 em {
   font-style: normal;
-  color: var(--highlight);
+  color: #000000;
   position: relative;
   display: inline-block;
   white-space: nowrap;
@@ -557,11 +558,82 @@ html[dir="rtl"] .hero h1 {
   right: 0;
   bottom: -0.08em;
   height: 0.22em;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 13 C 40 6, 90 5, 132 9 S 186 15, 197 7' fill='none' stroke='%2310b981' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center / 100% 100%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 13 C 40 6, 90 5, 132 9 S 186 15, 197 7' fill='none' stroke='%23000000' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center / 100% 100%;
   clip-path: inset(0 100% 0 0);
   animation: underline 0.9s 0.9s var(--ease) forwards;
 }
 @keyframes underline { to { clip-path: inset(0 0 0 0); } }
+
+/* In dark mode, ensure readability against dark backgrounds */
+:root[data-theme="dark"] .hero h1 em,
+html.dark .hero h1 em,
+:root:not([data-theme="light"]) .hero h1 em {
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .hero h1 em::after,
+html.dark .hero h1 em::after,
+:root:not([data-theme="light"]) .hero h1 em::after {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 13 C 40 6, 90 5, 132 9 S 186 15, 197 7' fill='none' stroke='%23ffffff' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center / 100% 100%;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .hero h1 em {
+    color: #000000;
+  }
+  :root:not([data-theme="dark"]) .hero h1 em::after {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 13 C 40 6, 90 5, 132 9 S 186 15, 197 7' fill='none' stroke='%23000000' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center / 100% 100%;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hero h1 em {
+    color: #ffffff;
+  }
+  :root:not([data-theme="light"]) .hero h1 em::after {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 13 C 40 6, 90 5, 132 9 S 186 15, 197 7' fill='none' stroke='%23ffffff' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center / 100% 100%;
+  }
+}
+
+/* Arabic hero typography: modern Cairo UI/UX heading font */
+html[dir="rtl"] .hero h1,
+.hero [data-lang="ar"] h1,
+[data-lang="ar"] .hero h1 {
+  font-family: "Cairo", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+}
+
+/* "وأتقن المتشابهات." emphasis element */
+.hero [data-lang="ar"] h1 em,
+[data-lang="ar"] .hero h1 em,
+html[dir="rtl"] .hero h1 em {
+  font-family: "Cairo", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-weight: 850;
+  letter-spacing: -0.015em;
+  font-style: normal;
+}
+
+/* English hero typography: crisp, modern, high-tier UI/UX */
+html[lang="en"] .hero h1,
+.hero [data-lang="en"] h1,
+[data-lang="en"] .hero h1 {
+  font-family: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.18;
+}
+
+/* "Master the Mutashabihat." emphasis element: Black text and black underline in light mode */
+.hero [data-lang="en"] h1 em,
+[data-lang="en"] .hero h1 em,
+html[lang="en"] .hero h1 em {
+  font-family: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  font-style: normal;
+}
 .lede {
   margin: 1.85rem 0 0;
   font-size: clamp(1.15rem, 1.8vw, 1.35rem);
