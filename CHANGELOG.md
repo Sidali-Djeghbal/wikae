@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.6.0...v2.7.0) (2026-10-31)
+
+
+### Features
+
+* **site:** update branding to Wikae Islamic project with dark/light mode toggle ([c000dbf](https://github.com/Sidali-Djeghbal/wikae/commit/c000dbf677344101a8524f5c004d3f26d16b603d))
+
 ## [2.6.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.5.0...v2.6.0) (2026-10-31)
 
 
