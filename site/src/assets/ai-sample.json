@@ -1,9 +1,30 @@
 {
-  "prompt": "Prove by induction that for every integer $n \\ge 1$\n\n$$\\sum_{k=1}^{n} k = \\frac{n(n+1)}{2}.$$\n\nWrite it the way you would on paper: math in `$...$` renders as you type.",
-  "answer": "Assume it holds for $n$: $1 + \\dots + n = \\frac{n(n+1)}{2}$. Adding $n+1$ to both sides gives $\\frac{n(n+1)}{2} + (n+1) = \\frac{(n+1)(n+2)}{2}$, which is the formula for $n+1$. So it holds for every $n$.",
+  "prompt": "بيّن التوجيه البلاغي لورود: ﴿رَبِّ اجْعَلْ هَٰذَا بَلَدًا آمِنًا﴾ بالتنكير في سورة البقرة [الآية: ١٢٦]، و﴿رَبِّ اجْعَلْ هَٰذَا الْبَلَدَ آمِنًا﴾ بالتعريف في سورة إبراهيم [الآية: ٣٥]، وما الفرق بينهما في سياق طلب الرزق؟",
+  "answer": "في البقرة جاءت ﴿بَلَدًا﴾ نكرة لأن دعاء إبراهيم كان قبل قيام البلد وتعميره، فسأل الله أن يجعله بلداً ذا أمن واستقرار. أما في إبراهيم فجاءت ﴿الْبَلَدَ﴾ معرفة لأن مكة كانت قد عُمِرت وبُنيت فطلب دوام أمنها وبركتها.",
   "verdict": "partial",
-  "score": 0.5036409558023737,
-  "model": "liquid/d1-ultra-20261015",
+  "score": 0.50,
+  "model": "wikae/d1-ultra-20261015",
   "ms": 387,
-  "feedback": "Your inductive step is correct, but the proof is incomplete: you never checked a base case. Add \"$n=1$: the sum is $1$ and $\\frac{1\\cdot 2}{2}=1$\" before the hypothesis, and state that the hypothesis holds for some $n\\ge 1$."
+  "note": "أين المقارنة في سياق الرزق؟",
+  "feedback": "توجيهك للتنكير والتعريف صحيح ودقيق بلاغياً؛ فدعاء البقرة كان قبل قيام البلد وفي إبراهيم بعد استقراره. لكن إجابتك غير مكتملة: لم تُجب عن الشق الثاني المتعلق بالرزق؛ ففي البقرة قَصَر إبراهيم دعاءه بالثمرات على المؤمنين ﴿مَنْ آمَنَ مِنْهُم بِاللَّهِ﴾ فأجابه الله تعالى بأن رزق الدنيا يعم الكافر أيضاً: ﴿قَالَ وَمَن كَفَرَ فَأُمَتِّعُهُ قَلِيلًا﴾، بينما في سورة إبراهيم عمَّم إبراهيم الدعاء بالرزق لذريته: ﴿وَارْزُقْهُم مِّنَ الثَّمَرَاتِ لَعَلَّهُمْ يَشْكُرُونَ﴾.",
+  "ar": {
+    "prompt": "بيّن التوجيه البلاغي لورود: ﴿رَبِّ اجْعَلْ هَٰذَا بَلَدًا آمِنًا﴾ بالتنكير في سورة البقرة [الآية: ١٢٦]، و﴿رَبِّ اجْعَلْ هَٰذَا الْبَلَدَ آمِنًا﴾ بالتعريف في سورة إبراهيم [الآية: ٣٥]، وما الفرق بينهما في سياق طلب الرزق؟",
+    "answer": "في البقرة جاءت ﴿بَلَدًا﴾ نكرة لأن دعاء إبراهيم كان قبل قيام البلد وتعميره، فسأل الله أن يجعله بلداً ذا أمن واستقرار. أما في إبراهيم فجاءت ﴿الْبَلَدَ﴾ معرفة لأن مكة كانت قد عُمِرت وبُنيت فطلب دوام أمنها وبركتها.",
+    "verdict": "partial",
+    "score": 0.50,
+    "model": "wikae/d1-ultra-20261015",
+    "ms": 387,
+    "note": "أين المقارنة في سياق الرزق؟",
+    "feedback": "توجيهك للتنكير والتعريف صحيح ودقيق بلاغياً؛ فدعاء البقرة كان قبل قيام البلد وفي إبراهيم بعد استقراره. لكن إجابتك غير مكتملة: لم تُجب عن الشق الثاني المتعلق بالرزق؛ ففي البقرة قَصَر إبراهيم دعاءه بالثمرات على المؤمنين ﴿مَنْ آمَنَ مِنْهُم بِاللَّهِ﴾ فأجابه الله تعالى بأن رزق الدنيا يعم الكافر أيضاً: ﴿قَالَ وَمَن كَفَرَ فَأُمَتِّعُهُ قَلِيلًا﴾، بينما في سورة إبراهيم عمَّم إبراهيم الدعاء بالرزق لذريته: ﴿وَارْزُقْهُم مِّنَ الثَّمَرَاتِ لَعَلَّهُمْ يَشْكُرُونَ﴾."
+  },
+  "en": {
+    "prompt": "Explain the rhetorical distinction between: ﴿رَبِّ اجْعَلْ هَٰذَا بَلَدًا آمِنًا﴾ (indefinite) in Al-Baqarah [126] and ﴿رَبِّ اجْعَلْ هَٰذَا الْبَلَدَ آمِنًا﴾ (definite) in Ibrahim [35]. How do their contexts differ regarding provisions?",
+    "answer": "In Al-Baqarah, ﴿بَلَدًا﴾ is indefinite because Ibrahim's supplication was before Makkah was built, asking Allah to make this valley a secure city. In Surah Ibrahim, ﴿الْبَلَدَ﴾ is definite because Makkah had already become an established town, so he asked for the continuance of its security and blessing.",
+    "verdict": "partial",
+    "score": 0.50,
+    "model": "wikae/d1-ultra-20261015",
+    "ms": 387,
+    "note": "where is the comparison of provisions?",
+    "feedback": "Your explanation of the indefinite and definite nouns is rhetorically accurate; the prayer in Al-Baqarah was before the town was built, and in Ibrahim after it was populated. However, your answer is incomplete: you missed the second part regarding provisions; in Al-Baqarah, Ibrahim restricted his prayer to believers ﴿مَنْ آمَنَ مِنْهُم بِاللَّهِ﴾, to which Allah clarified that worldly sustenance is given to disbelievers as well: ﴿قَالَ وَمَن كَفَرَ فَأُمَتِّعُهُ قَلِيلًا﴾, whereas in Surah Ibrahim he generalized the prayer for his offspring: ﴿وَارْزُقْهُم مِّنَ الثَّمَرَاتِ لَعَلَّهُمْ يَشْكُرُونَ﴾."
+  }
 }

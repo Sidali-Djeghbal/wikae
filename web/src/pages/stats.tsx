@@ -409,13 +409,14 @@ export function Schedulers({ list }: { list: StatsScheduler[] }) {
           const go = () => (x.decks.length === 1 ? navigate(`/stats?deck=${encodeURIComponent(x.decks[0])}`) : undefined);
           const status = x.kind === "drill" ? (x.due ? t("{n} ready", { n: x.due }) : t("none ready")) : t("{n} due", { n: x.due });
           const extra = x.kind === "drill" ? (x.answers ? (x.answers === 1 ? t("1 run") : t("{n} runs", { n: x.answers })) : "") : x.passRate != null ? `${pct(x.passRate)} ${t("pass")}` : "";
+          const deckName = x.decks.length === 1 ? t(x.decks[0].split("::").pop()!) : t("{n} decks", { n: x.decks.length });
           return (
             <li key={x.id} className="py-3 first:pt-0 last:pb-0">
               <button type="button" onClick={go} disabled={x.decks.length !== 1} className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 text-left rtl:text-right enabled:cursor-pointer enabled:hover:opacity-80 sm:grid-cols-[13rem_minmax(0,1fr)_auto]">
                 <div className="col-span-2 min-w-0 sm:col-span-1">
-                  <div className="truncate text-sm font-medium">{x.name}</div>
+                  <div className="truncate text-sm font-medium">{t(x.name)}</div>
                   <div className="truncate text-[11px] text-muted-foreground" title={x.decks.join(", ")}>
-                    {word[x.kind]} · {x.decks.length === 1 ? x.decks[0].split("::").pop() : t("{n} decks", { n: x.decks.length })}
+                    {word[x.kind]} · {deckName}
                   </div>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-muted/60">
@@ -538,10 +539,12 @@ export function PracticePanel({ card }: { card: PracticeCard }) {
   const shown = (v: number) => Number(v.toFixed(m.digits));
   const delta = m.first != null && m.last != null && m.points.length > 1 ? shown(m.last) - shown(m.first) : null;
   const up = delta != null && (m.better === "lower" ? delta < 0 : delta > 0);
+  const deckTitle = t(card.deck.split("::").pop() ?? "");
+  const sessionText = card.sessions === 1 ? t("1 session") : t("{n} sessions", { n: card.sessions });
   return (
-    <Panel title={card.title} aside={<span className="tabular">{card.sessions} session{card.sessions === 1 ? "" : "s"} · {card.deck.split("::").pop()}</span>}>
+    <Panel title={t(card.title || "ضبط المتشابهات")} aside={<span className="tabular">{sessionText} · {deckTitle}</span>}>
       {card.metrics.length > 1 && (
-        <div className="-mt-1 mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Metric">
+        <div className="-mt-1 mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label={t("Metric")}>
           {card.metrics.map((x) => (
             <button
               key={x.key}
@@ -550,7 +553,7 @@ export function PracticePanel({ card }: { card: PracticeCard }) {
               onClick={() => setKey(x.key)}
               className={cn("h-8 rounded-md border px-2.5 text-xs", x.key === m.key ? "border-foreground/25 bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50")}
             >
-              {x.label}
+              {t(x.label)}
             </button>
           ))}
         </div>

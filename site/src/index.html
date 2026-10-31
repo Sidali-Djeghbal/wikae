@@ -30,7 +30,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="runtime/vendor/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="modulepreload" href="runtime/vendor/katex.js">
@@ -50,6 +50,10 @@
 <header class="nav" id="nav">
   <div class="wrap">
     <a href="./" class="wordmark" aria-label="Wikae home">
+      <img src="assets/logo_black.svg" class="wikae-brand-logo logo-ar logo-light" alt="وِكَاء" height="34">
+      <img src="assets/logo_white.svg" class="wikae-brand-logo logo-ar logo-dark" alt="وِكَاء" height="34">
+      <img src="assets/logo_black_en.svg" class="wikae-brand-logo logo-en logo-light" alt="Wikae" height="34">
+      <img src="assets/logo_white_en.svg" class="wikae-brand-logo logo-en logo-dark" alt="Wikae" height="34">
       <span class="wikae-ar" data-lang="ar">وِكَاء</span>
       <span class="wikae-en" data-lang="en">Wikae</span>
     </a>
@@ -123,32 +127,6 @@
         <p class="colophon fade-up" style="animation-delay:.34s">Quranic Mutashabihat in Uthmani script · FSRS-6 algorithm · Full Anki import · 100% open source · Offline-first & private</p>
       </div>
     </div>
-
-    <div class="stage-wrap fade-up" style="animation-delay:.2s">
-      <div class="sheet stage" id="stage">
-        <div class="window-bar">
-          <div class="stage-tabs" role="tablist" aria-label="Card types">{{STAGE_TABS}}</div>
-        </div>
-        <div class="stage-body">
-          <div class="stage-loader" role="status"><div class="sk" aria-hidden="true"><i class="sk-eyebrow"></i><i class="sk-line"></i><i class="sk-line short"></i><i class="sk-block"></i></div><span class="sr-only">Loading card…</span></div>
-        </div>
-        <div class="stage-foot">
-          <div class="verdict" aria-live="polite"></div>
-          <div class="stage-actions">
-            <button class="btn btn-primary" data-check type="button" disabled>
-              <span data-lang="ar">تحقق</span>
-              <span data-lang="en">Check</span>
-              <kbd>Ctrl ↵</kbd>
-            </button>
-          </div>
-          <div class="ratings" hidden></div>
-        </div>
-      </div>
-      <p class="note note-stage" aria-hidden="true">
-        <span data-lang="ar">يتدرب التطبيق تلقائياً · انقر على أي بطاقة للمشاركة في الحل</span>
-        <span data-lang="en">Autoplaying deck · Click any card to take over and practice</span>
-      </p>
-    </div>
   </div>
 </section>
 
@@ -194,7 +172,7 @@
         <div class="mutashabih-head">
           <span class="mutashabih-tag" data-lang="ar">إكمال الموضع المحوري</span>
           <span class="mutashabih-tag" data-lang="en">Pivotal completion</span>
-          <span class="opus" style="font-size:0.9rem">
+          <span class="mutashabih-scope" style="font-size:0.9rem">
             <span data-lang="ar">البقرة / إبراهيم</span>
             <span data-lang="en">Al-Baqarah / Ibrahim</span>
           </span>
@@ -231,7 +209,7 @@
         <div class="mutashabih-head">
           <span class="mutashabih-tag" data-lang="ar">التقديم والتأخير</span>
           <span class="mutashabih-tag" data-lang="en">Sequence distinction</span>
-          <span class="opus" style="font-size:0.9rem">
+          <span class="mutashabih-scope" style="font-size:0.9rem">
             <span data-lang="ar">البقرة ٤٨ / البقرة ١٢٣</span>
             <span data-lang="en">Al-Baqarah 48 / Al-Baqarah 123</span>
           </span>
@@ -365,23 +343,34 @@
       <figure class="vs" data-reveal>
         <div class="flip" aria-hidden="true">
           <div class="flip-card">
-            <div class="index-card front"><span>Transmission delay of a 1,500-byte packet on a 10&nbsp;Mbps link?</span></div>
-            <div class="index-card back"><span><b>1.2 ms</b><small>did you get it? be honest.</small></span></div>
+            <div class="index-card front">
+              <span data-lang="ar">﴿وَإِذْ نَجَّيْنَاكُم مِّنْ آلِ فِرْعَوْنَ يَسُومُونَكُمْ سُوءَ الْعَذَابِ...﴾ ما اللفظ التالي في البقرة؟</span>
+              <span data-lang="en">Complete in Al-Baqarah: ﴿وَإِذْ نَجَّيْنَاكُم مِّنْ آلِ فِرْعَوْنَ...﴾?</span>
+            </div>
+            <div class="index-card back">
+              <span data-lang="ar"><b>﴿يُذَبِّحُونَ أَبْنَاءَكُمْ﴾ [البقرة: ٤٩]</b><small>بالياء وبلا واو (عكس الأعراف: ﴿يُقَتِّلُونَ﴾). هل تذكرت؟ قيّم بأمانة.</small></span>
+              <span data-lang="en"><b>﴿يُذَبِّحُونَ أَبْنَاءَكُمْ﴾ [Al-Baqarah: 49]</b><small>Without Waw (unlike Al-A'raf ﴿يُقَتِّلُونَ﴾). Did you recall it? Be honest.</small></span>
+            </div>
           </div>
         </div>
-        <figcaption data-lang="ar"><b>بطاقة تقليدية:</b> نفس النص والأرقام تتكرر كل مرة، فتحفظ الجواب عن ظهر قلب دون فهم الطريقة، وتقيم نفسك بنفسك.</figcaption>
-        <figcaption data-lang="en"><b>Traditional card:</b> Same static prompt and numbers every review, encouraging rote pattern matching and manual self-rating.</figcaption>
+        <figcaption data-lang="ar"><b>بطاقة تقليدية:</b> نفس النص الثابت يتكرر في كل مراجعة، تقلب البطاقة وتقيّم نفسك ذاتياً، فتحفظ موضع الورقة شكلياً دون إتقان الفروق الدقيقة بين السور.</figcaption>
+        <figcaption data-lang="en"><b>Traditional card:</b> Same static card every review, encouraging rote visual memory without real Surah distinction, and manual self-rating.</figcaption>
       </figure>
 
       <figure class="vs" data-reveal style="--d:.1s">
-        <div class="mini" id="mini" aria-label="A numeric card answering itself">
-          <div class="mini-label">Numeric <span>a new variant each review</span></div>
+        <div class="mini" id="mini" aria-label="A smart Quranic card answering itself">
+          <div class="mini-label">
+            <span data-lang="ar" class="mini-tag">متشابهات القرآن</span>
+            <span data-lang="en" class="mini-tag">Mutashabihat</span>
+            <span data-lang="ar">سؤال وموضع متجدد مع كل مراجعة</span>
+            <span data-lang="en">a new variant each review</span>
+          </div>
           <div class="prompt" data-q>&nbsp;</div>
           <div class="answer"><span data-typed></span><span class="caret"></span></div>
           <div class="grade-line" data-v></div>
         </div>
-        <figcaption data-lang="ar"><b>بطاقة وِكَاء الذكية:</b> متغيرات متجددة، تحقق برمجي فوري، ورسم دقيق مع احتساب الدرجات الجزئية قبل جدولة المراجعة التالية.</figcaption>
-        <figcaption data-lang="en"><b>Wikae smart card:</b> Fresh variables, instant code grading, and precision feedback with partial credit before scheduling.</figcaption>
+        <figcaption data-lang="ar"><b>بطاقة وِكَاء الذكية:</b> مواضع وأسئلة متجددة، تحقق فوري بالحرف، وبيان قواعد الضبط البلاغية مع خوارزمية FSRS لمنع تفلت الحفظ.</figcaption>
+        <figcaption data-lang="en"><b>Wikae smart card:</b> Fresh Quranic variants, instant letter-exact grading, rhetorical distinction rules, and automated FSRS scheduling.</figcaption>
       </figure>
     </div>
 
@@ -425,35 +414,41 @@
       <p class="opus" data-lang="en">Smart Grading <span>No.&thinsp;2</span></p>
       <div data-lang="ar">
         <h2>تصحيح فوري يناسب طبيعة كل سؤال.</h2>
-        <p class="sub">لكل نوع بطاقة المصحح الأنسب له: التحقق التلقائي من الكلمات القرآنية، التدقيق في المعادلات الرياضية، أو تحليل الذكاء الاصطناعي للإجابات المفتوحة والمشروحة.</p>
+        <p class="sub">لكل نوع بطاقة المصحح الأنسب له: التحقق التلقائي من الكلمات القرآنية، التدقيق في مواضع المتشابهات ورسم المصحف، أو تحليل الذكاء الاصطناعي للإجابات المفتوحة والشروح التفسيرية والبلاغية.</p>
       </div>
       <div data-lang="en">
         <h2>The right grader for each kind of question.</h2>
-        <p class="sub">Different material needs different grading: instant Quranic word verification, mathematical equivalences, or AI evaluation for open conceptual answers.</p>
+        <p class="sub">Different material needs different grading: instant Quranic word verification, checking Mutashabihat and Uthmani script, or AI evaluation for open Tafsir and rhetorical answers.</p>
       </div>
     </header>
 
     <div class="grading">
       <dl class="graders" data-reveal data-lang="ar">
-        <div><dt><code>self</code> تقييم ذاتي</dt><dd>للمراجعة السريعة: أظهر الإجابة واختر (مجدداً، صعب، جيد، سهل).</dd></div>
-        <div><dt><code>script</code> تصحيح برمجي</dt><dd>تدقيق الكلمات القرآنية، الأرقام مع الوحدات، أو مطابقة النصوص بدقة.</dd></div>
-        <div><dt><code>ai</code> تصحيح بالذكاء الاصطناعي</dt><dd>قراءة الإجابات المشروحة وشرح التجويد والتفسير وتقديم ملاحظات فورية.</dd></div>
-        <div><dt><code>hybrid</code> تقييم هجين</dt><dd>يتكفل البرنامج بالحالات الواضحة ويحيل التفاصيل الدقيقة للمصحح الذكي.</dd></div>
+        <div><dt><code>self</code> تقييم ذاتي</dt><dd>للمراجعة السريعة: أظهر الإجابة واستحضر المحفوظ ثم قيّم استذكارك بأمانة (مجدداً، صعب، جيد، سهل).</dd></div>
+        <div><dt><code>script</code> تصحيح برمجي</dt><dd>تدقيق فوري للكلمات القرآنية، مواضع المتشابهات، أو مطابقة رسم المصحف العثماني بدقة تامة.</dd></div>
+        <div><dt><code>ai</code> تصحيح بالذكاء الاصطناعي</dt><dd>قراءة الإجابات المشروحة وشرح أحكام التجويد والعلل البلاغية وتقديم ملاحظات فورية على مواطن النقص.</dd></div>
+        <div><dt><code>hybrid</code> تقييم هجين</dt><dd>يتكفل البرنامج بالتحقق الآلي من المتشابهات الواضحة ويحيل الشروح اللغوية والتفسيرية للمصحح الذكي.</dd></div>
       </dl>
 
       <dl class="graders" data-reveal data-lang="en">
-        <div><dt><code>self</code> Self-grading</dt><dd>For rapid recall: reveal the answer and choose (Again, Hard, Good, Easy).</dd></div>
-        <div><dt><code>script</code> Script-graded</dt><dd>Deterministic verification for Quranic words, numeric expressions with units, and exact matches.</dd></div>
-        <div><dt><code>ai</code> AI-graded</dt><dd>Evaluates written explanations, Tajweed nuances, and open-ended conceptual answers.</dd></div>
-        <div><dt><code>hybrid</code> Hybrid</dt><dd>Deterministic test suites run first; borderline or complex subjective cases pass to AI.</dd></div>
+        <div><dt><code>self</code> Self-grading</dt><dd>For rapid recall: reveal the verse and honestly rate your retention (Again, Hard, Good, Easy).</dd></div>
+        <div><dt><code>script</code> Script-graded</dt><dd>Instant deterministic checking for Quranic wording, Mutashabihat distinction, and exact Uthmani script.</dd></div>
+        <div><dt><code>ai</code> AI-graded</dt><dd>Evaluates written explanations, Tajweed rulings, and open-ended Tafsir and rhetorical analysis.</dd></div>
+        <div><dt><code>hybrid</code> Hybrid</dt><dd>Deterministic checks verify exact matches first; subjective explanations pass smoothly to AI.</dd></div>
       </dl>
 
       <figure class="homework" id="ai-demo" data-reveal style="--d:.1s">
         <div class="hw-q" data-prompt></div>
         <div class="hw-a">
-          <span class="hw-tag" aria-hidden="true">answer</span>
+          <span class="hw-tag" aria-hidden="true">
+            <span data-lang="ar">إجابة المتعلم</span>
+            <span data-lang="en">Student answer</span>
+          </span>
           <div data-answer></div>
-          <span class="note note-hw" aria-hidden="true">where's the base case?</span>
+          <span class="note note-hw" aria-hidden="true" data-hw-note>
+            <span data-lang="ar">أين المقارنة في سياق الرزق؟</span>
+            <span data-lang="en">where is the comparison of provisions?</span>
+          </span>
         </div>
         <div class="hw-grade"><span class="stamp" data-verdict></span><span class="tabular hw-score" data-score></span><span class="meter"><i data-meter></i></span></div>
         <div class="feedback-text" data-feedback></div>
@@ -709,27 +704,51 @@
       <p class="opus" data-lang="ar">حزم تفاعلية <span>تجارب حية</span></p>
       <p class="opus" data-lang="en">Interactive Decks <span>Live in-page demos</span></p>
       <div data-lang="ar">
-        <h2>بطاقات تتجاوز حدود السؤال والجواب التقليدي.</h2>
-        <p class="sub">تفاعل مباشر مع الخرائط، والجداول الدورية، والتطبيقات التفاعلية. جرب البطاقات الحقيقية مباشرة في متصفحك.</p>
+        <h2>بطاقات قرآنية وتفاعلية تُثبّت الحفظ وترسّخ الإتقان.</h2>
+        <p class="sub">تفاعل مباشر مع مصحف مجمع الملك فهد، وضبط المتشابهات اللفظية، وترتيب الآيات، وغريب الألفاظ. جرب البطاقات الحقيقية في متصفحك.</p>
       </div>
       <div data-lang="en">
-        <h2>Cards that go beyond simple flashcards.</h2>
-        <p class="sub">Interact directly with maps, the periodic table, and speed exercises. Experience real card types right here in your browser.</p>
+        <h2>Quranic and interactive cards that anchor your memorization.</h2>
+        <p class="sub">Direct practice with King Fahd Complex Uthmani script, Mutashabihat recall, verse ordering, and Quranic vocabulary right in your browser.</p>
       </div>
     </header>
     <div class="suite" data-suite data-reveal>
       <div class="suite-list" role="tablist" aria-label="New decks">
-        <button role="tab" aria-selected="true" data-suite-type="country-map">
-          <div data-lang="ar"><span class="suite-goal">جغرافيا العالم</span><b>دول وخريطة العالم</b><span class="suite-meta">197 دولة · حدد موقعها أو اذكر اسمها</span></div>
-          <div data-lang="en"><span class="suite-goal">World geography</span><b>Countries & Map</b><span class="suite-meta">197 countries · locate or identify by name</span></div>
+        <button role="tab" aria-selected="true" data-suite-type="quran-mutashabihat">
+          <div data-lang="ar">
+            <span class="suite-goal">متشابهات القرآن</span>
+            <b class="suite-title">إكمال الموضع المحوري</b>
+            <span class="suite-meta">الرسم العثماني · تمييز دقيق بين السور</span>
+          </div>
+          <div data-lang="en">
+            <span class="suite-goal">Quran Mutashabihat</span>
+            <b class="suite-title">Pivotal Completion</b>
+            <span class="suite-meta">Uthmani script · Distinct Surah context</span>
+          </div>
         </button>
-        <button role="tab" aria-selected="false" data-suite-type="element">
-          <div data-lang="ar"><span class="suite-goal">كيمياء العناصر</span><b>الجدول الدوري</b><span class="suite-meta">118 عنصراً بثماني طرق تدريب</span></div>
-          <div data-lang="en"><span class="suite-goal">Chemistry</span><b>Periodic Table</b><span class="suite-meta">118 elements across 8 drill modes</span></div>
+        <button role="tab" aria-selected="false" data-suite-type="order">
+          <div data-lang="ar">
+            <span class="suite-goal">ترتيب الآيات</span>
+            <b class="suite-title">أوائل سورة العلق</b>
+            <span class="suite-meta">سحب وإفلات · أول ما نزل من القرآن</span>
+          </div>
+          <div data-lang="en">
+            <span class="suite-goal">Verse Ordering</span>
+            <b class="suite-title">Surah Al-Alaq</b>
+            <span class="suite-meta">Drag & drop · The first revelation</span>
+          </div>
         </button>
-        <button role="tab" aria-selected="false" data-suite-type="flippy">
-          <div data-lang="ar"><span class="suite-goal">النظام الثنائي</span><b>Flippy Bit</b><span class="suite-meta">تدريب سرعة على التحويل الثنائي والست عشري</span></div>
-          <div data-lang="en"><span class="suite-goal">Binary system</span><b>Flippy Bit</b><span class="suite-meta">Speed drill for binary & hex conversions</span></div>
+        <button role="tab" aria-selected="false" data-suite-type="match">
+          <div data-lang="ar">
+            <span class="suite-goal">غريب القرآن</span>
+            <b class="suite-title">معاني ألفاظ المعوذات</b>
+            <span class="suite-meta">تفسير وبيان · وصل اللفظ بمعناه</span>
+          </div>
+          <div data-lang="en">
+            <span class="suite-goal">Quran Vocabulary</span>
+            <b class="suite-title">Mu'awwidhat Lexicon</b>
+            <span class="suite-meta">Tafsir & meaning · Match words to definitions</span>
+          </div>
         </button>
       </div>
       <div class="suite-stage">
@@ -1011,7 +1030,11 @@
 <footer class="footer">
   <div class="wrap" data-lang="ar">
     <div>
-      <a href="./" class="wordmark"><span class="wikae-ar">وِكَاء</span></a>
+      <a href="./" class="wordmark">
+        <img src="assets/logo_black.svg" class="wikae-brand-logo logo-ar logo-light" alt="وِكَاء" height="34">
+        <img src="assets/logo_white.svg" class="wikae-brand-logo logo-ar logo-dark" alt="وِكَاء" height="34">
+        <span class="wikae-ar">وِكَاء</span>
+      </a>
       <p>رِباطُ المحفوظ وإتقان المتشابهات بالتكرار المتباعد الذكي.<br>تطبيق مفتوح المصدر لحفظ القرآن الكريم وتثبيت العلم.</p>
     </div>
     <div><h4>المنتج</h4><ul><li><a href="#mutashabihat">المتشابهات</a></li><li><a href="#cards">البطاقات</a></li><li><a href="#grading">التقييم الذكي</a></li><li><a href="#tempo">خوارزمية FSRS</a></li><li><a href="#exams">الختمة والمواعيد</a></li><li><a href="#stats">الإحصائيات</a></li><li><a href="#anki">استيراد آنكي</a></li><li><a href="#market">المتجر</a></li><li><a href="download.html">التحميل</a></li></ul></div>
@@ -1023,7 +1046,11 @@
 
   <div class="wrap" data-lang="en">
     <div>
-      <a href="./" class="wordmark"><span class="wikae-en">Wikae</span></a>
+      <a href="./" class="wordmark">
+        <img src="assets/logo_black_en.svg" class="wikae-brand-logo logo-en logo-light" alt="Wikae" height="34">
+        <img src="assets/logo_white_en.svg" class="wikae-brand-logo logo-en logo-dark" alt="Wikae" height="34">
+        <span class="wikae-en">Wikae</span>
+      </a>
       <p>Spaced repetition practice for Quran, Mutashabihat and knowledge.<br>Free and open source memorization platform.</p>
     </div>
     <div><h4>Product</h4><ul><li><a href="#mutashabihat">Mutashabihat</a></li><li><a href="#cards">Cards</a></li><li><a href="#grading">Smart Grading</a></li><li><a href="#tempo">FSRS Algorithm</a></li><li><a href="#exams">Deadlines</a></li><li><a href="#stats">Statistics</a></li><li><a href="#anki">Anki Import</a></li><li><a href="#market">Market</a></li><li><a href="download.html">Download</a></li></ul></div>
@@ -1052,8 +1079,10 @@
     <button class="programme-x" type="button" aria-label="إغلاق" data-programme-close><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     <p class="programme-k" data-lang="ar">فهرس الأقسام</p>
     <p class="programme-k" data-lang="en">Table of Contents</p>
-    <h3 id="programme-h" data-lang="ar">وِكَاء · <em>دليل الموقع</em></h3>
-    <h3 id="programme-h-en" data-lang="en">Wikae · <em>Overview Guide</em></h3>
+    <h3 id="programme-h">
+      <span data-lang="ar">وِكَاء · <em>دليل الموقع</em></span>
+      <span data-lang="en">Wikae · <em>Overview Guide</em></span>
+    </h3>
     <ol data-programme-list></ol>
   </div>
 </div>

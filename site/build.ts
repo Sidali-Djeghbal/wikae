@@ -27,6 +27,16 @@ mkdirSync(out, { recursive: true });
 
 // Pages and assets. {{VERSION}} is filled in from package.json.
 cpSync(join(here, "src"), out, { recursive: true });
+cpSync(join(root, "web/public/logo.svg"), join(out, "assets/logo.svg"));
+cpSync(join(root, "web/public/logo.svg"), join(out, "logo.svg"));
+cpSync(join(here, "src/assets/logo_black.svg"), join(out, "assets/logo_black.svg"));
+cpSync(join(here, "src/assets/logo_white.svg"), join(out, "assets/logo_white.svg"));
+cpSync(join(here, "src/assets/logo_black.svg"), join(out, "logo_black.svg"));
+cpSync(join(here, "src/assets/logo_white.svg"), join(out, "logo_white.svg"));
+cpSync(join(here, "src/assets/logo_black_en.svg"), join(out, "assets/logo_black_en.svg"));
+cpSync(join(here, "src/assets/logo_white_en.svg"), join(out, "assets/logo_white_en.svg"));
+cpSync(join(here, "src/assets/logo_black_en.svg"), join(out, "logo_black_en.svg"));
+cpSync(join(here, "src/assets/logo_white_en.svg"), join(out, "logo_white_en.svg"));
 for (const page of ["index.html", "download.html", "404.html"]) {
   const p = join(out, page);
   if (existsSync(p)) writeFileSync(p, readFileSync(p, "utf8").replaceAll("{{VERSION}}", pkg.version));
@@ -173,7 +183,21 @@ const REPERTOIRE: [string, [string, string, string, string[]][]][] = [
     ["typed", "Type the answer", "A short answer typed from memory, checked against the accepted spellings.", ["showcase.typed.capital"]],
     ["mcq", "Pick the answer", "Options shuffled every time, so you remember the answer, not its position.", ["showcase.mcq.day"]],
     ["cloze", "Fill the blanks", "A sentence with holes in it. Each blank is checked on its own.", ["showcase.cloze.haiku"]],
-    ["match", "Match the pairs", "Wire each item to its partner. The right side comes shuffled.", ["showcase.match.paintings"]],
+    ["match", "Match the pairs", "Wire each item to its partner. The right side comes shuffled.", [
+      "showcase.match.quran",
+      "showcase.match.naba",
+      "showcase.match.tariq",
+      "showcase.match.fajr",
+      "showcase.match.takwir",
+      "showcase.match.qariah",
+    ]],
+    ["quran-mutashabihat", "Quranic Mutashabihat", "Complete the pivotal wording and distinguish similar verses.", [
+      "showcase.quran.baqarah",
+      "showcase.quran.baqarah_araf",
+      "showcase.quran.qul_qulu",
+      "showcase.quran.shafaa_adl",
+      "showcase.quran.sariou_sabiqu",
+    ]],
   ]],
   ["Calculate", [
     ["numeric", "Compute, with units", "New numbers every review. Units are fine, and the answer gets a tolerance.", ["showcase.numeric.train"]],
@@ -184,7 +208,14 @@ const REPERTOIRE: [string, [string, string, string, string[]][]][] = [
     ["plot", "Mark the points", "Tap the points that matter on the grid: roots, vertices, intersections.", ["showcase.plot.parabola", "showcase.plot.lines"]],
   ]],
   ["Arrange", [
-    ["order", "Put them in order", "Drag the blocks, or move them with the keyboard. Partial credit for what's already in order.", ["showcase.order.scale"]],
+    ["order", "Put them in order", "Drag the blocks, or move them with the keyboard. Partial credit for what's already in order.", [
+      "showcase.order.quran",
+      "showcase.order.fatiha",
+      "showcase.order.duha",
+      "showcase.order.sharh",
+      "showcase.order.naba",
+      "showcase.order.tin",
+    ]],
     ["timeline", "Place it in time", "Drag each event to its year. Graded on order and on how many years off.", ["showcase.timeline.computing", "showcase.timeline.physics"]],
     ["graph-walk", "Walk the graph", "Tap the nodes in the order the algorithm would visit them, on a graph made for this review.", ["showcase.graph-walk.bfs", "showcase.graph-walk.dfs"]],
   ]],

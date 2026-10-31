@@ -1,23 +1,26 @@
 [
   {
-    "id": "showcase.order.scale",
+    "id": "showcase.order.quran",
     "type": "order",
     "deck": "Etude Showcase::3 Arrange",
     "tags": [
       "showcase",
-      "topic::science"
+      "topic::quran"
     ],
     "fields": {
-      "prompt": "Put these in order of size, **smallest first**.",
+      "cardTitleAr": "أوائل سورة العلق",
+      "cardMetaAr": "سحب وإفلات · أول ما نزل من القرآن",
+      "cardTitleEn": "Surah Al-Alaq",
+      "cardMetaEn": "Drag & drop · The first revelation",
+      "prompt": "رتّب الآيات الخمس الأولى من سورة العلق (أول ما نزل من القرآن الكريم):",
       "steps": [
-        "A proton",
-        "A hydrogen atom",
-        "A virus",
-        "A red blood cell",
-        "A grain of sand",
-        "A cat"
+        "اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ",
+        "خَلَقَ الْإِنْسَانَ مِنْ عَلَقٍ",
+        "اقْرَأْ وَرَبُّكَ الْأَكْرَمُ",
+        "الَّذِي عَلَّمَ بِالْقَلَمِ",
+        "عَلَّمَ الْإِنْسَانَ مَا لَمْ يَعْلَمْ"
       ],
-      "explanation": "Roughly $10^{-15}$ m, $10^{-10}$ m, $10^{-7}$ m, $10^{-5}$ m, half a millimetre and half a metre. A hydrogen atom is about 60,000 times wider than the proton at its centre."
+      "explanation": "أول ما نزل على النبي ﷺ في غار حراء من سورة العلق: الأمر بالقراءة، ثم التذكير بخلق الإنسان من علق، ثم بيان فضل العلم والتعليم بالقلم."
     },
     "source": ""
   },

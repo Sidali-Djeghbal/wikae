@@ -598,3 +598,77 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Mobile Responsive Optimizations */
+@media (max-width: 600px) {
+  .mutashabihat-app {
+    gap: 0.9rem;
+    padding: 0 0.15rem;
+  }
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .header-main {
+    justify-content: space-between;
+    width: 100%;
+  }
+  .header-actions {
+    align-self: flex-end;
+  }
+  .mode-toggles {
+    display: flex;
+    overflow-x: auto;
+    width: 100%;
+    scrollbar-width: none;
+  }
+  .mode-btn {
+    flex: 1;
+    text-align: center;
+    padding: 0.35rem 0.4rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+  .mushaf-inner {
+    padding: 1.25rem 0.75rem;
+    min-height: 90px;
+  }
+  .quran-text {
+    font-size: 1.35rem;
+    line-height: 2.1;
+  }
+  .pivotal-slot {
+    min-width: 80px;
+    padding: 0 0.4rem;
+    margin: 0 0.2rem;
+  }
+  .options-container {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .mutashabih-option {
+    padding: 0.75rem 0.85rem;
+  }
+  .mutashabih-option .opt-text {
+    font-size: 1.15rem;
+  }
+  .fsrs-buttons-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  .fsrs-keyboard-hint {
+    display: none;
+  }
+  .kbd-badge {
+    display: none;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .kbd-badge,
+  .fsrs-keyboard-hint {
+    display: none !important;
+  }
+}
+
+

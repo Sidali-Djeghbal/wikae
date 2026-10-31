@@ -11,6 +11,9 @@ export function setLanguage(lang) {
   document.documentElement.setAttribute("dir", isAr ? "rtl" : "ltr");
   try {
     localStorage.setItem(LANG_KEY, lang);
+    localStorage.setItem("wikae.language", lang);
+    localStorage.setItem("wikaa.language", lang);
+    localStorage.setItem("etude.language", lang);
   } catch (_) {}
 
   const titles = {

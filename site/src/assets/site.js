@@ -161,7 +161,9 @@ function theme() {
   const vars = {};
   for (const v of THEME_VARS) { const val = cs.getPropertyValue(v).trim(); if (val) vars[v] = val; }
   const scheme = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
-  return { scheme, vars };
+  const lang = getCurrentLang();
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  return { scheme, vars, lang, dir };
 }
 
 function humanInterval(ms) {
@@ -444,29 +446,84 @@ if (stage) {
   setAuto(auto);
 }
 
-// ------------------------------------------- the self-grading numeric mini card
+// ------------------------------------------- the self-grading Quranic Mutashabihat mini card
 const mini = $("#mini");
 if (mini) {
   const vis = visibility(mini);
   const qEl = $("[data-q]", mini), typed = $("[data-typed]", mini), vEl = $("[data-v]", mini);
-  const sizes = [500, 1000, 1500, 4000, 9000, 12000], rates = [1, 2, 5, 10, 25, 100];
-  const fmt = (x) => String(+x.toPrecision(3));
+  const VARIANTS = {
+    ar: [
+      {
+        q: "﴿رَبِّ اجْعَلْ هَٰذَا بَلَدًا آمِنًا﴾ في أي سورة وردت ﴿بَلَدًا﴾ نكرة؟",
+        a: "سورة البقرة (١٢٦)",
+        feedback: "البقرة: ﴿بَلَدًا﴾ نكرة قبل عمارة مكة، وفي إبراهيم: ﴿الْبَلَدَ﴾ معرفة"
+      },
+      {
+        q: "﴿وَسَارِعُوا إِلَىٰ مَغْفِرَةٍ مِّن رَّبِّكُمْ﴾ في أي سورة وردت بالواو؟",
+        a: "سورة آل عمران (١٣٣)",
+        feedback: "آل عمران: بالواو ﴿وَسَارِعُوا﴾، وفي الحديد: ﴿سَابِقُوا﴾ بدون واو"
+      },
+      {
+        q: "ما اللفظ التالي في البقرة: ﴿فَكُلُوا مِنْهَا حَيْثُ شِئْتُمْ رَغَدًا...﴾؟",
+        a: "وَادْخُلُوا الْبَابَ سُجَّدًا وَقُولُوا حِطَّةٌ",
+        feedback: "البقرة ٥٨: قُدّم السجود على القول، عكس الأعراف ١٦١"
+      },
+      {
+        q: "﴿يَا أَيُّهَا الَّذِينَ آمَنُوا كُتِبَ عَلَيْكُمُ الصِّيَامُ...﴾ ما ختام الآية؟",
+        a: "لَعَلَّكُمْ تَتَّقُونَ",
+        feedback: "البقرة ١٨٣: ﴿لَعَلَّكُمْ تَتَّقُونَ﴾، عكس آية الاعتكاف ١٨٧: ﴿لَعَلَّهُمْ يَتَّقُونَ﴾"
+      },
+      {
+        q: "﴿قُولُوا آمَنَّا بِاللَّهِ وَمَا أُنزِلَ...﴾ في سورة البقرة ما صلة الموصول؟",
+        a: "إِلَيْنَا",
+        feedback: "البقرة: ﴿إِلَيْنَا﴾ لخطاب الأمة، وآل عمران: ﴿عَلَيْنَا﴾ لخطاب النبي ﷺ"
+      }
+    ],
+    en: [
+      {
+        q: "﴿رَبِّ اجْعَلْ هَٰذَا بَلَدًا آمِنًا﴾ In which Surah is ﴿بَلَدًا﴾ indefinite?",
+        a: "Surah Al-Baqarah (126)",
+        feedback: "Al-Baqarah: indefinite ﴿بَلَدًا﴾ (before settlement); Ibrahim: definite ﴿الْبَلَدَ﴾"
+      },
+      {
+        q: "﴿وَسَارِعُوا إِلَىٰ مَغْفِرَةٍ مِّن رَّبِّكُمْ﴾ Which Surah opens with Waw?",
+        a: "Surah Al Imran (133)",
+        feedback: "Al Imran: ﴿وَسَارِعُوا﴾ with Waw; Al-Hadid 21: ﴿سَابِقُوا﴾ without Waw"
+      },
+      {
+        q: "Next in Al-Baqarah: ﴿فَكُلُوا مِنْهَا حَيْثُ شِئْتُمْ رَغَدًا...﴾?",
+        a: "وَادْخُلُوا الْبَابَ سُجَّدًا وَقُولُوا حِطَّةٌ",
+        feedback: "Al-Baqarah 58: prostration before speech; Al-A'raf 161: speech first"
+      },
+      {
+        q: "﴿يَا أَيُّهَا الَّذِينَ آمَنُوا كُتِبَ عَلَيْكُمُ الصِّيَامُ...﴾ Verse ending?",
+        a: "لَعَلَّكُمْ تَتَّقُونَ",
+        feedback: "Al-Baqarah 183: ﴿لَعَلَّكُمْ تَتَّقُونَ﴾; verse 187: ﴿لَعَلَّهُمْ يَتَّقُونَ﴾"
+      },
+      {
+        q: "﴿قُولُوا آمَنَّا بِاللَّهِ وَمَا أُنزِلَ...﴾ In Al-Baqarah: إِلَيْنَا or عَلَيْنَا?",
+        a: "إِلَيْنَا",
+        feedback: "Al-Baqarah: ﴿إِلَيْنَا﴾ for plural; Al Imran: ﴿عَلَيْنَا﴾ for the Prophet ﷺ"
+      }
+    ]
+  };
   let k = 0;
   (async function loop() {
     for (;;) {
       if (!vis.on) { await sleep(400); continue; }
-      const L = sizes[(k * 5 + 2) % sizes.length], R = rates[(k * 7 + 3) % rates.length];
+      const lang = getCurrentLang();
+      const list = VARIANTS[lang] || VARIANTS.ar;
+      const item = list[k % list.length];
       k++;
-      const ms = (8 * L) / (R * 1000);
-      qEl.innerHTML = `A ${L.toLocaleString("en")}-byte packet on a ${R}&nbsp;Mbps link. Transmission delay?`;
+      qEl.innerHTML = item.q;
       typed.textContent = "";
       vEl.innerHTML = "";
       await sleep(700);
-      const ans = `${fmt(ms)} ms`;
-      for (const ch of ans) { typed.textContent += ch; await sleep(reduced ? 0 : 90); }
+      for (const ch of item.a) { typed.textContent += ch; await sleep(reduced ? 0 : 70); }
       await sleep(450);
-      vEl.innerHTML = `<span class="v" style="color:var(--good)">Correct</span><span style="color:var(--muted-foreground);font-size:.8rem">${tex(`\\tfrac{8 \\cdot ${L}\\,\\text{bits}}{${R}\\,\\text{Mbps}} = ${fmt(ms)}\\,\\text{ms}`)}</span>`;
-      await sleep(2600);
+      const isAr = lang === "ar";
+      vEl.innerHTML = `<span class="v" style="color:var(--good)">${isAr ? "صحيح" : "Correct"}</span><span style="color:var(--muted-foreground);font-size:.82rem">${item.feedback}</span>`;
+      await sleep(2800);
     }
   })();
 }
@@ -474,29 +531,82 @@ if (mini) {
 // ----------------------------------------------------------- the AI grading sample
 const ai = $("#ai-demo");
 if (ai) {
-  fetch("assets/ai-sample.json").then((r) => r.json()).then((s) => {
-    $("[data-prompt]", ai).innerHTML = md(s.prompt.replace(/\n\nWrite it the way[\s\S]*$/, ""));
-    $("[data-answer]", ai).innerHTML = md(s.answer);
-    $("[data-model]", ai).innerHTML = `A real grade, recorded from Etude: verdict by <code class="nowrap">${esc(s.model.split("/").pop())}</code> in ${s.ms} ms, feedback by a chat model. Grading instructions came from the card's rubric.`;
-    whenVisible(ai, async () => {
-      const verdictEl = $("[data-verdict]", ai), scoreEl = $("[data-score]", ai), meter = $("[data-meter]", ai), fb = $("[data-feedback]", ai);
-      await sleep(300);
-      verdictEl.textContent = VERDICT[s.verdict] ?? s.verdict;
-      verdictEl.classList.add("on");
-      scoreEl.textContent = `${Math.round(s.score * 100)}%`;
-      meter.style.width = `${Math.round(s.score * 100)}%`;
-      await sleep(700);
-      // Type the feedback out, keeping math and bold as whole pieces.
-      const parts = s.feedback.replace(/"([^"]+)"/g, "$1").split(/(\$[^$\n]+?\$|\*\*[^*]+\*\*)/).filter(Boolean);
-      fb.classList.add("caret");
-      for (const p of parts) {
-        if (p.startsWith("$") || p.startsWith("**")) { fb.insertAdjacentHTML("beforeend", md(p)); await sleep(reduced ? 0 : 60); continue; }
-        const node = document.createTextNode("");
-        fb.appendChild(node);
-        for (const ch of p) { node.data += ch; if (!reduced) await sleep(ch === " " ? 14 : 11); }
+  fetch("assets/ai-sample.json").then((r) => r.json()).then((sampleData) => {
+    let animGen = 0;
+    const getSample = () => {
+      const lang = getCurrentLang();
+      return { s: sampleData[lang] || sampleData.ar || sampleData, isAr: lang === "ar" };
+    };
+
+    const populate = () => {
+      const { s, isAr } = getSample();
+      const promptEl = $("[data-prompt]", ai);
+      const answerEl = $("[data-answer]", ai);
+      const modelEl = $("[data-model]", ai);
+      const noteEl = $("[data-hw-note]", ai);
+
+      if (promptEl) promptEl.innerHTML = md(s.prompt);
+      if (answerEl) answerEl.innerHTML = md(s.answer);
+      if (noteEl) noteEl.textContent = s.note || (isAr ? "أين المقارنة في سياق الرزق؟" : "where is the comparison of provisions?");
+
+      const modelName = esc(s.model.split("/").pop());
+      if (modelEl) {
+        if (isAr) {
+          modelEl.innerHTML = `تقييم حقيقي مسجل في وِكَاء: حُكم النموذج الذكي <code class="nowrap">${modelName}</code> في ${s.ms} ملي ثانية، مع ملاحظات توجيهية وفق معايير تصحيح البطاقة.`;
+        } else {
+          modelEl.innerHTML = `A real grade, recorded in Wikae: verdict by <code class="nowrap">${modelName}</code> in ${s.ms} ms, feedback from the card's rubric.`;
+        }
       }
-      await sleep(1500);
-      fb.classList.remove("caret");
+    };
+
+    const runAnimation = async () => {
+      const curGen = ++animGen;
+      const { s, isAr } = getSample();
+      populate();
+
+      const verdictEl = $("[data-verdict]", ai);
+      const scoreEl = $("[data-score]", ai);
+      const meter = $("[data-meter]", ai);
+      const fb = $("[data-feedback]", ai);
+
+      if (verdictEl) {
+        verdictEl.textContent = getVerdict(s.verdict) || (isAr ? "صحيح جزئياً" : "Partly right");
+        verdictEl.classList.add("on");
+      }
+      if (scoreEl) scoreEl.textContent = `${Math.round(s.score * 100)}%`;
+      if (meter) meter.style.width = `${Math.round(s.score * 100)}%`;
+
+      if (fb) {
+        fb.innerHTML = "";
+        await sleep(350);
+        if (curGen !== animGen) return;
+        const parts = s.feedback.replace(/"([^"]+)"/g, "$1").split(/(\$[^$\n]+?\$|\*\*[^*]+\*\*|﴿[^﴾]+?﴾)/).filter(Boolean);
+        fb.classList.add("caret");
+        for (const p of parts) {
+          if (curGen !== animGen) return;
+          if (p.startsWith("$") || p.startsWith("**") || p.startsWith("﴿")) {
+            fb.insertAdjacentHTML("beforeend", p.startsWith("﴿") ? `<span class="quran-w">${esc(p)}</span>` : md(p));
+            await sleep(reduced ? 0 : 40);
+            continue;
+          }
+          const node = document.createTextNode("");
+          fb.appendChild(node);
+          for (const ch of p) {
+            if (curGen !== animGen) return;
+            node.data += ch;
+            if (!reduced) await sleep(ch === " " ? 10 : 8);
+          }
+        }
+        await sleep(1000);
+        if (curGen === animGen) fb.classList.remove("caret");
+      }
+    };
+
+    populate();
+    whenVisible(ai, runAnimation, "0px 0px 30% 0px");
+    window.addEventListener("wikae-lang-change", () => {
+      populate();
+      runAnimation();
     });
   });
 }
@@ -1019,28 +1129,44 @@ if (rep && GALLERY?.length) {
 // The new Market decks, live. Same frames and scripts as the repertoire, one deck per tab.
 {
   const box = $("[data-suite]");
-  const entries = Object.fromEntries((GALLERY ?? []).filter((e) => ["country-map", "element", "flippy"].includes(e.type)).map((e) => [e.type, e]));
+  const entries = Object.fromEntries((GALLERY ?? []).filter((e) => ["quran-mutashabihat", "order", "match"].includes(e.type)).map((e) => [e.type, e]));
   if (box && Object.keys(entries).length) {
     const tabs = $$("[data-suite-type]", box), body = $(".suite-body", box), loader = $(".suite-loader", box);
     const checkBtn = $("[data-suite-check]", box), nextBtn = $("[data-suite-next]", box), verdictEl = $(".suite-verdict", box), noteEl = $("[data-suite-note]", box);
     const coarse = matchMedia("(pointer: coarse)").matches;
     const NOTES = {
-      "country-map": "Natural Earth borders, drawn by the card itself. It takes English, Portuguese, Spanish and French names, and forgives typos.",
-      element: "Data from PubChem. Every answer ends on the element's place in the coloured table.",
-      flippy: "Keys 1 to 8 flip the bits, or tap them. It's a drill: no rating, every run is kept, and Stats charts invaders per run. After Q42's Flippy Bit.",
+      ar: {
+        "quran-mutashabihat": "مصحف مجمع الملك فهد بالرسم العثماني المعتمد. تدريب استحضار اللفظ القرآني وضبط المتشابهات بين السور.",
+        order: "رتّب آيات السورة الكريمة بالسحب والإفلات أو أزرار الأسهم. تقييم دقيق للتسلسل القرآني المحفوظ.",
+        match: "صِل المفردة القرآنية الكريمة ببيانها وتفسيرها الصحيح من أمهات كتب التفسير وغريب القرآن.",
+      },
+      en: {
+        "quran-mutashabihat": "King Fahd Complex Uthmani script with active recall to distinguish subtle differences across Surahs.",
+        order: "Arrange Quranic verses in sequential order using drag-and-drop or arrow keys with partial credit grading.",
+        match: "Connect Quranic vocabulary with precise interpretations and lexical Tafsir meanings.",
+      }
     };
     // The heading follows the deck you pick.
     const head = box.closest("section")?.querySelector(".head h2");
     const HEADS = {
-      "country-map": "Learning the map? Name the country that's lit&nbsp;up.",
-      element: "Taking chemistry? Find iron on a blank&nbsp;table.",
-      flippy: "Learning binary? Shoot the invaders&nbsp;down.",
+      ar: {
+        "quran-mutashabihat": "تتدرب على المتشابهات؟ أكمل الموضع المحوري في الآية الكريمة.",
+        order: "ترسّخ تسلسل السورة؟ رتّب الآيات الكريمة بترتيبها القرآني.",
+        match: "تتدبّر غريب القرآن؟ صِل كل مفردة بمعناها وتفسيرها.",
+      },
+      en: {
+        "quran-mutashabihat": "Practicing Mutashabihat? Complete the pivotal wording in the verse.",
+        order: "Anchoring Surah sequence? Arrange the verses in their correct order.",
+        match: "Exploring Quranic vocabulary? Match each word to its Tafsir meaning.",
+      }
     };
     const setHead = (type) => {
-      if (!head || !HEADS[type] || head.dataset.type === type) return;
+      const lang = getCurrentLang();
+      const heads = HEADS[lang] || HEADS.ar;
+      if (!head || !heads[type]) return;
       head.dataset.type = type;
       head.classList.remove("swap"); void head.offsetWidth;
-      head.innerHTML = HEADS[type];
+      head.innerHTML = heads[type];
       head.classList.add("swap");
     };
     const swap = frameSwapper(body, loader);
@@ -1049,15 +1175,44 @@ if (rep && GALLERY?.length) {
     const post = (msg) => cur?.frame.contentWindow?.postMessage({ etude: 1, ...msg }, "*");
     function open(type, { next = false, focus = false } = {}) {
       const entry = entries[type];
+      if (!entry) return;
       k[type] = next ? ((k[type] ?? 0) + 1) % entry.items.length : (k[type] ?? 0);
       const item = entry.items[k[type]];
       tabs.forEach((b) => b.setAttribute("aria-selected", String(b.dataset.suiteType === type)));
       setHead(type);
-      noteEl.textContent = NOTES[type] ?? "";
+      const lang = getCurrentLang();
+      const isAr = lang === "ar";
+
+      // Dynamically update active tab button's title and metadata to reflect the active card
+      const tabBtn = Array.from(tabs).find((b) => b.dataset.suiteType === type);
+      if (tabBtn && item?.fields) {
+        const titleAr = item.fields.cardTitleAr;
+        const metaAr = item.fields.cardMetaAr;
+        const titleEn = item.fields.cardTitleEn;
+        const metaEn = item.fields.cardMetaEn;
+        const elArTitle = tabBtn.querySelector('[data-lang="ar"] .suite-title');
+        const elArMeta = tabBtn.querySelector('[data-lang="ar"] .suite-meta');
+        const elEnTitle = tabBtn.querySelector('[data-lang="en"] .suite-title');
+        const elEnMeta = tabBtn.querySelector('[data-lang="en"] .suite-meta');
+        if (titleAr && elArTitle) elArTitle.textContent = titleAr;
+        if (metaAr && elArMeta) elArMeta.textContent = metaAr;
+        if (titleEn && elEnTitle) elEnTitle.textContent = titleEn;
+        if (metaEn && elEnMeta) elEnMeta.textContent = metaEn;
+      }
+
+      const notes = NOTES[lang] || NOTES.ar;
+      if (isAr && item?.fields?.mnemonicRuleAr) {
+        noteEl.innerHTML = `<span style="color:var(--highlight);font-weight:600">قاعدة الضبط:</span> ${esc(item.fields.mnemonicRuleAr)}`;
+      } else if (isAr && item?.fields?.explanation) {
+        noteEl.innerHTML = `<span style="color:var(--highlight);font-weight:600">بيان وتفسير:</span> ${esc(item.fields.explanation)}`;
+      } else {
+        noteEl.textContent = notes[type] ?? "";
+      }
       verdictEl.innerHTML = "";
       checkBtn.hidden = !!entry.auto;
       checkBtn.disabled = true;
-      nextBtn.innerHTML = `${entry.auto ? "Play again" : "Another card"} <span aria-hidden="true">↻</span>`;
+      const lbl = entry.auto ? (isAr ? "إعادة التجربة" : "Play again") : (isAr ? "بطاقة أخرى" : "Another card");
+      nextBtn.innerHTML = `<span>${lbl}</span> <span aria-hidden="true">↻</span>`;
       nextBtn.classList.replace("btn-primary", "btn-ghost");
       const seed = (Math.random() * 2 ** 32) >>> 0;
       let prep;
@@ -1102,12 +1257,16 @@ if (rep && GALLERY?.length) {
           // A drill shows what it measured, as the app does.
           line = `<span class="v">Run over</span><span class="m">${metricLine(entry.metrics, out.details)}</span>`;
         } else {
+          const isAr = getCurrentLang() === "ar";
+          const vWord = getVerdict(g.verdict) ?? (isAr ? "تم التقييم" : "Graded");
+          const timing = isAr ? `· عبر خوارزمية البطاقة في ${ms} مل ث` : `· by the card's script in ${ms} ms`;
           const pct = g.verdict === "partial" ? `<span class="m tabular">${Math.round(score * 100)}%</span>` : "";
-          line = `<span class="v ${g.verdict}">${VERDICT[g.verdict] ?? "Graded"}</span>${pct}<span class="m">· by the card's script in ${ms} ms</span>`;
+          line = `<span class="v ${g.verdict}">${vWord}</span>${pct}<span class="m">${timing}</span>`;
         }
       } catch (err) {
+        const isAr = getCurrentLang() === "ar";
         g = { score: null, verdict: "ungraded", grader: { kind: "script" } };
-        line = `<span class="v incorrect">Grader error</span><span class="m">${esc(err.message)}</span>`;
+        line = `<span class="v incorrect">${isAr ? "خطأ في التقييم" : "Grader error"}</span><span class="m">${esc(err.message)}</span>`;
       }
       post({ type: "result", result: { grade: g, key: prep.key, answer } });
       verdictEl.innerHTML = line;
@@ -1121,7 +1280,39 @@ if (rep && GALLERY?.length) {
     box.addEventListener("click", (e) => { const b = e.target.closest("[data-suite-type]"); if (b && b.dataset.suiteType !== cur?.type) open(b.dataset.suiteType, { focus: e.detail > 0 }); });
     window.__suiteCount = (t) => entries[t]?.items.length;
     window.__suite = () => cur && { type: cur.type, item: cur.item.id, face: cur.item.face ?? "main", view: cur.prep.view, key: cur.prep.key, phase: cur.phase, grade: cur.grade ?? null };
-    whenVisible(box, () => open("country-map"), "0px 0px 40% 0px");
+    window.addEventListener("wikae-lang-change", () => {
+      if (cur) {
+        setHead(cur.type);
+        const lang = getCurrentLang();
+        const isAr = lang === "ar";
+        const tabBtn = Array.from(tabs).find((b) => b.dataset.suiteType === cur.type);
+        if (tabBtn && cur.item?.fields) {
+          const titleAr = cur.item.fields.cardTitleAr;
+          const metaAr = cur.item.fields.cardMetaAr;
+          const titleEn = cur.item.fields.cardTitleEn;
+          const metaEn = cur.item.fields.cardMetaEn;
+          const elArTitle = tabBtn.querySelector('[data-lang="ar"] .suite-title');
+          const elArMeta = tabBtn.querySelector('[data-lang="ar"] .suite-meta');
+          const elEnTitle = tabBtn.querySelector('[data-lang="en"] .suite-title');
+          const elEnMeta = tabBtn.querySelector('[data-lang="en"] .suite-meta');
+          if (titleAr && elArTitle) elArTitle.textContent = titleAr;
+          if (metaAr && elArMeta) elArMeta.textContent = metaAr;
+          if (titleEn && elEnTitle) elEnTitle.textContent = titleEn;
+          if (metaEn && elEnMeta) elEnMeta.textContent = metaEn;
+        }
+        const notes = NOTES[lang] || NOTES.ar;
+        if (isAr && cur.item?.fields?.mnemonicRuleAr) {
+          noteEl.innerHTML = `<span style="color:var(--highlight);font-weight:600">قاعدة الضبط:</span> ${esc(cur.item.fields.mnemonicRuleAr)}`;
+        } else if (isAr && cur.item?.fields?.explanation) {
+          noteEl.innerHTML = `<span style="color:var(--highlight);font-weight:600">بيان وتفسير:</span> ${esc(cur.item.fields.explanation)}`;
+        } else {
+          noteEl.textContent = notes[cur.type] ?? "";
+        }
+        const lbl = cur.entry.auto ? (isAr ? "إعادة التجربة" : "Play again") : (isAr ? "بطاقة أخرى" : "Another card");
+        nextBtn.innerHTML = `<span>${lbl}</span> <span aria-hidden="true">↻</span>`;
+      }
+    });
+    whenVisible(box, () => open("quran-mutashabihat"), "0px 0px 40% 0px");
   }
 }
 
@@ -1227,42 +1418,48 @@ if (rep && GALLERY?.length) {
 }
 
 // ---------------------------------------------------------------- market
-// The section is filled from a snapshot of the catalogue shipped with the site, then refreshed
-// from the live index if it answers, so new entries show up without rebuilding the site.
+// The section is filled from our curated snapshot of Islamic decks, card types, and themes.
 {
   const box = $("[data-market]");
   if (box) {
     const grid = $("[data-market-grid]", box), count = $("[data-market-count]", box), tabs = $$("[data-kind]", box);
-    const RAW = "https://raw.githubusercontent.com/Zibhelina/etude-market/main";
     let entries = [], kind = "theme";
     const v = (t, k, d) => t?.vars?.[k] ?? d;
     const themeTile = (t) => {
+      const isAr = getCurrentLang() === "ar";
       const s = [["--t-bg", v(t, "--background", "#111")], ["--t-side", v(t, "--sidebar", v(t, "--background"))], ["--t-card", v(t, "--card", "#222")], ["--t-fg", v(t, "--foreground", "#eee")],
         ["--t-muted", v(t, "--muted-foreground", "#999")], ["--t-hl", v(t, "--highlight", v(t, "--primary", "#f6a"))], ["--t-border", v(t, "--border", "#ffffff22")]]
         .map(([k, val]) => `${k}:${val}`).join(";");
       const rate = ["--again", "--hard", "--good", "--easy"].map((k) => `<i style="background:${v(t, k, "#888")}"></i>`).join("");
       const chips = ["--highlight", "--chart-2", "--chart-3", "--chart-4"].map((k) => `<i style="background:${v(t, k, v(t, "--highlight", "#f6a"))}"></i>`).join("");
-      return `<div class="mk-theme" style="${esc(s)}" aria-hidden="true"><div class="rail"><i></i><i></i><i></i><i></i></div><div class="pane"><div class="t1"><b>ε</b>tude</div><div class="t2">Mate in <b>one</b></div><div class="chips">${chips}</div><div class="rates">${rate}</div></div></div>`;
+      const t1 = isAr ? "<b>وِ</b>كَاء" : "<b>W</b>ikae";
+      const t2 = isAr ? "رِباط <b>المحفوظ</b>" : "Spaced <b>Practice</b>";
+      return `<div class="mk-theme" style="${esc(s)}" aria-hidden="true"><div class="rail"><i></i><i></i><i></i><i></i></div><div class="pane"><div class="t1">${t1}</div><div class="t2">${t2}</div><div class="chips">${chips}</div><div class="rates">${rate}</div></div></div>`;
     };
-    const tile = (e, n) => `<article class="mk" style="--i:${n}">${e.kind === "theme" ? themeTile(e.theme) : e.cover ? `<div class="mk-cover"><img src="${esc(e.cover)}" alt="" loading="lazy"></div>` : ""}<div class="mk-body"><h3 class="mk-name">${esc(e.name)}</h3><p class="mk-desc">${esc(e.description)}</p>${e.tags?.length ? `<div class="mk-tags">${e.tags.slice(0, 3).map((t) => `<span>${esc(t)}</span>`).join("")}</div>` : ""}</div></article>`;
+    const tile = (e, n) => {
+      const isAr = getCurrentLang() === "ar";
+      const name = (isAr ? e.nameAr : e.nameEn) || e.name;
+      const desc = (isAr ? e.descriptionAr : e.descriptionEn) || e.description;
+      const tags = (isAr ? e.tagsAr : e.tagsEn) || e.tags;
+      return `<article class="mk" style="--i:${n}">${e.kind === "theme" ? themeTile(e.theme) : e.cover ? `<div class="mk-cover"><img src="${esc(e.cover)}" alt="" loading="lazy"></div>` : ""}<div class="mk-body"><h3 class="mk-name">${esc(name)}</h3><p class="mk-desc">${esc(desc)}</p>${tags?.length ? `<div class="mk-tags">${tags.slice(0, 3).map((t) => `<span>${esc(t)}</span>`).join("")}</div>` : ""}</div></article>`;
+    };
     const render = () => {
+      const isAr = getCurrentLang() === "ar";
       const shown = entries.filter((e) => e.kind === kind);
       grid.innerHTML = shown.map(tile).join("");
-      const k = { type: ["card type", "card types"], deck: ["deck", "decks"], theme: ["theme", "themes"] };
       const c = (x) => entries.filter((e) => e.kind === x).length;
-      count.textContent = `${c("theme")} ${k.theme[+(c("theme") !== 1)]}, ${c("deck")} ${k.deck[+(c("deck") !== 1)]} and ${c("type")} ${k.type[+(c("type") !== 1)]} so far.`;
+      if (isAr) {
+        count.textContent = `${c("theme")} مظاهر، و ${c("deck")} حزم قرآنية، و ${c("type")} أنواع بطاقات حتى الآن.`;
+      } else {
+        const k = { type: ["card type", "card types"], deck: ["deck", "decks"], theme: ["theme", "themes"] };
+        count.textContent = `${c("theme")} ${k.theme[+(c("theme") !== 1)]}, ${c("deck")} ${k.deck[+(c("deck") !== 1)]} and ${c("type")} ${k.type[+(c("type") !== 1)]} so far.`;
+      }
       tabs.forEach((b) => b.setAttribute("aria-selected", String(b.dataset.kind === kind)));
     };
     box.addEventListener("click", (e) => { const b = e.target.closest("[data-kind]"); if (b) { kind = b.dataset.kind; render(); } });
+    window.addEventListener("wikae-lang-change", render);
     whenVisible(box, async () => {
       try { entries = (await (await fetch("assets/market/market.json")).json()).entries; render(); } catch {}
-      // live index: only adopt entries without a local cover through the raw URL
-      try {
-        const live = await (await fetch(`${RAW}/index.json`, { cache: "no-cache" })).json();
-        const known = new Map(entries.map((e) => [`${e.kind}:${e.id}`, e]));
-        const next = live.entries.map((e) => known.get(`${e.kind}:${e.id}`) ?? { id: e.id, kind: e.kind, name: e.name, description: e.description, tags: e.tags ?? [], theme: e.kind === "theme" ? e.summary?.theme : undefined, cover: e.cover ? `${RAW}/${e.cover}` : undefined });
-        if (next.length && next.length !== entries.length) { entries = next; render(); }
-      } catch {}
     }, "0px 0px 30% 0px");
   }
 }
@@ -1277,7 +1474,7 @@ if (rep && GALLERY?.length) {
   let cur = -1;
   const getMovements = () => {
     const lang = getCurrentLang();
-    return $$("main .opus").filter((o) => {
+    return $$("main > section .head .opus, main > section > .wrap > .opus, main > section .film .opus").filter((o) => {
       const p = o.closest("[data-lang]");
       return !p || p.getAttribute("data-lang") === lang;
     }).map((o) => {
@@ -1291,9 +1488,9 @@ if (rep && GALLERY?.length) {
     const buildList = () => {
       movements = getMovements();
       if (!movements.length) return;
-      const hEm = $("#programme-h em");
+      const isAr = getCurrentLang() === "ar";
+      const hEm = isAr ? $("#programme-h [data-lang='ar'] em") : $("#programme-h [data-lang='en'] em");
       if (hEm) {
-        const isAr = getCurrentLang() === "ar";
         const arNums = ["", "الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس", "السابع", "الثامن", "التاسع", "العاشر", "الحادي عشر", "الثاني عشر", "الثالث عشر", "الرابع عشر", "الخامس عشر", "السادس عشر", "السابع عشر", "الثامن عشر"];
         hEm.textContent = isAr ? (arNums[movements.length] ?? String(movements.length)) : (["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen"][movements.length] ?? String(movements.length));
       }
@@ -1315,11 +1512,11 @@ if (rep && GALLERY?.length) {
       $$("a", list).forEach((a) => a.toggleAttribute("aria-current", Number(a.dataset.i) === i));
     };
     // the dock comes up once the hero's buttons have scrolled away, and steps aside for the closing CTA
-    const hero = $(".hero .hero-cta"), cta = $(".cta");
+    const hero = $(".hero"), cta = $(".cta");
     let pastHero = false, atEnd = false;
     const show = () => dock.classList.toggle("show", phone.matches && pastHero && !atEnd);
-    new IntersectionObserver(([e]) => { pastHero = !e.isIntersecting && e.boundingClientRect.top < 0; show(); }).observe(hero);
-    new IntersectionObserver(([e]) => { atEnd = e.isIntersecting; show(); }, { rootMargin: "0px 0px -20% 0px" }).observe(cta);
+    if (hero) new IntersectionObserver(([e]) => { pastHero = !e.isIntersecting && e.boundingClientRect.top < 0; show(); }).observe(hero);
+    if (cta) new IntersectionObserver(([e]) => { atEnd = e.isIntersecting; show(); }, { rootMargin: "0px 0px -20% 0px" }).observe(cta);
     const track = () => {
       if (!phone.matches) return;
       const y = innerHeight * 0.5;
@@ -1404,23 +1601,32 @@ if (rep && GALLERY?.length) {
     const meter = document.createElement("div");
     meter.className = "rail-meter ph-only";
     meter.setAttribute("aria-hidden", "true");
-    meter.innerHTML = `<span class="tabular" data-pos></span><span class="bar"><i></i></span><span class="hint">swipe</span>`;
+    const isArInit = getCurrentLang() === "ar";
+    meter.innerHTML = `<span class="tabular" data-pos></span><span class="bar"><i></i></span><span class="hint">${isArInit ? "اسحب للتصفح" : "swipe"}</span>`;
     rail.after(meter);
-    const pos = $("[data-pos]", meter), bar = $(".bar i", meter);
+    const pos = $("[data-pos]", meter), bar = $(".bar i", meter), hintEl = $(".hint", meter);
     const update = () => {
       const items = [...rail.children].filter((c) => c.offsetWidth);
       const n = items.length;
       if (!n || rail.scrollWidth <= rail.clientWidth + 4) { meter.style.visibility = "hidden"; return; }
       meter.style.visibility = "";
-      const max = rail.scrollWidth - rail.clientWidth, f = max > 0 ? rail.scrollLeft / max : 0;
+      const max = rail.scrollWidth - rail.clientWidth;
+      const f = max > 0 ? Math.min(1, Math.abs(rail.scrollLeft) / max) : 0;
       const shown = Math.max(1, Math.round(rail.clientWidth / (items[0].offsetWidth + 14)));
       const first = Math.min(n - shown, Math.round(f * (n - shown))) + 1;
-      pos.textContent = `${first}${shown > 1 ? `–${Math.min(n, first + shown - 1)}` : ""} of ${n}`;
+      const isAr = getCurrentLang() === "ar";
+      pos.textContent = isAr
+        ? `${first}${shown > 1 ? `–${Math.min(n, first + shown - 1)}` : ""} من ${n}`
+        : `${first}${shown > 1 ? `–${Math.min(n, first + shown - 1)}` : ""} of ${n}`;
+      if (hintEl) hintEl.textContent = isAr ? "اسحب للتصفح" : "swipe";
       const w = Math.max(0.08, rail.clientWidth / rail.scrollWidth);
-      bar.style.width = `${w * 100}%`; bar.style.left = `${f * (1 - w) * 100}%`;
-      if (rail.scrollLeft > 8) meter.querySelector(".hint").hidden = true;
+      bar.style.width = `${w * 100}%`;
+      bar.style.setProperty("inset-inline-start", `${f * (1 - w) * 100}%`);
+      bar.style.removeProperty("left");
+      if (Math.abs(rail.scrollLeft) > 8 && hintEl) hintEl.hidden = true;
     };
     rail.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("wikae-lang-change", update);
     new ResizeObserver(update).observe(rail);
     new MutationObserver(update).observe(rail, { childList: true });
     update();

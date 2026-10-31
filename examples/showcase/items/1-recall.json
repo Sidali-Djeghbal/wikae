@@ -80,38 +80,42 @@
     "source": ""
   },
   {
-    "id": "showcase.match.paintings",
+    "id": "showcase.match.quran",
     "type": "match",
     "deck": "Etude Showcase::1 Recall",
     "tags": [
       "showcase",
-      "topic::art"
+      "topic::quran"
     ],
     "fields": {
-      "prompt": "Match each painting with its painter.",
+      "cardTitleAr": "معاني ألفاظ المعوذات",
+      "cardMetaAr": "تفسير وبيان · وصل اللفظ بمعناه",
+      "cardTitleEn": "Mu'awwidhat Lexicon",
+      "cardMetaEn": "Tafsir & meaning · Match words to definitions",
+      "prompt": "صِل كل مفردة قرآنية كريمة بمعناها وتفسيرها الصحيح:",
       "pairs": [
         [
-          "*The Starry Night*",
-          "Vincent van Gogh"
+          "الصَّمَدُ",
+          "الذي تُصمَد إليه الحوائج ويُقصد وحده"
         ],
         [
-          "*Girl with a Pearl Earring*",
-          "Johannes Vermeer"
+          "الفَلَقِ",
+          "الصبح إذا انفلق وانشق عنه الظلام"
         ],
         [
-          "*The Persistence of Memory*",
-          "Salvador Dalí"
+          "غَاسِقٍ إِذَا وَقَبَ",
+          "الليل إذا أقبل واشتد ظلامه ودخل"
         ],
         [
-          "*The Birth of Venus*",
-          "Sandro Botticelli"
+          "النَّفَّاثَاتِ فِي الْعُقَدِ",
+          "الساحرات اللاتي ينفثن في عقد السحر"
         ],
         [
-          "*The Great Wave off Kanagawa*",
-          "Katsushika Hokusai"
+          "الْوَسْوَاسِ الْخَنَّاسِ",
+          "الشيطان يوسوس فإذا ذُكر الله خنس وتراجع"
         ]
       ],
-      "explanation": "Van Gogh painted *The Starry Night* in 1889 from the window of an asylum in Saint-Rémy; Hokusai's *Great Wave* is a woodblock print, so thousands of copies exist."
+      "explanation": "بيان معاني غريب ألفاظ المعوذات وسورة الإخلاص من كتب التفسير المعتمدة لترسيخ تدبر القرآن أثناء التلاوة والحفظ."
     },
     "source": ""
   },
@@ -215,6 +219,10 @@
       "topic::quran"
     ],
     "fields": {
+      "cardTitleAr": "إكمال الموضع المحوري",
+      "cardMetaAr": "الرسم العثماني · تمييز دقيق بين السور",
+      "cardTitleEn": "Pivotal Completion",
+      "cardMetaEn": "Uthmani script · Distinct Surah context",
       "titleAr": "سورة البقرة · آية ١٢٦ · إكمال",
       "mode": "pivotal_completion",
       "targetVerseId": "baqarah_126",

@@ -15,12 +15,14 @@ const RTL_LOCALES: Set<LocaleId> = new Set(["ar"]);
 
 function detect(): LocaleId {
   try {
-    const stored = localStorage.getItem("wikae.language") || localStorage.getItem("wikaa.language") || localStorage.getItem("etude.language");
+    const docLang = typeof document !== "undefined" && (document.documentElement?.getAttribute("lang") || document.documentElement?.lang);
+    if (docLang && docLang in locales) return docLang as LocaleId;
+    const stored = localStorage.getItem("wikae-lang") || localStorage.getItem("wikae.language") || localStorage.getItem("wikaa.language") || localStorage.getItem("etude.language");
     if (stored && stored in locales) return stored as LocaleId;
   } catch { /* storage blocked */ }
   const nav = navigator.language?.split("-")[0]?.toLowerCase();
   if (nav in locales) return nav as LocaleId;
-  return "en";
+  return "ar";
 }
 
 let current: LocaleId = detect();
@@ -38,9 +40,9 @@ export function isRtl(): boolean {
 }
 
 export function setLocale(id: LocaleId) {
-  if (id === current && document.documentElement.lang === id) return;
   current = id;
   try {
+    localStorage.setItem("wikae-lang", id);
     localStorage.setItem("wikae.language", id);
     localStorage.setItem("wikaa.language", id);
     localStorage.setItem("etude.language", id);
