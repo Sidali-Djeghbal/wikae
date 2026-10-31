@@ -1,6 +1,21 @@
 // Arabic translations (العربية)
 // Complete, accurate, professional terminology for Etude flashcards & spaced repetition
 const ar: Record<string, string> = {
+  "AI Generate": "توليد بالذكاء الاصطناعي",
+  "Generate with AI": "توليد عبر الذكاء الاصطناعي",
+  "AI Card Generation": "توليد البطاقات بالذكاء الاصطناعي",
+  "Describe what you want to learn, and AI will generate structured cards matching your chosen card type.": "صف ما تريد تعلمه، وسيقوم الذكاء الاصطناعي بإنشاء بطاقات مطابقة لنمط البطاقة المختار.",
+  "Topic or request": "الموضوع أو الطلب",
+  "Number of cards": "عدد البطاقات",
+  "Generating cards...": "جاري توليد البطاقات...",
+  "Generated cards": "البطاقات المولدة",
+  "Save selected cards": "حفظ البطاقات المحددة",
+  "Saving...": "جاري الحفظ...",
+  "Cards added successfully": "تمت إضافة البطاقات بنجاح",
+  "e.g. Quran mutashabihat between Baqarah 126 and Ibrahim 35 in (baladan aminan vs al-balada aminan)": "مثال: متشابهات سورة البقرة 126 مع إبراهيم 35 في (بلداً آمناً / البلد آمناً)",
+  "e.g. Key concepts of photosynthesis, 5 practice questions...": "مثال: المفاهيم الأساسية لعملية البناء الضوئي، أو 5 أسئلة تدريبية...",
+  "Groq": "Groq",
+  "Ultra-fast free inference with Llama 3.3 70B. Free API key.": "استدلال مجاني فائق السرعة مع Llama 3.3 70B ومفتاح مجاني.",
   "Quranic Verses with [...]": "المواضع المتشابهة مع أقواس [...]",
   "Add sibling verse": "إضافة موضع متشابه",
   "Surah": "السورة",

@@ -45,7 +45,7 @@ import type { Learner } from "./learner.ts";
 import { Adaptive, annotateVariants, placementSession, variantPrior, type AdaptContext } from "./adaptive.ts";
 import { deckParts, hashString, interleave, parse } from "./util.ts";
 import { compile, isMediaRef, itemSearchText, QueryError, stripHtml, type Compiled } from "./query.ts";
-import { AGENT_EFFORTS, aiEditFields, aiFeedback, aiVerdict, AiError, DEFAULT_AI, type AiSettings, type GradingContext } from "./ai.ts";
+import { AGENT_EFFORTS, aiEditFields, aiGenerateItems, aiFeedback, aiVerdict, AiError, DEFAULT_AI, type AiSettings, type GradingContext } from "./ai.ts";
 import {
   beginChatGptLogin,
   chatGptEndpoints,
@@ -1828,6 +1828,60 @@ export class Etude {
       return { itemId: id, fields, changed, model: proposal.model, ms: proposal.ms, ...(proposal.cost != null ? { cost: proposal.cost } : {}) };
     } catch (e) {
       if (e instanceof AiError) throw new EtudeError(`couldn't edit the card: ${e.message}`, 502);
+      throw e;
+    }
+  }
+
+  /** Generates items using the configured language model. Optionally saves them to a deck. */
+  async aiGenerateItems(typeId: string, prompt: string, opts: { count?: number; deck?: string; save?: boolean; tags?: string[] } = {}) {
+    if (typeof prompt !== "string" || !prompt.trim()) throw new EtudeError("describe what cards to generate");
+    const def = this.type(typeId);
+    try {
+      const generated = await aiGenerateItems(this.settings().ai, def, prompt.trim(), { count: opts.count, home: this.home });
+      const items: { fields: Record<string, unknown>; title?: string }[] = [];
+      const savedIds: string[] = [];
+
+      for (let i = 0; i < generated.items.length; i++) {
+        const item = generated.items[i];
+        let fields = { ...item.fields };
+        if (def.id === "quran-mutashabihat" && !fields.targetVerseId && Array.isArray(fields.siblings) && fields.siblings.length) {
+          const s0 = fields.siblings[0];
+          if (typeof s0 === "string") {
+            const m = s0.match(/^([^|:]+)[:\s]+(\d+)/);
+            if (m) fields.targetVerseId = `${m[1]}:${m[2]}`;
+          } else if (typeof s0 === "object" && s0 !== null) {
+            const obj = s0 as any;
+            if (obj.surahNumber && obj.ayahNumber) fields.targetVerseId = `${obj.surahNumber}_${obj.ayahNumber}`;
+          }
+        }
+        const fullFields = { ...fieldDefaults(def), ...fields };
+        this.checkItemFields(`generated-${i + 1}`, def, fullFields);
+        items.push({ fields, title: item.title || itemTitle(def, fullFields, false) });
+
+        if (opts.save && opts.deck) {
+          const slug = opts.deck.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "card";
+          const id = `${slug}.${Date.now().toString(36)}${i > 0 ? `-${i + 1}` : ""}`;
+          this.upsertItem({
+            id,
+            type: typeId,
+            deck: opts.deck,
+            fields,
+            tags: opts.tags ?? [],
+          });
+          savedIds.push(id);
+        }
+      }
+
+      return {
+        items,
+        savedIds: savedIds.length ? savedIds : undefined,
+        count: items.length,
+        model: generated.model,
+        ms: generated.ms,
+        ...(generated.cost != null ? { cost: generated.cost } : {}),
+      };
+    } catch (e) {
+      if (e instanceof AiError) throw new EtudeError(`couldn't generate cards: ${e.message}`, 502);
       throw e;
     }
   }

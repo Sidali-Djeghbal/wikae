@@ -314,6 +314,20 @@ export interface ItemEditProposal {
   cost?: number;
 }
 
+export interface ItemGenerationProposal {
+  fields: Record<string, unknown>;
+  title?: string;
+}
+
+export interface AiGenerateResult {
+  items: ItemGenerationProposal[];
+  savedIds?: string[];
+  count: number;
+  model: string;
+  ms: number;
+  cost?: number;
+}
+
 export interface StoredMedia {
   name: string;
   file: string;
@@ -521,6 +535,8 @@ export const api = {
   saveItem: (id: string, item: { type: string; deck: string; fields: Record<string, unknown>; tags: string[]; source?: string; notes?: string; archived?: boolean }) =>
     call<{ result: string; item: ItemDetail }>("PUT", `/api/items/${encodeURIComponent(id)}`, item),
   suggestItemEdit: (id: string, instruction: string, fields: Record<string, unknown>) => call<ItemEditProposal>("POST", `/api/items/${encodeURIComponent(id)}/ai-edit`, { instruction, fields }),
+  aiGenerateItems: (type: string, prompt: string, opts: { count?: number; deck?: string; save?: boolean; tags?: string[] } = {}) =>
+    call<AiGenerateResult>("POST", "/api/items/ai-generate", { type, prompt, ...opts }),
   previewItem: (id: string, seed: number, face = "main") => call<{ view: Record<string, unknown>; key: Record<string, unknown>; seed: number }>("POST", `/api/items/${encodeURIComponent(id)}/preview`, { seed, face }),
   bulkItems: (action: string, ids: string[], extra: Record<string, unknown> = {}) => call("POST", "/api/items-bulk", { action, ids, ...extra }),
   bulkCards: (action: string, cardIds: number[]) => call("POST", "/api/cards-bulk", { action, cardIds }),

@@ -32,6 +32,7 @@ import {
 
 const PRESETS: { id: PresetId; label: string; hint: string }[] = [
   { id: "openrouter", label: "OpenRouter", hint: "Decision model for verdicts, a chat model for feedback. One key." },
+  { id: "groq", label: "Groq", hint: "Ultra-fast free inference with Llama 3.3 70B. Free API key." },
   { id: "openai", label: "OpenAI", hint: "OpenAI's chat API judges and writes feedback. Needs an OpenAI key." },
   { id: "chatgpt", label: "ChatGPT", hint: "Grade with your ChatGPT Plus or Pro plan. No API key." },
   { id: "local", label: "Local", hint: "An OpenAI-compatible server on this machine (llama.cpp, Ollama, vLLM). No key." },
@@ -59,7 +60,7 @@ export function AiSection({ ai, saved, errors, onChange }: { ai: AiSettings; sav
       description={t("Open answers are graded in two steps. A small decision model reads the card, the reference and your answer and returns the verdict (correct, partial or incorrect) in about a second for a fraction of a cent. A language model then writes a few lines of feedback. Drawings skip the decision model and go to a vision model, which judges and explains in one call.")}
     >
       <Block title={t("Quick setup")} description={t("Fills the provider fields below. Feedback timing and language stay as they are.")}>
-        <div className={cn("grid gap-2 sm:grid-cols-2", serverless() ? "lg:grid-cols-3" : "lg:grid-cols-4")}>
+        <div className={cn("grid gap-2 sm:grid-cols-2", serverless() ? "lg:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-5")}>
           {PRESETS.filter((p) => !(serverless() && p.id === "chatgpt")).map((p) => (
             <button
               key={p.id}

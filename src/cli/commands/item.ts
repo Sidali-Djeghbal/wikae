@@ -142,6 +142,39 @@ command({
 });
 
 command({
+  name: "item generate",
+  summary: "Ask the configured language model to generate cards for a card type.",
+  description: "Uses the language model configured for feedback. Generates cards matching the card type schema from a prompt or notes. Pass --save and --deck to add them immediately.",
+  args: [
+    { name: "type", description: "Card type id (e.g. quran-mutashabihat, basic, cloze, match).", required: true },
+    { name: "prompt", description: "What to generate cards about (topic, questions, verses, or text).", required: true },
+  ],
+  flags: [
+    { name: "count", type: "number", description: "How many cards to generate (1 to 10).", default: 1 },
+    DECK_FLAG,
+    { name: "save", type: "boolean", description: "Save the generated cards to the collection immediately.", default: false },
+    TAG_FLAG,
+  ],
+  writes: true,
+  dryRun: true,
+  examples: [
+    'etude item generate basic "Key facts about photosynthesis" --count 3',
+    'etude item generate quran-mutashabihat "متشابهات البقرة 126 مع إبراهيم 35" --deck quran --save',
+  ],
+  output: "{ items: [{ fields, title? }], savedIds?: [ids], count, model, ms, cost? }",
+  async run(ctx) {
+    if (ctx.flags.save && !ctx.flags.deck) throw new CliError("--deck is required when using --save");
+    const save = Boolean(ctx.flags.save && !ctx.flags["dry-run"]);
+    return ctx.e.aiGenerateItems(ctx.args.type, ctx.args.prompt, {
+      count: ctx.flags.count,
+      deck: ctx.flags.deck,
+      save,
+      tags: ctx.flags.tag,
+    });
+  },
+});
+
+command({
   name: "item add",
   summary: "Add an item. Re-running with the same --id and content is a no-op.",
   description:

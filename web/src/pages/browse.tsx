@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Sparkles, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { BulkBar, CheckBox, groupItems, ItemEditor, ItemRow, NewItemDialog, OrderSelect, SearchHints } from "@/components/item-editor";
+import { AiGenerateDialog } from "@/components/ai-generate-dialog";
 import { api, type SearchRow, type TypeSummary } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { EmptyState, PHONE_H1 } from "@/components/page";
 import { useLocale } from "@/lib/useLocale";
-import { X } from "lucide-react";
 
 const PAGE = 200;
 
@@ -21,6 +21,7 @@ export function BrowsePage({ initialQuery, openItem }: { initialQuery: string; o
   const [selected, setSelected] = useState<string | null>(openItem);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [decks, setDecks] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [types, setTypes] = useState<TypeSummary[]>([]);
@@ -79,7 +80,10 @@ export function BrowsePage({ initialQuery, openItem }: { initialQuery: string; o
         <div className="flex flex-col gap-3 border-b px-4 pt-6 pb-3 max-md:px-5 max-md:pt-[calc(1.25rem+env(safe-area-inset-top))] sm:pt-8 md:px-4 md:pt-6">
           <div className="flex items-center justify-between gap-3">
             <h1 className={cn("text-2xl font-semibold tracking-tight", PHONE_H1)}>{t("Browse")}</h1>
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />{t("Add")}</Button>
+            <div className="flex items-center gap-1.5">
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setAiGenerating(true)}><Sparkles className="size-4 text-primary" />{t("AI Generate")}</Button>
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />{t("Add")}</Button>
+            </div>
           </div>
           <div className="relative">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground rtl:left-auto rtl:right-3" />
@@ -155,6 +159,7 @@ export function BrowsePage({ initialQuery, openItem }: { initialQuery: string; o
       </section>
 
       <NewItemDialog open={creating} onOpenChange={setCreating} decks={decks} types={types} onCreated={(id) => { setSelected(id); run(); reloadMeta(); }} />
+      <AiGenerateDialog open={aiGenerating} onOpenChange={setAiGenerating} decks={decks} types={types} onGenerated={(ids) => { if (ids[0]) setSelected(ids[0]); run(); reloadMeta(); }} />
     </div>
   );
 }

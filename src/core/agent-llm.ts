@@ -270,6 +270,14 @@ async function chatTurn(req: LlmRequest, p: Extract<ChatProvider, { kind: "opena
       res = await post();
     }
   }
+  if (res.status === 429) {
+    const text = await res.clone().text().catch(() => "");
+    const match = text.match(/try again in ([0-9.]+)s/i);
+    const delaySec = match ? Math.ceil(parseFloat(match[1])) : Number(res.headers.get("retry-after")) || 3;
+    const waitMs = Math.min(Math.max(delaySec, 1), 8) * 1000;
+    await new Promise((r) => setTimeout(r, waitMs));
+    res = await post();
+  }
   if (!res.ok) throw new AiError(`HTTP ${res.status}: ${(await res.text().catch(() => "")).slice(0, 300)}`);
   if (!res.body) throw new AiError("the model returned an empty response");
   let text = "";

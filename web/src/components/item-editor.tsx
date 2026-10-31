@@ -1,6 +1,6 @@
 // The card list rows, bulk actions and item editor shared by Browse and the deck page's Cards tab.
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Archive, ArchiveRestore, ArrowLeft, Check, Copy, Dices, FolderInput, Loader2, MoreHorizontal, Pause, Play, RotateCcw, Save, Tag, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowLeft, Check, Copy, Dices, FolderInput, Loader2, MoreHorizontal, Pause, Play, RotateCcw, Save, Sparkles, Tag, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { FieldEditor } from "@/components/field-editor";
 import { ItemAiEdit } from "@/components/item-ai-edit";
 import { CardPreview } from "@/components/card-preview";
+import { AiGenerateDialog } from "@/components/ai-generate-dialog";
 import { Markdown } from "@/components/markdown";
 import { api, humanInterval, relative, RATING_LABEL, STATE_NAMES, type CardType, type ItemDetail, type SearchRow, type TypeSummary } from "@/lib/api";
 import { navigate } from "@/lib/router";
@@ -520,6 +521,7 @@ export function NewItemDialog({ open, onOpenChange, decks, types, onCreated, def
   const [fields, setFields] = useState<Record<string, unknown>>({});
   const [mediaPending, setMediaPending] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
+  const [aiOpen, setAiOpen] = useState(false);
   useEffect(() => {
     if (open) api.type(type).then(setDef);
   }, [type, open]);
@@ -545,9 +547,24 @@ export function NewItemDialog({ open, onOpenChange, decks, types, onCreated, def
     }
   };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("max-h-[90dvh] overflow-y-auto", occlusion ? "sm:max-w-[min(72rem,calc(100vw-2rem))]" : "sm:max-w-2xl")}>
-        <DialogHeader><DialogTitle>Add a card</DialogTitle></DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className={cn("max-h-[90dvh] overflow-y-auto", occlusion ? "sm:max-w-[min(72rem,calc(100vw-2rem))]" : "sm:max-w-2xl")}>
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle>{t("Add a card")}</DialogTitle>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs text-primary mr-6 rtl:mr-0 rtl:ml-6"
+                onClick={() => setAiOpen(true)}
+              >
+                <Sparkles className="size-3.5" />
+                {t("AI Generate")}
+              </Button>
+            </div>
+          </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium">Type</label>
@@ -586,6 +603,21 @@ export function NewItemDialog({ open, onOpenChange, decks, types, onCreated, def
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <AiGenerateDialog
+      open={aiOpen}
+      onOpenChange={setAiOpen}
+      decks={decks}
+      types={types}
+      defaultDeck={deck}
+      defaultType={type}
+      onGenerated={(ids) => {
+        if (ids[0]) {
+          onOpenChange(false);
+          onCreated(ids[0]);
+        }
+      }}
+    />
+  </>
   );
 }
 

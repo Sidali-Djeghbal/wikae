@@ -106,18 +106,29 @@ function key(envName?: string): string | undefined {
 async function post(url: string, body: unknown, apiKeyEnv: string | undefined, timeoutMs: number): Promise<any> {
   const k = key(apiKeyEnv);
   if (apiKeyEnv && !k) throw new AiError(`${apiKeyEnv} is not set`);
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(k ? { Authorization: `Bearer ${k}` } : {}),
-      "X-Title": "Etude",
-    },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(timeoutMs),
-  }).catch((e) => {
-    throw new AiError(e?.name === "TimeoutError" ? `timed out after ${timeoutMs} ms` : String(e?.message ?? e));
-  });
+  const doFetch = () =>
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(k ? { Authorization: `Bearer ${k}` } : {}),
+        "X-Title": "Etude",
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(timeoutMs),
+    }).catch((e) => {
+      throw new AiError(e?.name === "TimeoutError" ? `timed out after ${timeoutMs} ms` : String(e?.message ?? e));
+    });
+
+  let res = await doFetch();
+  if (res.status === 429) {
+    const text = await res.clone().text().catch(() => "");
+    const match = text.match(/try again in ([0-9.]+)s/i);
+    const delaySec = match ? Math.ceil(parseFloat(match[1])) : Number(res.headers.get("retry-after")) || 3;
+    const waitMs = Math.min(Math.max(delaySec, 1), 8) * 1000;
+    await new Promise((r) => setTimeout(r, waitMs));
+    res = await doFetch();
+  }
   const text = await res.text();
   if (!res.ok) throw new AiError(`HTTP ${res.status}: ${text.slice(0, 300)}`);
   try {
@@ -205,6 +216,7 @@ async function chat(p: ChatProvider, system: string, user: string, image: string
         { type: "image_url", image_url: { url: image } },
       ]
     : user;
+  const openrouter = /openrouter\.ai/.test(p.url);
   const reply = await post(
     p.url,
     {
@@ -214,8 +226,8 @@ async function chat(p: ChatProvider, system: string, user: string, image: string
         { role: "system", content: system },
         { role: "user", content },
       ],
-      ...(json ? { response_format: { type: "json_object" } } : {}),
-      usage: { include: true },
+      ...(json ? { response_format: { type: "json_object" }, max_completion_tokens: 4096 } : {}),
+      ...(openrouter ? { usage: { include: true } } : {}),
     },
     p.apiKeyEnv,
     p.timeoutMs ?? 45000,
@@ -313,4 +325,113 @@ Do not change the card's id, type, deck, tags, source, notes, scheduling or hist
     return value;
   });
   return { changes: changes as Record<string, unknown>, model: out.model, ms: out.ms, ...(out.cost != null ? { cost: out.cost } : {}) };
+}
+
+export interface AiGenerateOptions extends AiRunOptions {
+  count?: number;
+}
+
+/** Generates card items according to a card type's schema and a user prompt. */
+export async function aiGenerateItems(
+  settings: AiSettings,
+  type: CardTypeDef,
+  prompt: string,
+  opts: AiGenerateOptions = {}
+): Promise<{ items: { fields: Record<string, unknown>; title?: string }[]; model: string; ms: number; cost?: number }> {
+  if (!settings.feedback) throw new AiError("no language model configured; choose one in Settings → AI grading");
+  const count = Math.max(1, Math.min(10, Number(opts.count ?? 1) || 1));
+  const system = `You are an expert educational flashcard creator. Your task is to generate ${count} high-quality flashcard item(s) matching the requested card type and user prompt.
+Reply with JSON only:
+{"items": [{"title": "short optional title", "fields": {"fieldName": "field value"}}]}
+
+Requirements:
+1. Provide ${count} item(s) in the "items" array.
+2. For each item, populate its "fields" object strictly adhering to the card type schema.
+3. Match each field's expected kind (string, number, boolean, list, or JSON object/array).
+4. Do not include unknown field names not defined in the card type.
+${
+  type.id === "quran-mutashabihat"
+    ? `Special instructions for quran-mutashabihat:
+- Provide authentic Quranic Uthmani text with diacritics.
+- Use the bracket notation for the "siblings" field:
+  ["السورة:الآية | بادئة الآية [اللفظ المفصلي] بقية الآية", "السورة الأخرى:الآية | بادئة الآية [اللفظ المفصلي البديل] بقية الآية"]
+  or full sibling objects with surahNumber, surahNameAr, ayahNumber, prefixUthmani, pivotalUthmani, suffixUthmani.
+- Always include at least 2 distinct sibling verses to compare.
+- Set "targetVerseId" to the first sibling identifier, e.g. "2_126" or "2:126".
+- Set "titleAr" to a concise Arabic title comparing the verses and pivotal words.
+- Set "mode" to "pivotal_completion" (default) or "surah_identification".
+- Set "inputSubmode" to "choice" (default) or "typing".
+- Set "mnemonicRuleAr" to an accurate, memorable mnemonic or rhetorical explanation distinguishing the verses.`
+    : ""
+}
+${
+  type.id === "basic"
+    ? `Special instructions for basic:
+- "front": clear, concise question or prompt in markdown.
+- "back": accurate, well-formatted answer in markdown.`
+    : ""
+}
+${
+  type.id === "cloze"
+    ? `Special instructions for cloze:
+- "text": markdown containing one or more {{c1::cloze deletion}} blanks.
+- "explanation": optional helpful context.`
+    : ""
+}
+${
+  type.id === "match"
+    ? `Special instructions for match:
+- "prompt": instruction for what to match.
+- "pairs": array of 2-item arrays [["left text", "right text"], ...].`
+    : ""
+}
+${
+  type.id === "mcq"
+    ? `Special instructions for mcq:
+- "prompt": question text in markdown.
+- "options": array of choices.
+- "multiple": boolean (false for single choice).`
+    : ""
+}`;
+
+  const user = JSON.stringify({
+    prompt,
+    count,
+    cardType: {
+      id: type.id,
+      name: type.name,
+      description: type.description,
+      fields: type.fields.map((f) => ({
+        name: f.name,
+        kind: f.kind,
+        description: f.description,
+        required: f.required,
+        default: f.default,
+      })),
+    },
+  });
+
+  const out = await chat(settings.feedback, system, user, null, true, opts.home);
+  let reply: any;
+  try {
+    reply = parseJson(out.text);
+  } catch {
+    throw new AiError("language model returned invalid JSON for card generation");
+  }
+
+  const rawItems = Array.isArray(reply?.items)
+    ? reply.items
+    : reply?.fields
+    ? [{ fields: reply.fields, title: reply.title }]
+    : [];
+
+  if (!rawItems.length) throw new AiError("language model returned no cards in response");
+
+  const items = rawItems.map((raw: any) => {
+    const fields = raw?.fields && typeof raw.fields === "object" && !Array.isArray(raw.fields) ? raw.fields : raw;
+    const title = typeof raw?.title === "string" ? raw.title : undefined;
+    return { fields: fields as Record<string, unknown>, title };
+  });
+
+  return { items, model: out.model, ms: out.ms, ...(out.cost != null ? { cost: out.cost } : {}) };
 }

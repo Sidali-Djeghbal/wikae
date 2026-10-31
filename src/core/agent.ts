@@ -135,7 +135,7 @@ export interface ModelChoice {
 }
 
 export interface ModelGroup {
-  provider: "chatgpt" | "openrouter" | "custom";
+  provider: "chatgpt" | "openrouter" | "groq" | "custom";
   label: string;
   models: ModelChoice[];
   error?: string;
@@ -413,11 +413,16 @@ export class Agent {
       const url = fb?.kind === "openai-chat" && /openrouter/.test(fb.url) ? fb.url : OPENROUTER_CHAT;
       return { kind: "openai-chat", url, model, apiKeyEnv: env ?? "OPENROUTER_API_KEY", vision: this.visionOf(r), timeoutMs: 180_000 };
     }
+    if (kind === "groq") {
+      const env = fb?.kind === "openai-chat" && /groq\.com/.test(fb.url) ? fb.apiKeyEnv : "GROQ_API_KEY";
+      const url = fb?.kind === "openai-chat" && /groq\.com/.test(fb.url) ? fb.url : "https://api.groq.com/openai/v1/chat/completions";
+      return { kind: "openai-chat", url, model, apiKeyEnv: env ?? "GROQ_API_KEY", vision: false, timeoutMs: 180_000 };
+    }
     if (kind === "custom") {
       if (fb?.kind !== "openai-chat") throw new AgentError("no custom endpoint is configured", 409);
       return { ...fb, model, timeoutMs: Math.max(fb.timeoutMs ?? 0, 180_000) };
     }
-    throw new AgentError(`unknown model "${r}" (use chatgpt:<model>, openrouter:<model> or custom:<model>)`);
+    throw new AgentError(`unknown model "${r}" (use chatgpt:<model>, openrouter:<model>, groq:<model> or custom:<model>)`);
   }
 
   private visionOf(ref: string): boolean {
@@ -430,6 +435,7 @@ export class Agent {
     const fb = this.etude.settings().ai.feedback;
     if (!fb) return null;
     if (fb.kind === "chatgpt") return `chatgpt:${fb.model}`;
+    if (/groq\.com/.test(fb.url)) return `groq:${fb.model}`;
     return /openrouter\.ai/.test(fb.url) ? `openrouter:${fb.model}` : `custom:${fb.model}`;
   }
 
@@ -464,7 +470,27 @@ export class Agent {
       }
       groups.push(g);
     }
-    if (fb?.kind === "openai-chat" && !/openrouter\.ai/.test(fb.url)) groups.push({ provider: "custom", label: new URL(fb.url).host, models: [{ ref: `custom:${fb.model}`, name: fb.model, vision: !!fb.vision }] });
+    const groqEnv = fb?.kind === "openai-chat" && /groq\.com/.test(fb.url) ? fb.apiKeyEnv : "GROQ_API_KEY";
+    if (groqEnv && process.env[groqEnv]) {
+      const g: ModelGroup = { provider: "groq", label: "Groq", models: [] };
+      try {
+        const res = await fetch("https://api.groq.com/openai/v1/models", {
+          headers: { Authorization: `Bearer ${process.env[groqEnv]}` },
+          signal: AbortSignal.timeout(15_000),
+        });
+        const body = (await res.json()) as { data?: any[] };
+        g.models = (body.data ?? [])
+          .filter((m) => m.active !== false && !m.id.includes("whisper") && !m.id.includes("guard"))
+          .map((m) => ({ ref: `groq:${m.id}`, name: m.name ?? m.id, vision: false }));
+      } catch (e) {
+        g.error = `couldn't load Groq's models: ${(e as Error).message}`;
+      }
+      if (g.models.length === 0 && fb?.kind === "openai-chat" && /groq\.com/.test(fb.url)) {
+        g.models = [{ ref: `groq:${fb.model}`, name: fb.model, vision: false }];
+      }
+      groups.push(g);
+    }
+    if (fb?.kind === "openai-chat" && !/openrouter\.ai|groq\.com/.test(fb.url)) groups.push({ provider: "custom", label: new URL(fb.url).host, models: [{ ref: `custom:${fb.model}`, name: fb.model, vision: !!fb.vision }] });
     this.modelCache = { at: Date.now(), groups };
     return { configured: this.configured(), default: this.defaultModel() ?? this.feedbackRef(), groups };
   }
@@ -472,7 +498,7 @@ export class Agent {
   configured(): boolean {
     const ai = this.etude.settings().ai;
     if (ai.feedback || ai.agent?.model) return true;
-    return chatGptStatus(this.etude.home).signedIn || !!process.env.OPENROUTER_API_KEY;
+    return chatGptStatus(this.etude.home).signedIn || !!process.env.OPENROUTER_API_KEY || !!process.env.GROQ_API_KEY;
   }
 
   // ------------------------------------------------------------ attachments

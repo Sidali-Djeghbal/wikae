@@ -83,11 +83,26 @@ export const draftOf = (s: SettingsResponse | SettingsDraft): SettingsDraft => (
 /** The decision provider "llm" grades with the chat model, same as having none. */
 export const usesDecisionModel = (ai: AiSettings) => ai.decision?.kind === "openrouter-decisions";
 
-export type PresetId = "openrouter" | "openai" | "chatgpt" | "local";
+export type PresetId = "openrouter" | "groq" | "openai" | "chatgpt" | "local";
 
 export function presetAi(id: PresetId, defaults: AiSettings, current: AiSettings): AiSettings {
   const keep = { autoFeedback: current.autoFeedback, language: current.language, agent: current.agent };
   if (id === "openrouter") return { ...structuredClone(defaults), ...keep, vision: null };
+  if (id === "groq")
+    return {
+      ...keep,
+      decision: null,
+      feedback: {
+        kind: "openai-chat",
+        url: "https://api.groq.com/openai/v1/chat/completions",
+        model: "openai/gpt-oss-120b",
+        apiKeyEnv: "GROQ_API_KEY",
+        vision: false,
+        temperature: 0.3,
+        timeoutMs: 30000,
+      },
+      vision: null,
+    };
   if (id === "chatgpt")
     return {
       ...keep,
@@ -114,6 +129,7 @@ export function matchPreset(ai: AiSettings, defaults: AiSettings | undefined): P
   if (!usesDecisionModel(ai) && ai.feedback?.kind === "chatgpt") return "chatgpt";
   const url = isOpenAiChat(ai.feedback) ? ai.feedback.url : "";
   if (defaults && usesDecisionModel(ai) && url === (isOpenAiChat(defaults.feedback) ? defaults.feedback.url : "")) return "openrouter";
+  if (!usesDecisionModel(ai) && url.startsWith("https://api.groq.com/")) return "groq";
   if (!usesDecisionModel(ai) && url.startsWith("https://api.openai.com/")) return "openai";
   if (!usesDecisionModel(ai) && /^https?:\/\/(127\.0\.0\.1|localhost)[:/]/.test(url)) return "local";
   return null;

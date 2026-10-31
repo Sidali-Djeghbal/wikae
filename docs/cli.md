@@ -241,6 +241,7 @@ These work on every command, before or after the command words.
   - [`item list`](#item-list) Items matching a search (one row per item, not per card).
   - [`item show`](#item-show) An item with its fields, cards, scheduling, reviews and attempts.
   - [`item ai-edit`](#item-ai-edit) Ask the configured language model to propose changes to a card's content. Nothing is saved.
+  - [`item generate`](#item-generate) Ask the configured language model to generate cards for a card type.
   - [`item add`](#item-add) Add an item. Re-running with the same --id and content is a no-op.
   - [`item edit`](#item-edit) Change an item's fields, deck, tags, source, notes or type. Scheduling is kept.
   - [`item move`](#item-move) Move items to another deck.
@@ -1210,6 +1211,40 @@ Output: { itemId, fields, changed: [fieldNames], model, ms, cost? }
 ```sh
 etude item ai-edit net.router --instruction "Make the answer shorter and add an example"
 etude item ai-edit sp.perro --instruction-file change.txt --fields-file draft.json
+```
+
+### etude item generate
+
+<a id="item-generate"></a>
+
+Ask the configured language model to generate cards for a card type.
+
+Uses the language model configured for feedback. Generates cards matching the card type schema from a prompt or notes. Pass --save and --deck to add them immediately.
+
+```
+etude item generate <type> <prompt> [flags]
+```
+
+*writes · `--dry-run`*
+
+| Argument | Description |
+| --- | --- |
+| `type` | Card type id (e.g. quran-mutashabihat, basic, cloze, match). |
+| `prompt` | What to generate cards about (topic, questions, verses, or text). |
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--count <N>` | number | How many cards to generate (1 to 10). Default `1`. |
+| `--deck <NAME>` | string | Limit to this deck and its subdecks. |
+| `--save` | boolean | Save the generated cards to the collection immediately. |
+| `-t, --tag <VALUE> (repeatable)` | string | A tag (repeatable; commas also split). `::` makes a hierarchy: course::week1. |
+| `--dry-run` | boolean | Show what would change without writing anything. |
+
+Output: { items: [{ fields, title? }], savedIds?: [ids], count, model, ms, cost? }
+
+```sh
+etude item generate basic "Key facts about photosynthesis" --count 3
+etude item generate quran-mutashabihat "متشابهات البقرة 126 مع إبراهيم 35" --deck quran --save
 ```
 
 ### etude item add

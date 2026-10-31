@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Archive, ArchiveRestore, ArrowUpToLine, BarChart3, CalendarClock, Check, ChevronDown, ChevronRight, Download, Eye, FastForward, FolderInput, Library, Pencil, Play, Plus, Search, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpToLine, BarChart3, CalendarClock, Check, ChevronDown, ChevronRight, Download, Eye, FastForward, FolderInput, Library, Pencil, Play, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Markdown } from "@/components/markdown";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { BulkBar, CheckBox, groupItems, ItemEditor, ItemRow, NewItemDialog, OrderSelect, SearchHints } from "@/components/item-editor";
+import { AiGenerateDialog } from "@/components/ai-generate-dialog";
 import { DeckOptions, formatDeadline, type DeckFull } from "@/components/deck-options";
 import { api, type DeckNode, type LearnerSummary, type Preset, type SearchRow, type TypeSummary } from "@/lib/api";
 import { navigate } from "@/lib/router";
@@ -216,6 +217,7 @@ function DeckCards({ deck, hasChildren, active, onChanged }: { deck: string; has
   const [selected, setSelected] = useState<string | null>(() => new URLSearchParams(location.search).get("item"));
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [decks, setDecks] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [types, setTypes] = useState<TypeSummary[]>([]);
@@ -299,6 +301,7 @@ function DeckCards({ deck, hasChildren, active, onChanged }: { deck: string; has
               </button>
             )}
           </div>
+          <Button variant="outline" className="h-10 gap-1.5 px-3" onClick={() => setAiGenerating(true)} aria-label={t("AI Generate")}><Sparkles className="size-4 text-primary" /><span className="hidden min-[420px]:inline">{t("AI Generate")}</span></Button>
           <Button variant="outline" className="h-10 gap-1.5 px-3" onClick={() => setCreating(true)} aria-label={t("Add a card")}><Plus className="size-4" /><span className="hidden min-[420px]:inline">{t("Add")}</span></Button>
         </div>
         {!emptyDeck && <SearchHints onPick={(h) => setQuery((q) => (q ? `${q} ${h}` : h))} />}
@@ -353,7 +356,15 @@ function DeckCards({ deck, hasChildren, active, onChanged }: { deck: string; has
       )}
 
       {emptyDeck && (
-        <EmptyState title={t("No cards in this deck yet")} action={<Button size="sm" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />{t("Add a card")}</Button>}>
+        <EmptyState
+          title={t("No cards in this deck yet")}
+          action={
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setAiGenerating(true)}><Sparkles className="size-4 text-primary" />{t("AI Generate")}</Button>
+              <Button size="sm" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />{t("Add a card")}</Button>
+            </div>
+          }
+        >
           {t("Add one here, or import a pack from the Decks page.")}
         </EmptyState>
       )}
@@ -387,6 +398,7 @@ function DeckCards({ deck, hasChildren, active, onChanged }: { deck: string; has
       </Sheet>
 
       <NewItemDialog open={creating} onOpenChange={setCreating} decks={decks} types={types} defaultDeck={deck} onCreated={(id) => { open(id); changed(); }} />
+      <AiGenerateDialog open={aiGenerating} onOpenChange={setAiGenerating} decks={decks} types={types} defaultDeck={deck} onGenerated={() => { changed(); run(); }} />
     </div>
   );
 }

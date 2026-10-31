@@ -65,7 +65,7 @@ const LEVELS: { id: OnboardingLevel; icon: typeof Coffee; title: string; hint: s
 ];
 const levelTitle = (l: OnboardingLevel) => t(LEVELS.find((x) => x.id === l)!.title);
 
-const PRESET_LABEL: Record<PresetId, string> = { chatgpt: "ChatGPT", openrouter: "OpenRouter", openai: "OpenAI", local: "Local server" };
+const PRESET_LABEL: Record<PresetId, string> = { chatgpt: "ChatGPT", groq: "Groq", openrouter: "OpenRouter", openai: "OpenAI", local: "Local server" };
 const KEY_ENV: Record<"openrouter" | "openai", string> = { openrouter: "OPENROUTER_API_KEY", openai: "OPENAI_API_KEY" };
 
 /** The one path the ticked boxes lead to: ChatGPT, then OpenRouter, then OpenAI, then a local server. */

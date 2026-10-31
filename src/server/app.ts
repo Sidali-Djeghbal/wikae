@@ -351,6 +351,10 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
     const b = await body(c);
     return c.json(await etude.suggestItemEdit(c.req.param("id"), b.instruction, { fields: b.fields }));
   });
+  app.post("/api/items/ai-generate", async (c) => {
+    const b = await body(c);
+    return c.json(await etude.aiGenerateItems(String(b.type), String(b.prompt), { count: b.count ? Number(b.count) : undefined, deck: b.deck ? String(b.deck) : undefined, save: Boolean(b.save), tags: Array.isArray(b.tags) ? b.tags.map(String) : undefined }));
+  });
   app.post("/api/items-bulk", async (c) => {
     const b = await body(c);
     const ids: string[] = b.ids ?? [];
