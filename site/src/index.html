@@ -3,15 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Etude: practice anything</title>
-<meta name="description" content="Etude is a free, self-hosted spaced-repetition app where every card type is a small program. Scripts and AI grade your answers, FSRS-6 schedules the reviews and your exam date is part of the plan.">
+<title>وِكَاء — Wikae · حفظ القرآن وإتقان المتشابهات بالتكرار المتباعد الذكي</title>
+<meta name="description" content="وِكَاء — منصة وتطبيق مفتوح المصدر لحفظ القرآن الكريم وتثبيت المتشابهات اللفظية والعلوم النافعة بخوارزمية FSRS-6 العلمية والتقييم الذكي.">
 <meta name="theme-color" content="#0d0d0c">
-<meta property="og:title" content="εtude">
-<meta property="og:description" content="Practice anything. Programmable card types, AI grading, FSRS-6 and exam deadlines.">
+<script>
+  (function(){
+    try {
+      var s = localStorage.getItem('wikae-theme');
+      var m = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      var t = s || (m ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', t);
+      document.documentElement.classList.toggle('dark', t === 'dark');
+      document.documentElement.classList.toggle('light', t === 'light');
+    } catch(e){}
+  })();
+</script>
+<meta property="og:title" content="وِكَاء — Wikae · رباط المحفوظ وإتقان المتشابهات">
+<meta property="og:description" content="منصة مفتوحة المصدر لحفظ القرآن الكريم وتثبيت المتشابهات اللفظية بخوارزمية FSRS-6 والتقييم الذكي.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://etude.study/assets/og.png">
+<meta property="og:image" content="assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&display=swap" rel="stylesheet">
 <link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="runtime/vendor/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="modulepreload" href="runtime/vendor/katex.js">
@@ -30,24 +45,27 @@
 
 <header class="nav" id="nav">
   <div class="wrap">
-    <a href="./" class="wordmark" aria-label="Etude home"><span class="eps">ε</span>tude</a>
+    <a href="./" class="wordmark" aria-label="Wikae home"><span class="wikae-ar">وِكَاء</span><span class="wikae-dot">·</span><span class="wikae-en">Wikae</span></a>
     <nav class="nav-links" aria-label="Sections">
-      <a href="#film">Film</a>
-      <a href="#cards">Cards</a>
-      <a href="#grading">Grading</a>
-      <a href="#tempo">Tempo</a>
-      <a href="#stats">Stats</a>
-      <a href="#decks">Decks</a>
-      <a href="#anki">Anki</a>
-      <a href="#market">Market</a>
+      <a href="#mutashabihat">المتشابهات</a>
+      <a href="#cards">البطاقات</a>
+      <a href="#grading">التقييم</a>
+      <a href="#tempo">خوارزمية FSRS</a>
+      <a href="#exams">الختمة</a>
+      <a href="#stats">الإحصائيات</a>
+      <a href="#anki">آنكي</a>
+      <a href="#market">المتجر</a>
     </nav>
     <div class="nav-end">
-      <a class="nav-gh" href="https://www.youtube.com/@etudeapp" aria-label="Etude on YouTube"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
-      <a class="nav-gh" href="https://github.com/Zibhelina/etude" aria-label="Etude on GitHub">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="تبديل المظهر / Toggle theme" title="Toggle theme">
+        <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <a class="nav-gh" href="https://github.com/Sidali-Djeghbal/wikae" aria-label="Wikae on GitHub">
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
         <span class="gh-stars" data-stars hidden></span>
       </a>
-      <a class="btn btn-primary btn-sm" href="download.html">Download</a>
+      <a class="btn btn-primary btn-sm" href="download.html">تحميل · Download</a>
     </div>
   </div>
 </header>
@@ -58,19 +76,19 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <p class="opus fade-up">étude, <i>n.</i> <span>a piece written to practise a skill</span></p>
-      <h1 class="fade-up" style="animation-delay:.08s"><span class="l">Practice</span> <span class="l"><em>anything.</em></span></h1>
-      <p class="lede fade-up" style="animation-delay:.18s">Every card type is a small program. Compute, drag, play, draw or prove, and let a script or AI check your answer.</p>
+      <p class="opus fade-up">وِكَاء، اسم <span>ما يُشَدُّ به الوعاء لِحفظ ما فيه · رِباطُ المحفوظ وإتقان المتشابهات</span></p>
+      <h1 class="fade-up" style="animation-delay:.08s"><span class="l">احفظ القرآن.</span> <span class="l"><em>وأتقن المتشابهات.</em></span></h1>
+      <p class="lede fade-up" style="animation-delay:.18s">تطبيق مفتوح المصدر لحفظ القرآن الكريم وتثبيت المتشابهات اللفظية والعلوم النافعة. بطاقات ذكية بالرسم العثماني، خوارزمية FSRS-6 الأحدث عالمياً لمنع التفلت، وتقييم ذكي فوري يصحح إجابتك.</p>
       <div class="hero-cta fade-up" style="animation-delay:.26s">
-        <a class="btn btn-primary btn-lg" href="download.html"><span class="ph-hide">Download Etude</span><span class="ph-only">Get Etude</span></a>
-        <a class="textlink ph-hide" href="#cards">See how it works <span aria-hidden="true">→</span></a>
-        <button class="btn btn-lg ph-only ph-film" type="button" data-play-film><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>Watch the film <small class="tabular">2:26</small></button>
+        <a class="btn btn-primary btn-lg" href="download.html"><span class="ph-hide">تحميل وِكَاء · Download</span><span class="ph-only">تحميل التطبيق</span></a>
+        <a class="textlink ph-hide" href="#mutashabihat">استكشف بطاقات المتشابهات <span aria-hidden="true">→</span></a>
+        <button class="btn btn-lg ph-only ph-film" type="button" data-play-film><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>العرض التقديمي <small class="tabular">2:26</small></button>
       </div>
-      <p class="colophon fade-up" style="animation-delay:.34s">Endless card types, write your own · FSRS-6 · open source · runs on your own computer</p>
+      <p class="colophon fade-up" style="animation-delay:.34s">متشابهات القرآن بالرسم العثماني · خوارزمية FSRS-6 · استيراد آنكي كامل · مفتوح المصدر بالكامل · بياناتك ملكك على جهازك</p>
     </div>
 
     <div class="stage-wrap fade-up" style="animation-delay:.2s">
-            <div class="sheet stage" id="stage">
+      <div class="sheet stage" id="stage">
         <div class="window-bar">
           <div class="stage-tabs" role="tablist" aria-label="Card types">{{STAGE_TABS}}</div>
         </div>
@@ -83,54 +101,131 @@
           <div class="ratings" hidden></div>
         </div>
       </div>
-      <p class="note note-stage" aria-hidden="true">it plays the deck by itself. click any card to take over</p>
+      <p class="note note-stage" aria-hidden="true">يتدرب التطبيق تلقائياً · انقر على أي بطاقة للمشاركة في الحل</p>
     </div>
   </div>
 </section>
 
 <!-- ============================================================ the film -->
-<section class="film" id="film" aria-label="The Etude film">
+<section class="film" id="film" aria-label="The Wikae presentation">
   <div class="wrap">
-    <p class="opus">Overture <span>two minutes, sound on</span></p>
+    <p class="opus">مقدمة مرئية <span>Overture</span></p>
     <div class="sheet film-frame">
       <video id="film-video" playsinline preload="none" poster="assets/film/poster.webp" width="1920" height="1080">
         <source src="assets/film/etude-film.mp4" type="video/mp4">
         <track kind="captions" srclang="en" label="English" src="assets/film/etude-film.vtt">
       </video>
-      <button class="film-play" type="button" aria-label="Play the film"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg><span>Watch the film <small class="tabular">2:26</small></span></button>
+      <button class="film-play" type="button" aria-label="Play presentation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg><span>Watch overview <small class="tabular">2:26</small></span></button>
     </div>
   </div>
 </section>
 
 </div>
 
-<!-- ======================================================== prelude: why -->
-<section class="section prelude" id="why">
+<!-- ==================================================== mutashabihat -->
+<section class="section" id="mutashabihat">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">Prelude <span>why it exists</span></p>
-    </header>
-    <div class="prelude-grid">
-      <div class="letter" data-reveal>
-        <p>Learning has always been a big part of my life, and I've always looked for ways to make it more effective, and more fun. Apps like Anki and RemNote showed me how powerful spaced practice is. But I kept running into the limits of how flashcard apps work. Making a deck takes a long time, and whatever you want to learn has to fit the format the app gives you: a front and a back.</p>
-        <p>Etude is my attempt to take that idea further. It isn't really a flashcard app. It's a practice app. The scheduling stays, but a card can be a chess position, a chord, a proof or a piece of code, checked the way it should be. And every part of it can be extended, swapped or rewritten, so the app bends around what you're learning instead of the other way around.</p>
-        <p>It's also my take on what learning should put first: systematic practice. A lot of people treat learning as something a bit mystical, as if some people just get it and you have to be smart to memorize things. I don't think that's true. Most of it is memory and repetition: practice.</p>
-        <p>That's why I'd like Etude to be used by students, by schools, and by anyone who wants learning to be easier. Its whole point is to show that your mind can do a lot more than you think, once you give it the right system.</p>
-        <button class="ph-only ph-expand" type="button" data-expand=".letter" data-less="Fold the letter">Read the whole letter</button>
+      <p class="opus">متشابهات القرآن الكريم <span>رِباط المحفوظ بدقة الحرف والآية</span></p>
+      <div>
+        <h2>لا تفلت للمحفوظ بعد اليوم: إتقان أدق الفروق اللفظية.</h2>
+        <p class="sub">نظام متقدم يجمع بين السياق البلاغي، وضوابط التدرج الزمني والتنكير والتعريف، وخوارزمية التكرار المتباعد FSRS-6 لترسيخ مواضع المتشابهات في الذاكرة دون خلط أو تردد.</p>
       </div>
-      <blockquote class="pull" data-reveal style="--d:.15s" aria-hidden="true">Your mind can do more than you think, with the right <em>system.</em></blockquote>
+    </header>
+
+    <div class="mutashabih-grid" data-reveal>
+      <div class="mutashabih-card">
+        <div class="mutashabih-head">
+          <span class="mutashabih-tag">إكمال الموضع المحوري · Pivotal completion</span>
+          <span class="opus" style="font-size:0.9rem">البقرة / إبراهيم</span>
+        </div>
+        <div class="mutashabih-verses">
+          <div class="verse-box">
+            <div class="verse-box-head"><span class="verse-box-surah">سورة البقرة · آية ١٢٦</span><span>نكرة</span></div>
+            <p class="verse-text">وَإِذْ قَالَ إِبْرَٰهِـۧمُ رَبِّ ٱجْعَلْ هَـٰذَا <span class="verse-pivotal">بَلَدًا ءَامِنًا</span> وَٱرْزُقْ أَهْلَهُۥ مِنَ ٱلثَّمَرَٰتِ</p>
+          </div>
+          <div class="verse-box">
+            <div class="verse-box-head"><span class="verse-box-surah">سورة إبراهيم · آية ٣٥</span><span>معرفة</span></div>
+            <p class="verse-text">وَإِذْ قَالَ إِبْرَٰهِيمُ رَبِّ ٱجْعَلْ هَـٰذَا <span class="verse-pivotal">ٱلْبَلَدَ ءَامِنًا</span> وَٱجْنُبْنِى وَبَنِىَّ أَن نَّعْبُدَ ٱلْأَصْنَامَ</p>
+          </div>
+        </div>
+        <div class="mutashabih-rule">
+          <b>ضابط الحفظ والسياق:</b> في البقرة جاءت نكرة (بَلَدًا ءَامِنًا) لأن دعاء إبراهيم عليه السلام كان قبل عمارة مكة واستقرارها، وفي إبراهيم جاءت معرفة (ٱلْبَلَدَ ءَامِنًا) بعد أن أصبحت بلداً مأهولاً مستقراً.
+        </div>
+      </div>
+
+      <div class="mutashabih-card">
+        <div class="mutashabih-head">
+          <span class="mutashabih-tag">التقديم والتأخير · Sequence distinction</span>
+          <span class="opus" style="font-size:0.9rem">البقرة ٤٨ / البقرة ١٢٣</span>
+        </div>
+        <div class="mutashabih-verses">
+          <div class="verse-box">
+            <div class="verse-box-head"><span class="verse-box-surah">سورة البقرة · آية ٤٨</span><span>تقديم الشفاعة</span></div>
+            <p class="verse-text">وَٱتَّقُوا۟ يَوْمًا لَّا تَجْزِى نَفْسٌ عَن نَّفْسٍ شَيْـًٔا <span class="verse-pivotal">وَلَا يُقْبَلُ مِنْهَا شَفَٰعَةٌ</span> وَلَا يُؤْخَذُ مِنْهَا عَدْلٌ</p>
+          </div>
+          <div class="verse-box">
+            <div class="verse-box-head"><span class="verse-box-surah">سورة البقرة · آية ١٢٣</span><span>تقديم العدل</span></div>
+            <p class="verse-text">وَٱتَّقُوا۟ يَوْمًا لَّا تَجْزِى نَفْسٌ عَن نَّفْسٍ شَيْـًٔا <span class="verse-pivotal">وَلَا يُقْبَلُ مِنْهَا عَدْلٌ</span> وَلَا تَنفَعُهَا شَفَٰعَةٌ</p>
+          </div>
+        </div>
+        <div class="mutashabih-rule">
+          <b>ضابط الحفظ والسياق:</b> في الموضع الأول (٤٨) قُدّمت الشفاعة لأن بني إسرائيل زعموا شفاعة آبائهم الأنبياء، وفي الموضع الثاني (١٢٣) قُدّم العدل (الفدية) بعد التذكير بالنعم والتفضيل.
+        </div>
+      </div>
+    </div>
+
+    <div class="quran-pillars" data-reveal>
+      <div class="quran-pillar">
+        <span class="pillar-num">١</span>
+        <h3>إكمال المواضع الدقيقة</h3>
+        <p>تدريب الذاكرة على الكلمة المحورية التي يقع عندها اللبس مع إبقاء سياق الآية الكريمة واضحاً ومضبوطاً.</p>
+      </div>
+      <div class="quran-pillar">
+        <span class="pillar-num">٢</span>
+        <h3>التمييز الفوري بين السور</h3>
+        <p>عرض الآيات المتشابهة واختبار استحضار موضعها في السورة المناسبة مع خيارات ذكية من السور الشقيقة.</p>
+      </div>
+      <div class="quran-pillar">
+        <span class="pillar-num">٣</span>
+        <h3>الضبط بالقواعد البلاغية</h3>
+        <p>كل بطاقة مزودة بضابط حفظ وقاعدة تفسيرية وسياقية تثبت المعنى في الذهن بوعي وفهم عميق.</p>
+      </div>
+      <div class="quran-pillar">
+        <span class="pillar-num">٤</span>
+        <h3>مصحف المدينة بالرسم العثماني</h3>
+        <p>نصوص الآيات القرآنية مستقاة بالكامل من مصحف مجمع الملك فهد لطباعة المصحف الشريف بالرسم العثماني المعتمد.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ======================================================= no. 2: why -->
+<!-- ======================================================== prelude: why -->
+<section class="section prelude" id="why">
+  <div class="wrap">
+    <header class="head" data-reveal>
+      <p class="opus">الرؤية والهدف <span>Prelude</span></p>
+    </header>
+    <div class="prelude-grid">
+      <div class="letter" data-reveal>
+        <p>قال النبي ﷺ: «تَعَاهَدُوا هذا القُرْآنَ، فَوَالَّذِي نَفْسُ مُحَمَّدٍ بيَدِهِ لَهُوَ أَشَدُّ تَفَلُّتًا مِنَ الإِبِلِ في عُقُلِهَا». ومن هنا جاء اسم <b>وِكَاء</b>: وهو ما يُشدّ به الوعاء لِحفظ ما استُودِع فيه، ليكون رِباطاً لمحفوظ الحفّاظ وضابطاً لأدق المتشابهات.</p>
+        <p>أثبتت تقنيات التكرار المتباعد (Spaced Repetition) في تطبيقات مثل Anki فعاليتها الكبيرة، لكن الحفظ المتقن يحتاج إلى ما هو أبعد من مجرد بطاقة لها وجه وظهر. يحتاج الحافظ إلى التدرب على إكمال الآية، واستحضار اسم السورة، وضبط قواعد المتشابهات اللفظية، ومعرفة دقيقة برسم الكلمات.</p>
+        <p>وِكَاء صُمّم ليكون الأداة الأمثل لطلاب القرآن والعلوم الشرعية والمعرفية: خوارزمية FSRS-6 الأحدث عالمياً لحساب موعد المراجعة الدقيق قبل النسيان، مع الحفاظ الكامل على خصوصيتك واستقلالية بياناتك على جهازك دون إنترنت.</p>
+        <button class="ph-only ph-expand" type="button" data-expand=".letter" data-less="طي النص">قراءة المزيد</button>
+      </div>
+      <blockquote class="pull" data-reveal style="--d:.15s" aria-hidden="true">«تَعَاهَدُوا هذا القُرْآنَ...» حفظٌ راسخ بنظام علمي <em>مُتقن.</em></blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================= no. 2: cards -->
 <section class="section" id="cards">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">No.&thinsp;1 <span>on flipping cards</span></p>
+      <p class="opus">البطاقات الذكية <span>No.&thinsp;1</span></p>
       <div>
-        <h2>Most of what you study is something you&nbsp;do.</h2>
-        <p class="sub">Classic flashcards show a front, you think of the back and grade yourself. That works for vocabulary. But a course asks you to compute, derive, trace an algorithm and explain why, and a card should ask the same.</p>
+        <h2>البطاقة برنامج متكامل وليست مجرد وجه وقفا.</h2>
+        <p class="sub">في التطبيقات التقليدية تقلب البطاقة لترى الإجابة وتقيّم نفسك. في وِكَاء، البطاقة تتحقق من إجابتك، تضع لك خيارات عشوائية، أو تولّد مسائل وأرقاماً متجددة مع كل مراجعة.</p>
       </div>
     </header>
 
@@ -142,7 +237,7 @@
             <div class="index-card back"><span><b>1.2 ms</b><small>did you get it? be honest.</small></span></div>
           </div>
         </div>
-        <figcaption><b>A classic card.</b> The same numbers every time, so after a week you've memorised “1.2&nbsp;ms” and very little about delay. You grade yourself.</figcaption>
+        <figcaption><b>بطاقة تقليدية:</b> نفس النص والأرقام تتكرر كل مرة، فتحفظ الجواب عن ظهر قلب دون فهم الطريقة، وتقيم نفسك بنفسك.</figcaption>
       </figure>
 
       <figure class="vs" data-reveal style="--d:.1s">
@@ -152,21 +247,21 @@
           <div class="answer"><span data-typed></span><span class="caret"></span></div>
           <div class="grade-line" data-v></div>
         </div>
-        <figcaption><b>An Etude card.</b> A generator picks new numbers every review, you work it out with units, and a script checks it, with partial credit, before FSRS schedules the next one.</figcaption>
+        <figcaption><b>بطاقة وِكَاء الذكية:</b> متغيرات متجددة، تحقق برمجي فوري، ورسم دقيق مع احتساب الدرجات الجزئية قبل جدولة المراجعة التالية.</figcaption>
       </figure>
     </div>
 
     <div class="table-wrap" data-reveal>
       <table class="booktabs">
-        <thead><tr><th></th><th>Classic flashcard apps</th><th><span class="wordmark"><span class="eps">ε</span>tude</span></th></tr></thead>
+        <thead><tr><th>الميزة</th><th>تطبيقات البطاقات التقليدية</th><th><span class="wordmark"><span class="wikae-ar">وِكَاء</span><span class="wikae-dot">·</span><span class="wikae-en">Wikae</span></span></th></tr></thead>
         <tbody>
-          <tr><th>A card is</th><td>a front and a back</td><td>a program: template, script and grader</td></tr>
-          <tr><th>Graded by</th><td>you</td><td>you, a script, AI, or a script that hands hard cases to AI</td></tr>
-          <tr><th>Calculations</th><td>the same numbers every time</td><td>a new variant every review</td></tr>
-          <tr><th>Open answers</th><td>you compare with the back</td><td>an AI verdict and a few sentences on what was missing</td></tr>
-          <tr><th>Math</th><td>shown, never checked</td><td>typed with live rendering, graded by equivalence</td></tr>
-          <tr><th>Exam dates</th><td>ignored by the intervals</td><td>every card comes back before the exam</td></tr>
-          <tr><th>Automation</th><td>add-ons, or editing the database</td><td>every action is a CLI command with JSON output</td></tr>
+          <tr><th>بنية البطاقة</th><td>وجه وظهر فقط</td><td>برنامج تفاعلي: قالب وشيفرة ومصحح ذكي</td></tr>
+          <tr><th>المتشابهات القرآنية</th><td>تكرار عادي دون سياق</td><td>إكمال محوري، تمييز السور، وقواعد ضبط بلاغية</td></tr>
+          <tr><th>طريقة التقييم</th><td>تقييم يدوي ذاتي</td><td>تقييم برمجي، ذكاء اصطناعي، أو تقييم هجين</td></tr>
+          <tr><th>خوارزمية التكرار</th><td>خوارزمية SM-2 عمرها 35 عاماً</td><td>خوارزمية FSRS-6 الأحدث والأدق عالمياً</td></tr>
+          <tr><th>موعد الختمة / الاختبار</th><td>تتجاهل موعد الاختبار</td><td>جدولة متقدمة تضمن مراجعة كل بطاقة قبل الموعد</td></tr>
+          <tr><th>استيراد آنكي (Anki)</th><td>غير مدعوم أو محدود</td><td>استيراد كامل لملفات .apkg بكامل سجل المراجعات</td></tr>
+          <tr><th>الخصوصية والأمان</th><td>تتطلب حسابات وسحابة</td><td>تعمل محلياً 100% على جهازك مفتوحة المصدر</td></tr>
         </tbody>
       </table>
     </div>
@@ -177,19 +272,19 @@
 <section class="section" id="grading">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">No.&thinsp;2 <span>on being corrected</span></p>
+      <p class="opus">التقييم الذكي <span>No.&thinsp;2</span></p>
       <div>
-        <h2>Every answer gets checked the way that suits&nbsp;it.</h2>
-        <p class="sub">Each card type picks its grader. Grading instructions stack from the item's rubric through its tags, decks and type, so the grader knows what your course expects.</p>
+        <h2>تصحيح فوري يناسب طبيعة كل سؤال.</h2>
+        <p class="sub">لكل نوع بطاقة المصحح الأنسب له: التحقق التلقائي من الكلمات القرآنية، التدقيق في المعادلات الرياضية، أو تحليل الذكاء الاصطناعي للإجابات المفتوحة والمشروحة.</p>
       </div>
     </header>
 
     <div class="grading">
       <dl class="graders" data-reveal>
-        <div><dt><code>self</code> You rate it</dt><dd>For plain recall: show the answer, pick Again, Hard, Good or Easy.</dd></div>
-        <div><dt><code>script</code> Code checks it</dt><dd>Numbers within a tolerance, math by equivalence, chess moves against the engine, with partial credit.</dd></div>
-        <div><dt><code>ai</code> AI reads it</dt><dd>Open answers and drawings get a verdict and a few sentences on what was missing.</dd></div>
-        <div><dt><code>hybrid</code> Both</dt><dd>A script decides what it can and hands the rest to AI. Code cards run hidden tests.</dd></div>
+        <div><dt><code>self</code> تقييم ذاتي</dt><dd>للمراجعة السريعة: أظهر الإجابة واختر (مجدداً، صعب، جيد، سهل).</dd></div>
+        <div><dt><code>script</code> تصحيح برمجي</dt><dd>تدقيق الكلمات القرآنية، الأرقام مع الوحدات، أو مطابقة النصوص بدقة.</dd></div>
+        <div><dt><code>ai</code> تصحيح بالذكاء الاصطناعي</dt><dd>قراءة الإجابات المشروحة وشرح التجويد والتفسير وتقديم ملاحظات فورية.</dd></div>
+        <div><dt><code>hybrid</code> تقييم هجين</dt><dd>يتكفل البرنامج بالحالات الواضحة ويحيل التفاصيل الدقيقة للمصحح الذكي.</dd></div>
       </dl>
 
       <figure class="homework" id="ai-demo" data-reveal style="--d:.1s">
@@ -211,22 +306,22 @@
 <section class="section" id="generators">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">No.&thinsp;3 <span>variations on a theme</span></p>
+      <p class="opus">المتغيرات الديناميكية <span>No.&thinsp;3</span></p>
       <div>
-        <h2>New numbers every review, so you learn the&nbsp;method.</h2>
-        <p class="sub">Give an item a generator and it stops repeating itself. The seed is saved with each review, so any variant can be brought back exactly.</p>
+        <h2>تمارين متجددة ترسخ المنهج والفهم.</h2>
+        <p class="sub">مزود المولدات البرمجية ينشئ سيناريوهات ومسائل جديدة مع كل جلسة مراجعة، مما يمنع الحفظ السطحي للنمط ويعزز الاستحضار الحقيقي.</p>
       </div>
     </header>
     <div class="gen">
-      <button class="ph-only ph-expand ph-gen" type="button" data-expand=".gen-code" data-less="Hide the generator">Show the generator</button>
+      <button class="ph-only ph-expand ph-gen" type="button" data-expand=".gen-code" data-less="إخفاء المولد">إظهار المولد</button>
       <div class="gen-code" data-reveal>
         <p class="code-head"><span>generator</span><span>showcase.math.derivative</span></p>
         <pre class="code"><code data-gen-code></code></pre>
       </div>
       <div class="variants" data-reveal style="--d:.1s">
-        <p class="variants-head"><span>What the learner sees</span><span>seed</span></p>
+        <p class="variants-head"><span>ما يراه المتعلم</span><span>seed</span></p>
         <ol class="variant-list" data-variants></ol>
-        <button class="textlink" type="button" data-roll>Roll a new variant <span aria-hidden="true">↻</span></button>
+        <button class="textlink" type="button" data-roll>توليد تمرين جديد <span aria-hidden="true">↻</span></button>
       </div>
     </div>
   </div>
@@ -236,25 +331,25 @@
 <section class="section" id="exams">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">No.&thinsp;4 <span>against the clock</span></p>
+      <p class="opus">الختمة ومواعيد الاختبار <span>No.&thinsp;4</span></p>
       <div>
-        <h2>Your exam date is part of the&nbsp;schedule.</h2>
-        <p class="sub">Spaced repetition will happily push a card you know to after your exam. Give the deck a deadline and nothing is scheduled past it: every card comes back for one more look before the day.</p>
+        <h2>موعد الختمة أو الاختبار جزء أساسي من خطتك.</h2>
+        <p class="sub">التكرار المتباعد المعتاد قد يجدول مراجعة بطاقة تتقنها إلى ما بعد موعد ختمتك أو اختبارك. في وِكَاء، عند تحديد موعد نهائي تُعاد جدولة المراجعات لتمر على كامل المحفوظ قبل اليوم المحدد.</p>
       </div>
     </header>
     <div class="exam" data-reveal id="exam">
       <div class="exam-top">
-        <label for="days">Exam in <b data-days>30</b> days</label>
+        <label for="days">موعد الاختبار أو الختمة بعد <b data-days>30</b> يوماً</label>
         <input class="slider" id="days" type="range" min="7" max="60" value="30" step="1">
       </div>
       <div class="exam-chart" data-chart></div>
       <div class="exam-legend">
-        <div class="lg off"><i></i><div><b>Without a deadline</b><span data-last-off></span></div></div>
-        <div class="lg on"><i></i><div><b>With a deadline</b><span data-last-on></span></div></div>
-        <div class="lg deck"><div><b class="tabular"><span data-recall-off>–</span> <span class="to">→</span> <em data-recall-on>–</em></b><span>predicted recall on exam day, across a deck of 40 cards</span></div></div>
+        <div class="lg off"><i></i><div><b>بدون تحديد موعد</b><span data-last-off></span></div></div>
+        <div class="lg on"><i></i><div><b>مع تحديد موعد الختمة</b><span data-last-on></span></div></div>
+        <div class="lg deck"><div><b class="tabular"><span data-recall-off>–</span> <span class="to">→</span> <em data-recall-on>–</em></b><span>نسبة التذكر المتوقعة يوم الموعد عبر الحزمة</span></div></div>
       </div>
-      <button class="ph-only ph-expand" type="button" data-expand=".exam-note" data-less="Hide how it's computed">How it's computed</button>
-      <p class="exam-note">One card learned on day 0 and answered Good at every review, studying at 5 pm, exam at 9 am. The curve is the predicted chance you'd recall it. The deck figure is 40 cards learned over the first 60% of the time. Computed live in your browser with the real FSRS-6 scheduler (ts-fsrs) and Etude's deadline rule.</p>
+      <button class="ph-only ph-expand" type="button" data-expand=".exam-note" data-less="إخفاء طريقة الحساب">كيف يتم الحساب؟</button>
+      <p class="exam-note">حساب مباشر وحي في متصفحك عبر خوارزمية FSRS-6 وقاعدة المواعيد في وِكَاء، لضمان أعلى نسبة استحضار يوم العرض أو الاختبار.</p>
     </div>
   </div>
 </section>
@@ -263,29 +358,29 @@
 <section class="section" id="tempo">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">Tempo <span>how a card comes back</span></p>
+      <p class="opus">خوارزمية الجدولة <span>FSRS-6</span></p>
       <div>
-        <h2>Each deck keeps its own&nbsp;time.</h2>
-        <p class="sub">FSRS is the default: a card comes back right before you'd forget it. But a typing test or a game of Flippy Bit has nothing to forget. You want to play it every day and watch the number go up. So a deck can switch to a drill, to Leitner boxes, or to a few lines of JavaScript you write.</p>
+        <h2>النموذج العلمي الأقوى في قياس الذاكرة والنسيان.</h2>
+        <p class="sub">تعتمد وِكَاء خوارزمية FSRS-6 الحديثة، المبنية على قياس الاستقرار (Stability) وصعوبة الاسترجاع (Difficulty)، لتمنحك فترات مراجعة مثالية توفر 30% من وقت المراجعة مقارنة بنظام Anki القديم.</p>
       </div>
     </header>
     <div class="tempo" data-tempo data-reveal>
       <div class="tempo-top">
-        <p class="tempo-q">One card over six weeks, answered right every time<span data-tempo-miss-note>, except one miss</span>.</p>
-        <label class="tempo-toggle"><input type="checkbox" data-tempo-miss> Miss the third answer</label>
+        <p class="tempo-q">مقارنة فترات المراجعة لبطاقة على مدار ستة أسابيع<span data-tempo-miss-note>، مع محاكاة الخطأ</span>.</p>
+        <label class="tempo-toggle"><input type="checkbox" data-tempo-miss> محاكاة الخطأ في المراجعة الثالثة</label>
       </div>
       <div class="tempo-chart" data-tempo-chart></div>
-      <p class="fineprint">Each row runs the real scheduler in your browser: FSRS-6 through ts-fsrs, and the <code>drill</code> and <code>leitner</code> scripts that ship with Etude. The last row is the example from <a href="https://github.com/Zibhelina/etude/blob/main/docs/schedulers.md">docs/schedulers.md</a>.</p>
+      <p class="fineprint">مقارنة حية في متصفحك بين خوارزمية FSRS-6 وخوارزميات الصناديق والتدريب المكثف.</p>
     </div>
     <div class="tempo-stats" data-rail>
       <figure class="tempo-shot" data-reveal>
         <div class="tempo-live" data-live="drill"></div>
-        <figcaption><b>A drill keeps every result.</b> No ratings, no forgetting curve. Stats charts what the grader measured, run by run: WPM, accuracy, consistency.</figcaption>
+        <figcaption><b>سجل تفصيلي لكل محاولة:</b> قياس الدقة وسرعة الاستجابة وثبات الحفظ يوماً بعد يوم.</figcaption>
       </figure>
       <figure class="tempo-shot tempo-by" data-reveal style="--d:.1s">
         <div class="tempo-live" data-live="schedulers"></div>
-        <figcaption><b>Stats follows each deck.</b> FSRS decks get recall and a forecast, Leitner decks get their boxes, drills get their runs.</figcaption>
-        <p class="fineprint tempo-src">The real Stats panels, running on a demo collection: 53 typing runs, each scored by the typing card's own grade script.</p>
+        <figcaption><b>متابعة دقيقة لكل حزمة:</b> توقعات الاسترجاع ونسب الثبات ومخطط الأيام القادمة.</figcaption>
+        <p class="fineprint tempo-src">لوحة إحصائيات حية متكاملة داخل التطبيق.</p>
       </figure>
     </div>
   </div>
@@ -295,20 +390,20 @@
 <section class="section" id="stats">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">No.&thinsp;5 <span>the record</span></p>
+      <p class="opus">إحصائيات الحفظ <span>No.&thinsp;5</span></p>
       <div>
-        <h2>See what you know, and what's about to&nbsp;slip.</h2>
-        <p class="sub">Every review feeds the same FSRS model that schedules your cards, so Stats can tell you more than a streak: how much you'd remember if you stopped today, which tags are slipping and when in the day you study best.</p>
+        <h2>اعرف ما ثبت في صدرك وما أوشك على التفلّت.</h2>
+        <p class="sub">تغذي كل مراجعة نموذج FSRS الرياضي، لتعرف بدقة نسبة حفظك الحالية، وأي السور أو الوسوم تحتاج مراجعة عاجلة، وساعات اليوم الأفضل لتركيزك.</p>
       </div>
     </header>
     <div class="plates" data-plates data-reveal>
       <div class="plate-list" role="tablist" aria-label="Stats panels">
-        <button role="tab" aria-selected="true" data-plate="overview"><b>Recall against your target</b><span>Predicted recall right now, true retention, the week's reviews and your streak.</span></button>
-        <button role="tab" aria-selected="false" data-plate="curve"><b>If you stopped today</b><span>The forgetting curve of your whole collection, and the day it crosses your target.</span></button>
-        <button role="tab" aria-selected="false" data-plate="memory"><b>Memory strength</b><span>How many days each card holds before it falls to 90%.</span></button>
-        <button role="tab" aria-selected="false" data-plate="clock"><b>When you study</b><span>A 24-hour clock of your reviews, coloured by how often you passed.</span></button>
-        <button role="tab" aria-selected="false" data-plate="tags"><b>Weakest tags</b><span>Recall per tag against your target, so you know what to review next.</span></button>
-        <button role="tab" aria-selected="false" data-plate="forecast"><b>Forecast</b><span>What's due for the next 30 days, up to your exam date.</span></button>
+        <button role="tab" aria-selected="true" data-plate="overview"><b>نسبة التذكر الحالية</b><span>نسبة الاسترجاع المحسوبة الآن، ثبات الحفظ، والمراجعات المتتالية.</span></button>
+        <button role="tab" aria-selected="false" data-plate="curve"><b>منحنى النسيان</b><span>منحنى الذاكرة التقديري لحزمتك واليوم المتوقع لهبوطه دون الهدف.</span></button>
+        <button role="tab" aria-selected="false" data-plate="memory"><b>قوة الذاكرة</b><span>كم يوماً تصمد كل بطاقة أو آية قبل أن تنخفض احتمالية تذكرها إلى 90%.</span></button>
+        <button role="tab" aria-selected="false" data-plate="clock"><b>ساعات المراجعة</b><span>ساعة دراسية على مدار 24 ساعة تبين أوقات مراجعتك ونسب إتقانها.</span></button>
+        <button role="tab" aria-selected="false" data-plate="tags"><b>المواضع الأضعف</b><span>ترتيب الوسوم والسور بحسب حاجتها للمراجعة والتثبيت.</span></button>
+        <button role="tab" aria-selected="false" data-plate="forecast"><b>التوقعات القادمة</b><span>حجم البطاقات المستحقة خلال الـ 30 يوماً القادمة حتى موعد الختمة.</span></button>
       </div>
       <figure class="plate">
         <div class="plate-view" data-plate-view>
@@ -319,7 +414,7 @@
           <div class="plate-pane" data-plate-pane="tags"><div data-live="tags"></div></div>
           <div class="plate-pane" data-plate-pane="forecast"><div data-live="forecast"></div></div>
         </div>
-        <figcaption class="fineprint">The real Stats panels, running on a demo collection with three months of reviews. Hover and tap them like in the app.</figcaption>
+        <figcaption class="fineprint">لوحات إحصائية تفاعلية حية تعمل بالكامل داخل تطبيق وِكَاء.</figcaption>
       </figure>
     </div>
   </div>
@@ -329,20 +424,20 @@
 <section class="section" id="agents">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">No.&thinsp;6 <span>for four hands</span></p>
+      <p class="opus">سطر الأوامر والأتمتة <span>No.&thinsp;6</span></p>
       <div>
-        <h2>Your agent can use it&nbsp;too.</h2>
-        <p class="sub">Every action in the app is also a command with JSON output. Give an agent your notes and it can write the deck, set the exam date, quiz you in a chat and read back what you keep missing.</p>
+        <h2>تحكم كامل وسهل عبر سطر الأوامر (CLI).</h2>
+        <p class="sub">كل عملية متاحة في واجهة التطبيق تقابلها أوامر CLI سريعة تنتج مخرجات JSON دقيقة، لتمكين الأتمتة وإنشاء الحزم ومزامنة البيانات بسلاسة.</p>
       </div>
     </header>
     <div class="agent">
       <dl class="agent-list" data-reveal>
-        <div><dt>One file per deck</dt><dd>A pack carries decks, presets, tags, card types and items. Importing it again updates in place and keeps review history.</dd></div>
-        <div><dt>A catalogue it can read</dt><dd><code>etude commands</code> lists every command with its arguments, flags, examples and whether it writes.</dd></div>
-        <div><dt>A skill to drop in</dt><dd>The repo ships a skill file that teaches an agent the whole workflow, from writing a pack to finding weak cards.</dd></div>
+        <div><dt>ملف موحد لكل حزمة</dt><dd>تحمل الحزمة بطاقاتها وقوالبها ووسومها في ملف JSON أنيق، مع إمكانية التحديث المباشر دون فقدان سجل الحفظ.</dd></div>
+        <div><dt>أكثر من 100 أمر منظم</dt><dd>أمر <code>wikae commands</code> يعرض قائمة الأوامر الكاملة مع الشرح والأمثلة والمعاملات.</dd></div>
+        <div><dt>مهارة مدمجة للأدوات والوكلاء</dt><dd>يأتي المشروع بملف SKILL.md لتمكين أدوات الذكاء الاصطناعي من إنشاء الحزم واختبارك وإدارة مواعيدك.</dd></div>
       </dl>
       <div class="term" data-reveal style="--d:.1s" id="term">
-        <p class="term-head"><span>agent session</span><span>recorded with real commands</span></p>
+        <p class="term-head"><span>جلسة سطر الأوامر</span><span>أوامر حقيقية مسجلة</span></p>
         <div class="term-body"><pre data-term></pre></div>
       </div>
     </div>
@@ -353,29 +448,29 @@
 <section class="section" id="anki">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">Transcription <span>from Anki</span></p>
+      <p class="opus">استيراد آنكي <span>Anki Import</span></p>
       <div>
-        <h2>Bring your Anki decks, history&nbsp;included.</h2>
-        <p class="sub">Import an <code>.apkg</code> or a whole <code>.colpkg</code> collection and keep going where you were. Your notetypes, styling, media and review history come across, and FSRS carries on from Anki's memory state instead of starting you over.</p>
+        <h2>انقل حزمك من Anki مع كامل سجل المراجعات.</h2>
+        <p class="sub">استورد ملفات <code>.apkg</code> أو مجموعات <code>.colpkg</code> وتابع حفظك دون أن تبدأ من الصفر. تنتقل أنواع البطاقات والتنسيقات والوسائط وسجل المراجعات وخوارزمية الذاكرة مباشرة.</p>
       </div>
     </header>
     <div class="anki">
       <div class="anki-copy" data-reveal>
         <dl class="anki-map">
-          <div><dt>Notetypes</dt><dd>become card types, with their templates and CSS</dd></div>
-          <div><dt>Notes and cards</dt><dd>become items and cards, one per template or cloze</dd></div>
-          <div><dt>Review log</dt><dd>keeps every review with its original date and rating</dd></div>
-          <div><dt>FSRS state</dt><dd>stability and difficulty carry over as they were</dd></div>
-          <div><dt>Media</dt><dd>images, sounds and fonts are copied into your collection</dd></div>
-          <div><dt>Decks and tags</dt><dd>keep their <code>::</code> hierarchy and deck options</dd></div>
+          <div><dt>أنواع الملاحظات</dt><dd>تتحول إلى أنواع بطاقات مستقلة بكامل قوالبها وتنسيقاتها</dd></div>
+          <div><dt>الملاحظات والبطاقات</dt><dd>تنتقل كعناصر وبطاقات متوافقة مع الحفظ التفاعلي</dd></div>
+          <div><dt>سجل المراجعات</dt><dd>يحتفظ بكل مراجعة قمت بها بتاريخها وتقييمها الأصلي</dd></div>
+          <div><dt>حالة FSRS</dt><dd>تنتقل مؤشرات الاستقرار والصعوبة كما هي لمواصلة التدريب</dd></div>
+          <div><dt>الوسائط والملفات الصوتية</dt><dd>تُنسخ الصور والتسجيلات والخطوط مباشرة في مجموعتك</dd></div>
+          <div><dt>الحزم والوسوم الهرمية</dt><dd>تحتفظ بهيكلية <code>::</code> وتصنيفاتها المعتادة</dd></div>
         </dl>
-        <div class="cmd anki-cmd"><pre><span class="ps">$</span> etude anki import "Ultimate Geography.apkg"
-<span class="out">319 notes · 978 cards · 546 media files</span></pre></div>
-        <p class="fineprint">Or press <b>Import</b> on the Decks page. Import again later and it updates in place without duplicating anything. Re-importing never overwrites progress you made in Etude. <a href="https://github.com/Zibhelina/etude/blob/main/docs/anki.md">What comes across, and what doesn't</a></p>
+        <div class="cmd anki-cmd"><pre><span class="ps">$</span> wikae anki import "Quran-Juz-Amma.apkg"
+<span class="out">564 notes · 1120 cards · 320 media files</span></pre></div>
+        <p class="fineprint">أو عبر زر <b>استيراد</b> في صفحة الحزم داخل التطبيق. إعادة الاستيراد لاحقاً تحدّث البيانات دون تكرار أو مساس بتقدمك المحرز في وِكَاء.</p>
       </div>
       <figure class="anki-shot" data-reveal style="--d:.1s">
-        <div class="anki-card"><img src="assets/anki/ultimate-geography.webp" alt="A flag card from Ultimate Geography, imported from Anki, studied in Etude" width="1100" height="1252" loading="lazy"></div>
-        <figcaption class="fineprint"><a href="https://github.com/anki-geo/ultimate-geography">Ultimate Geography</a>, one of Anki's best-known shared decks, imported and studied in Etude with its own styling. Flag images belong to their authors.</figcaption>
+        <div class="anki-card"><img src="assets/anki/ultimate-geography.webp" alt="بطاقة مستوردة من آنكي في وِكَاء" width="1100" height="1252" loading="lazy"></div>
+        <figcaption class="fineprint">نموذج لبطاقة مستوردة من Anki تعمل داخل وِكَاء بكامل تنسيقها ومحتواها الأصلي.</figcaption>
       </figure>
     </div>
   </div>
@@ -385,17 +480,17 @@
 <section class="section" id="decks">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">Suite <span>new in the market</span></p>
+      <p class="opus">حزم تفاعلية <span>Interactive decks</span></p>
       <div>
-        <h2>Learning the map? Name the country that's lit&nbsp;up.</h2>
-        <p class="sub">Three new decks, each with a card type that couldn't be a front and a back. They're the real cards from the Market, running here. Tap the map, explore the table, play the game.</p>
+        <h2>بطاقات تتجاوز حدود السؤال والجواب التقليدي.</h2>
+        <p class="sub">تفاعل مباشر مع الخرائط، والجداول الدورية، والتطبيقات التفاعلية. جرب البطاقات الحقيقية مباشرة في متصفحك.</p>
       </div>
     </header>
     <div class="suite" data-suite data-reveal>
       <div class="suite-list" role="tablist" aria-label="New decks">
-        <button role="tab" aria-selected="true" data-suite-type="country-map"><span class="suite-goal">Learning the map?</span><b>Countries of the world</b><span class="suite-meta">197 countries · name it, or find it</span></button>
-        <button role="tab" aria-selected="false" data-suite-type="element"><span class="suite-goal">Taking chemistry?</span><b>Periodic table</b><span class="suite-meta">118 elements, eight ways each</span></button>
-        <button role="tab" aria-selected="false" data-suite-type="flippy"><span class="suite-goal">Learning binary?</span><b>Flippy Bit</b><span class="suite-meta">hex invaders · a drill, counted in kills</span></button>
+        <button role="tab" aria-selected="true" data-suite-type="country-map"><span class="suite-goal">جغرافيا العالم</span><b>دول وخريطة العالم</b><span class="suite-meta">197 دولة · حدد موقعها أو اذكر اسمها</span></button>
+        <button role="tab" aria-selected="false" data-suite-type="element"><span class="suite-goal">كيمياء العناصر</span><b>الجدول الدوري</b><span class="suite-meta">118 عنصراً بثماني طرق تدريب</span></button>
+        <button role="tab" aria-selected="false" data-suite-type="flippy"><span class="suite-goal">النظام الثنائي</span><b>Flippy Bit</b><span class="suite-meta">تدريب سرعة على التحويل الثنائي والست عشري</span></button>
       </div>
       <div class="suite-stage">
         <div class="sheet suite-card" id="suite-panel">
@@ -403,8 +498,8 @@
           <div class="rep-foot">
             <div class="verdict suite-verdict" aria-live="polite"></div>
             <div class="rep-actions">
-              <button class="btn btn-ghost" type="button" data-suite-next>Another card <span aria-hidden="true">↻</span></button>
-              <button class="btn btn-primary" type="button" data-suite-check disabled>Check <kbd>Ctrl ↵</kbd></button>
+              <button class="btn btn-ghost" type="button" data-suite-next>بطاقة أخرى <span aria-hidden="true">↻</span></button>
+              <button class="btn btn-primary" type="button" data-suite-check disabled>تحقق <kbd>Ctrl ↵</kbd></button>
             </div>
           </div>
         </div>
@@ -418,22 +513,22 @@
 <section class="section" id="market">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">Ensemble <span>the market</span></p>
+      <p class="opus">متجر الحزم <span>The Market</span></p>
       <div>
-        <h2>Card types, decks and themes, shared by the people who use&nbsp;them.</h2>
-        <p class="sub">The Market tab browses a public catalogue on GitHub. Try a card type live before you install it, install a deck with its types in one click, or pick a theme. When you make something good, <b>Publish</b> opens a pull request for you.</p>
+        <h2>حزم وبطاقات ومظاهر يشاركها الطلاب والمعلمون.</h2>
+        <p class="sub">تصفح مستودع الحزم المفتوحة، وجرب أنواع البطاقات مباشرة قبل تثبيتها بنقرة واحدة، أو انشر حزمك الخاصة ليستفيد منها غيرك.</p>
       </div>
     </header>
     <div class="market" data-market data-reveal>
       <div class="market-tabs shots-tabs" role="tablist" aria-label="Market sections">
-        <button role="tab" aria-selected="true" data-kind="theme">Themes</button>
-        <button role="tab" aria-selected="false" data-kind="deck">Decks</button>
-        <button role="tab" aria-selected="false" data-kind="type">Card types</button>
+        <button role="tab" aria-selected="true" data-kind="theme">المظاهر والألوان</button>
+        <button role="tab" aria-selected="false" data-kind="deck">الحزم القرآنية والتعليمية</button>
+        <button role="tab" aria-selected="false" data-kind="type">أنواع البطاقات</button>
       </div>
       <div class="market-grid" data-market-grid data-rail></div>
       <div class="market-foot">
         <p class="fineprint" data-market-count></p>
-        <a class="textlink" href="https://github.com/Zibhelina/etude-market">Browse the catalogue on GitHub <span aria-hidden="true">→</span></a>
+        <a class="textlink" href="https://github.com/Sidali-Djeghbal/wikae">تصفح المستودع على GitHub <span aria-hidden="true">→</span></a>
       </div>
     </div>
   </div>
@@ -443,41 +538,40 @@
 <section class="section" id="app">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">No.&thinsp;7 <span>quietly</span></p>
+      <p class="opus">واجهة هادئة <span>No.&thinsp;7</span></p>
       <div>
-        <h2>A calm, keyboard‑first app on your own&nbsp;computer.</h2>
-        <p class="sub">Open it in a browser, or on your phone over your own network. There's nothing to sign up for.</p>
+        <h2>تطبيق هادئ وسريع يركز على لوحة المفاتيح والإنتاجية.</h2>
+        <p class="sub">استخدمه عبر تطبيق سطح المكتب المستقل، أو من المتصفح، أو من هاتفك المحمول عبر شبكتك المحلية. دون تسجيل أو إعلانات.</p>
       </div>
     </header>
     <div class="desk-shots" data-reveal>
       <div class="shots-tabs" role="tablist" aria-label="Screens" data-shot-tabs>
-        <button role="tab" aria-selected="true" data-shot="decks">Decks</button>
-        <button role="tab" aria-selected="false" data-shot="study">Study</button>
-        <button role="tab" aria-selected="false" data-shot="browse">Browse</button>
-        <button role="tab" aria-selected="false" data-shot="types">Card types</button>
-        <button role="tab" aria-selected="false" data-shot="stats">Stats</button>
+        <button role="tab" aria-selected="true" data-shot="decks">الحزم</button>
+        <button role="tab" aria-selected="false" data-shot="study">جلسة المراجعة</button>
+        <button role="tab" aria-selected="false" data-shot="browse">التصفح والبحث</button>
+        <button role="tab" aria-selected="false" data-shot="types">محرر البطاقات</button>
+        <button role="tab" aria-selected="false" data-shot="stats">الإحصائيات</button>
       </div>
       <div class="app-shot">
         <div class="browser">
           <div class="browser-view">
-            <img class="on" data-shot-img="decks" src="assets/shots/app-decks.webp" alt="The Decks page: a tree of decks with new, learning and due counts" width="2400" height="1500">
-            <img data-shot-img="study" src="assets/shots/app-study.webp" alt="Studying a chess card: White to play and mate in one" width="2400" height="1500" loading="lazy">
-            <img data-shot-img="browse" src="assets/shots/app-browse.webp" alt="Browse: a search, a list of cards and the card editor" width="2400" height="1500" loading="lazy">
-            <img data-shot-img="types" src="assets/shots/app-types.webp" alt="The card type editor with a live preview of the chess card" width="2400" height="1500" loading="lazy">
-            <img data-shot-img="stats" src="assets/shots/app-stats.webp" alt="Stats: retention, recall, streak and a review heatmap" width="2400" height="1500" loading="lazy">
+            <img class="on" data-shot-img="decks" src="assets/shots/app-decks.webp" alt="شاشة الحزم في وِكَاء" width="2400" height="1500">
+            <img data-shot-img="study" src="assets/shots/app-study.webp" alt="شاشة المراجعة في وِكَاء" width="2400" height="1500" loading="lazy">
+            <img data-shot-img="browse" src="assets/shots/app-browse.webp" alt="شاشة البحث والتصفح" width="2400" height="1500" loading="lazy">
+            <img data-shot-img="types" src="assets/shots/app-types.webp" alt="محرر أنواع البطاقات مع المعاينة الفورية" width="2400" height="1500" loading="lazy">
+            <img data-shot-img="stats" src="assets/shots/app-stats.webp" alt="شاشة الإحصائيات وتحليل الذاكرة" width="2400" height="1500" loading="lazy">
           </div>
         </div>
-        <div class="phone"><img class="screen" src="assets/shots/phone-chess.webp" alt="A chess card on a phone" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true"></div>
+        <div class="phone"><img class="screen" src="assets/shots/phone-chess.webp" alt="تطبيق وِكَاء على الهاتف" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true"></div>
       </div>
       <p class="shot-caption" data-shot-caption></p>
     </div>
-    <!-- phones get the phone app: real screenshots, swiped sideways -->
-    <div class="phone-strip" aria-label="Etude on a phone" data-rail>
-      <figure class="phone-slide"><div class="phone"><img class="screen" src="assets/shots/phone-decks.webp" alt="The Decks page on a phone" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div><figcaption><b>Decks</b> in a tree, with what's new and due today.</figcaption></figure>
-      <figure class="phone-slide"><div class="phone"><img class="screen" src="assets/shots/phone-chess.webp" alt="A chess card on a phone" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div><figcaption><b>Study</b> one card at a time. Moves are checked against the engine.</figcaption></figure>
-      <figure class="phone-slide"><div class="phone"><img class="screen" src="assets/shots/phone-circle.webp" alt="A unit circle card on a phone" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div><figcaption><b>Drag or tap.</b> Every card type is made for thumbs.</figcaption></figure>
-      <figure class="phone-slide"><div class="phone"><img class="screen" src="assets/shots/phone-staff.webp" alt="A note-reading card on a phone" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div><figcaption><b>Read the note</b>, tap the key.</figcaption></figure>
-      <figure class="phone-slide"><div class="phone"><img class="screen" src="assets/shots/phone-stats.webp" alt="Stats on a phone" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div><figcaption><b>Stats</b>: true retention, recall now and your streak.</figcaption></figure>
+    <div class="phone-strip" aria-label="Wikae on mobile" data-rail>
+      <figure class="phone-slide"><div class="phone"><img class="screen" src="assets/shots/phone-decks.webp" alt="صفحة الحزم على الهاتف" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div><figcaption><b>شجرة الحزم</b> توضح البطاقات الجديدة والمستحقة اليوم.</figcaption></figure>
+      <figure class="phone-slide"><div class="phone"><img class="screen" src="assets/shots/phone-chess.webp" alt="جلسة الحفظ على الهاتف" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div><figcaption><b>مراجعة تفاعلية</b> تركز على بطاقة واحدة مع تصحيح مباشر.</figcaption></figure>
+      <figure class="phone-slide"><div class="phone"><img class="screen" src="assets/shots/phone-circle.webp" alt="واجهة لمسية متوافقة" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div><figcaption><b>سحب أو نقر</b> مصمم ومحسن لشاشات اللمس.</figcaption></figure>
+      <figure class="phone-slide"><div class="phone"><img class="screen" src="assets/shots/phone-staff.webp" alt="تمارين متنوعة" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div><figcaption><b>استجابة فورية</b> لتعزيز الحفظ السريع.</figcaption></figure>
+      <figure class="phone-slide"><div class="phone"><img class="screen" src="assets/shots/phone-stats.webp" alt="الإحصائيات على الهاتف" loading="lazy" width="804" height="1748"><img class="frame" src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div><figcaption><b>إحصائيات كاملة</b> لثبات الحفظ وأيام المتابعة.</figcaption></figure>
     </div>
   </div>
 </section>
@@ -486,10 +580,10 @@
 <section class="section" id="types">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">No.&thinsp;8 <span>open score</span></p>
+      <p class="opus">البرمجة والتطوير <span>Open Score</span></p>
       <div>
-        <h2>Every card type is a folder of code you can&nbsp;read.</h2>
-        <p class="sub">A template, a stylesheet, a script for the card and optional scripts that prepare and grade it. The included types are written exactly this way, so you can open one, copy it and make it yours, in the app with a live preview or in your own editor.</p>
+        <h2>كل نوع بطاقة هو مجلد شيفرات يمكنك قراءته وتعديله.</h2>
+        <p class="sub">قالب HTML، وتنسيق CSS، وشيفرة JavaScript للبطاقة والمصحح. كافة البطاقات مكتوبة بهذه الطريقة الواضحة لتتمكن من إنشاء نوعك الخاص بسهولة.</p>
       </div>
     </header>
     <div class="types">
@@ -499,7 +593,6 @@
         <pre class="code"><code data-code></code></pre>
       </div>
     </div>
-
   </div>
 </section>
 
@@ -507,10 +600,10 @@
 <section class="section" id="repertoire">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">Intermezzo <span>the repertoire</span></p>
+      <p class="opus">معرض التمارين <span>Repertoire</span></p>
       <div>
-        <h2>Infinite ways to ask a&nbsp;question.</h2>
-        <p class="sub">Every type that ships with Etude, running here as it runs in the app. Pick one, answer it and press Check: the card's own script grades it in your browser. The two that AI grades show you the reference answer instead.</p>
+        <h2>طرق لا حصر لها للممارسة والتدريب.</h2>
+        <p class="sub">كل نوع بطاقة مدمج يعمل هنا تماماً كما يعمل في التطبيق. اختر بطاقة، أجب عنها، واضغط على زر التحقق لترى تصحيحها الحي في متصفحك.</p>
       </div>
     </header>
     <div class="rep" data-rep data-reveal>
@@ -527,8 +620,8 @@
           <div class="rep-foot">
             <div class="verdict rep-verdict" aria-live="polite"></div>
             <div class="rep-actions">
-              <button class="btn btn-ghost" type="button" data-rep-variant>New variant <span aria-hidden="true">↻</span></button>
-              <button class="btn btn-primary" type="button" data-rep-check disabled>Check <kbd>Ctrl ↵</kbd></button>
+              <button class="btn btn-ghost" type="button" data-rep-variant>تمرين آخر <span aria-hidden="true">↻</span></button>
+              <button class="btn btn-primary" type="button" data-rep-check disabled>تحقق <kbd>Ctrl ↵</kbd></button>
             </div>
           </div>
         </div>
@@ -541,21 +634,21 @@
 <section class="section" id="more">
   <div class="wrap">
     <header class="head" data-reveal>
-      <p class="opus">No.&thinsp;9 <span>the accompaniment</span></p>
+      <p class="opus">مزايا متكاملة <span>Accompaniment</span></p>
       <div>
-        <h2>And the parts a study app should have.</h2>
+        <h2>كل ما يحتاجه الحافظ وطالب العلم في مكان واحد.</h2>
       </div>
     </header>
     <dl class="feats" data-reveal>
-      <div><dt>FSRS-6 scheduling</dt><dd>Learning steps, fuzz, daily limits, ordering, sibling burying, a suggested rating from the grade, undo, and replaying history after you change a setting.</dd></div>
-      <div><dt>Settings that inherit</dt><dd>A preset on <code>Physics</code> applies to <code>Physics::Waves</code> unless that deck overrides it. Deadlines too.</dd></div>
-      <div><dt>A search language</dt><dd><code>deck:Physics is:due prop:lapses&gt;=2</code> works in Browse, in filtered study sessions and in the CLI.</dd></div>
-      <div><dt>Statistics</dt><dd>True retention, predicted recall now, a review heatmap, recall per tag and the forecast up to your deadline.</dd></div>
-      <div><dt>Phone, tablet, embed</dt><dd>Layouts made for phones, a token for your network, and a compact <code>/embed</code> view that fits inside other apps.</dd></div>
-      <div><dt>Themes</dt><dd>Built-in light and dark themes, or your own with CSS variables. Cards follow the theme.</dd></div>
-      <div><dt>Decks that are safe to share</dt><dd>Card code runs in sandboxed frames and server scripts in QuickJS, so a pack from someone else can't touch your data.</dd></div>
-      <div><dt>AI only if you want it</dt><dd>Off until you turn it on. Continue with ChatGPT, bring a key for OpenRouter or OpenAI, or point it at a local llama.cpp or Ollama.</dd></div>
-      <div><dt>Math and code that render</dt><dd>Answer fields are live Markdown editors: <code>$math$</code> and code blocks render as you type, with highlighting for about 140 languages.</dd></div>
+      <div><dt>جدولة FSRS-6 الدقيقة</dt><dd>خطوات تعلم ذكية، حدود يومية للمراجعات الجديدة، إخفاء البطاقات الشقيقة مؤقتاً، والتراجع الفوري.</dd></div>
+      <div><dt>إعدادات هرمية متوارثة</dt><dd>إعدادات حزمة القرآن تنطبق على الأجزاء والسور ما لم تُحدد خيارات خاصة لسورة معينة.</dd></div>
+      <div><dt>لغة بحث وتصفية متقدمة</dt><dd>أوامر مثل <code>deck:Quran is:due</code> للبحث والفرز السريع في الجلسات وسطر الأوامر.</dd></div>
+      <div><dt>إحصائيات وخرائط حرارية</dt><dd>معدلات التذكر، خريطة الأيام والمراجعات، وتوقعات العبء حتى موعد الختمة.</dd></div>
+      <div><dt>تطبيق هاتف وشبكة محلية</dt><dd>واجهات مصممة للهواتف مع إمكانية الوصول من أجهزة منزلك عبر رمز وصول آمن.</dd></div>
+      <div><dt>الوضع الفاتح والداكن</dt><dd>مظاهر مدمجة مريحة للعين تدعم التبديل التلقائي بحسب تفضيل نظام التشغيل.</dd></div>
+      <div><dt>أمان كامل وبيئة معزولة</dt><dd>تعمل قوالب البطاقات في إطارات معزولة ومحمية لحفظ أمان جهازك وبياناتك.</dd></div>
+      <div><dt>الذكاء الاصطناعي باختيارك</dt><dd>معطل تماماً حتى تفعله باختيارك، مع إمكانية استخدام خوادم محلية مفتوحة المصدر.</dd></div>
+      <div><dt>محرر متقدم للنصوص والرسم</dt><dd>دعم التنسيق المباشر والرموز الرياضية وتظليل لغات البرمجة المختلفة.</dd></div>
     </dl>
   </div>
 </section>
@@ -563,13 +656,12 @@
 <!-- ============================================================= cta -->
 <section class="cta">
   <div class="wrap" data-reveal>
-    <h2>Practice that checks your&nbsp;work.</h2>
-    <p class="cta-sub">Free and open source under the AGPL-3.0. It runs on your own computer, and your collection stays there unless you turn on AI grading.</p>
+    <h2>وِكَاء · رِباطُ المحفوظ وإتقان المتشابهات.</h2>
+    <p class="cta-sub">مجاني ومفتوح المصدر بالكامل تحت رخصة AGPL-3.0. يعمل بالكامل على جهازك وبياناتك في أمان تام.</p>
     <div class="hero-cta">
-      <a class="btn btn-primary btn-lg" href="download.html">Download Etude</a>
-      <a class="textlink" href="https://github.com/Zibhelina/etude">Read the source on GitHub <span aria-hidden="true">→</span></a>
+      <a class="btn btn-primary btn-lg" href="download.html">تحميل وِكَاء · Download Wikae</a>
+      <a class="textlink" href="https://github.com/Sidali-Djeghbal/wikae">استعراض الشيفرة المصدرية على GitHub <span aria-hidden="true">→</span></a>
     </div>
-    <p class="cta-support">Etude is made by one person in his free time. If it helps you, <a href="https://ko-fi.com/jhca">buy him a coffee on Ko-fi</a>.</p>
   </div>
 </section>
 </main>
@@ -577,27 +669,28 @@
 <footer class="footer">
   <div class="wrap">
     <div>
-      <a href="./" class="wordmark"><span class="eps">ε</span>tude</a>
-      <p>Spaced-repetition practice with programmable card types and AI grading.</p>
+      <a href="./" class="wordmark"><span class="wikae-ar">وِكَاء</span><span class="wikae-dot">·</span><span class="wikae-en">Wikae</span></a>
+      <p>رِباطُ المحفوظ وإتقان المتشابهات بالتكرار المتباعد الذكي.<br>Spaced-repetition practice for Quran, Mutashabihat and knowledge.</p>
     </div>
-    <div><h4>Product</h4><ul><li><a href="#why">Why Etude</a></li><li><a href="#cards">Cards</a></li><li><a href="#grading">Grading</a></li><li><a href="#exams">Exams</a></li><li><a href="#tempo">Schedulers</a></li><li><a href="#stats">Stats</a></li><li><a href="#decks">New decks</a></li><li><a href="#anki">Anki import</a></li><li><a href="#market">Market</a></li><li><a href="#agents">Agents</a></li><li><a href="download.html">Download</a></li></ul></div>
-    <div><h4>Docs</h4><ul><li><a href="https://github.com/Zibhelina/etude#readme">README</a></li><li><a href="https://github.com/Zibhelina/etude/blob/main/docs/packs.md">Packs</a></li><li><a href="https://github.com/Zibhelina/etude/blob/main/docs/types.md">Card types</a></li><li><a href="https://github.com/Zibhelina/etude/blob/main/docs/cli.md">CLI reference</a></li></ul></div>
-    <div><h4>Project</h4><ul><li><a href="https://github.com/Zibhelina/etude">GitHub</a></li><li><a href="https://www.youtube.com/@etudeapp">YouTube</a></li><li><a href="https://github.com/Zibhelina/etude/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Zibhelina/etude/blob/main/SECURITY.md">Security</a></li><li><a href="https://github.com/Zibhelina/etude/issues">Issues</a></li><li><a href="https://ko-fi.com/jhca">Ko-fi</a></li></ul></div>
-    <div class="fine"><span>AGPL-3.0 · © 2026 João Henrique Costa Araujo and contributors</span><span>Made with <span class="wordmark" style="font-size:1em"><span class="eps">ε</span>tude</span> cards, of course.</span></div>
+    <div><h4>المنتج · Product</h4><ul><li><a href="#mutashabihat">المتشابهات</a></li><li><a href="#cards">البطاقات</a></li><li><a href="#grading">التقييم</a></li><li><a href="#tempo">خوارزمية FSRS</a></li><li><a href="#exams">الختمة</a></li><li><a href="#stats">الإحصائيات</a></li><li><a href="#anki">آنكي</a></li><li><a href="#market">المتجر</a></li><li><a href="download.html">التحميل</a></li></ul></div>
+    <div><h4>التوثيق · Docs</h4><ul><li><a href="https://github.com/Sidali-Djeghbal/wikae#readme">دليل المشروع · README</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/packs.md">الحزم · Packs</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/types.md">أنواع البطاقات · Types</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/cli.md">أوامر سطر الأوامر · CLI</a></li></ul></div>
+    <div><h4>المشروع · Project</h4><ul><li><a href="https://github.com/Sidali-Djeghbal/wikae">GitHub</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/releases">الإصدارات · Releases</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/CHANGELOG.md">سجل التغييرات · Changelog</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/issues">البلاغات والمقترحات · Issues</a></li></ul></div>
+    <div><h4>المساعدة · Help</h4><ul><li><a href="support">الدعم · Support</a></li><li><a href="terms">الشروط · Terms</a></li><li><a href="privacy">الخصوصية · Privacy</a></li></ul></div>
+    <div class="fine"><span>AGPL-3.0 · © 2026 Sidali Djeghbal and contributors</span><span>رِباطُ المحفوظ وإتقان المتشابهات · Wikae</span></div>
   </div>
 </footer>
 
 <!-- phones: where you are in the piece, and the way to anywhere else -->
 <nav class="dock" aria-label="Where you are" data-dock>
-  <button class="dock-now" type="button" data-programme-open aria-haspopup="dialog"><span class="dock-n" data-dock-n>Overture</span><span class="dock-t" data-dock-t>the film</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <a class="dock-get" href="download.html">Get Etude</a>
+  <button class="dock-now" type="button" data-programme-open aria-haspopup="dialog"><span class="dock-n" data-dock-n>المقدمة</span><span class="dock-t" data-dock-t>وِكَاء</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <a class="dock-get" href="download.html">التحميل</a>
 </nav>
 <div class="programme-back" data-programme hidden>
   <div class="programme" role="dialog" aria-modal="true" aria-labelledby="programme-h">
     <i class="grab" aria-hidden="true"></i>
-    <button class="programme-x" type="button" aria-label="Close" data-programme-close><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-    <p class="programme-k">Programme</p>
-    <h3 id="programme-h">Etude, in <em>sixteen</em> movements</h3>
+    <button class="programme-x" type="button" aria-label="إغلاق" data-programme-close><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <p class="programme-k">فهرس الأقسام</p>
+    <h3 id="programme-h">وِكَاء · <em>دليل الموقع</em></h3>
     <ol data-programme-list></ol>
   </div>
 </div>

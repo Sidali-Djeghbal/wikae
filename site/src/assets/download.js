@@ -1,4 +1,6 @@
-// Download page: picks the visitor's OS and shows the matching commands.
+// Download page: picks the visitor's OS, shows the matching commands, and theme toggle.
+import { initThemeToggle } from "./theme.js";
+
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 
@@ -6,6 +8,7 @@ const nav = $("#nav");
 const onScroll = () => nav.classList.toggle("scrolled", scrollY > 8);
 addEventListener("scroll", onScroll, { passive: true });
 onScroll();
+initThemeToggle();
 
 const revealer = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && (e.target.classList.add("in"), revealer.unobserve(e.target))), { rootMargin: "0px 0px -8% 0px" });
 $$("[data-reveal]").forEach((el) => revealer.observe(el));

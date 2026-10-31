@@ -1,8 +1,8 @@
-/* Etude website.
-   An étude is a study piece, so the page is set like one: Computer Modern for every heading, numbered
-   movements (No. 2, No. 3…), booktabs rules instead of boxes, and a teacher's pen for annotations.
-   The color tokens are the app's dark theme, warmed slightly, so the card frames embedded here get
-   the same variables they get in the app. */
+/* Wikae (وِكَاء) website.
+   Spaced-repetition practice for Quran, Mutashabihat and knowledge.
+   Clean Islamic typography, emerald accents, and responsive light/dark themes. */
+
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&display=swap');
 
 @font-face { font-family: "Inter"; src: url("fonts/inter.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
 @font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
@@ -31,7 +31,7 @@
   --border: oklch(0.95 0.01 85 / 11%);
   --input: oklch(0.95 0.01 85 / 15%);
   --ring: oklch(0.6 0 0);
-  --highlight: oklch(0.75 0.15 350);
+  --highlight: oklch(0.72 0.16 155);
   --success: oklch(0.78 0.16 150);
   --warning: oklch(0.84 0.15 85);
   --danger: oklch(0.7 0.18 22);
@@ -46,6 +46,11 @@
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
   --font-serif: "KaTeX_Main", "Latin Modern Roman", "Computer Modern Serif", Georgia, serif;
   --font-hand: "Caveat", "Segoe Print", cursive;
+  --font-arabic: "Amiri Quran", "Amiri", "KFGQPC Uthman Taha Naskh", "Traditional Arabic", serif;
+
+  --code-bg: oklch(0.12 0.004 85);
+  --code-fg: oklch(0.86 0.005 85);
+  --sheet-shadow: 0 1px 0 oklch(1 0 0 / 4%) inset, 0 40px 80px -40px oklch(0 0 0 / 85%);
 
   --page: 74rem;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -54,6 +59,90 @@
   --ink: oklch(0.2 0.01 85);
   --pen: oklch(0.6 0.2 18);
   color-scheme: dark;
+}
+
+html[data-theme="light"], :root[data-theme="light"] {
+  --background: oklch(0.985 0.002 95);
+  --foreground: oklch(0.18 0.012 85);
+  --card: oklch(0.965 0.004 95);
+  --card-foreground: oklch(0.18 0.012 85);
+  --popover: oklch(0.97 0.004 95);
+  --popover-foreground: oklch(0.18 0.012 85);
+  --primary: oklch(0.2 0.015 85);
+  --primary-foreground: oklch(0.985 0.003 95);
+  --secondary: oklch(0.92 0.006 95);
+  --secondary-foreground: oklch(0.2 0.015 85);
+  --muted: oklch(0.93 0.006 95);
+  --muted-foreground: oklch(0.44 0.015 85);
+  --accent: oklch(0.92 0.012 155);
+  --accent-foreground: oklch(0.18 0.02 155);
+  --destructive: oklch(0.55 0.2 25);
+  --border: oklch(0.2 0.01 85 / 12%);
+  --input: oklch(0.2 0.01 85 / 16%);
+  --ring: oklch(0.45 0.16 155);
+  --highlight: oklch(0.45 0.16 155);
+  --success: oklch(0.48 0.16 150);
+  --warning: oklch(0.58 0.15 75);
+  --danger: oklch(0.55 0.2 25);
+  --again: oklch(0.55 0.2 25);
+  --hard: oklch(0.55 0.14 65);
+  --good: oklch(0.48 0.16 150);
+  --easy: oklch(0.45 0.14 240);
+  --new: oklch(0.45 0.14 240);
+  --learn: oklch(0.5 0.17 35);
+  --review: oklch(0.48 0.16 150);
+
+  --code-bg: oklch(0.94 0.005 90);
+  --code-fg: oklch(0.22 0.01 85);
+  --sheet-shadow: 0 1px 0 oklch(1 1 1 / 80%) inset, 0 20px 40px -20px oklch(0 0 0 / 12%), 0 1px 3px oklch(0 0 0 / 5%);
+
+  --rule: oklch(0.2 0.01 85 / 15%);
+  --paper: oklch(0.96 0.005 90);
+  --ink: oklch(0.18 0.01 85);
+  --pen: oklch(0.55 0.2 25);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --background: oklch(0.985 0.002 95);
+    --foreground: oklch(0.18 0.012 85);
+    --card: oklch(0.965 0.004 95);
+    --card-foreground: oklch(0.18 0.012 85);
+    --popover: oklch(0.97 0.004 95);
+    --popover-foreground: oklch(0.18 0.012 85);
+    --primary: oklch(0.2 0.015 85);
+    --primary-foreground: oklch(0.985 0.003 95);
+    --secondary: oklch(0.92 0.006 95);
+    --secondary-foreground: oklch(0.2 0.015 85);
+    --muted: oklch(0.93 0.006 95);
+    --muted-foreground: oklch(0.44 0.015 85);
+    --accent: oklch(0.92 0.012 155);
+    --accent-foreground: oklch(0.18 0.02 155);
+    --destructive: oklch(0.55 0.2 25);
+    --border: oklch(0.2 0.01 85 / 12%);
+    --input: oklch(0.2 0.01 85 / 16%);
+    --ring: oklch(0.45 0.16 155);
+    --highlight: oklch(0.45 0.16 155);
+    --success: oklch(0.48 0.16 150);
+    --warning: oklch(0.58 0.15 75);
+    --danger: oklch(0.55 0.2 25);
+    --again: oklch(0.55 0.2 25);
+    --hard: oklch(0.55 0.14 65);
+    --good: oklch(0.48 0.16 150);
+    --easy: oklch(0.45 0.14 240);
+    --new: oklch(0.45 0.14 240);
+    --learn: oklch(0.5 0.17 35);
+    --review: oklch(0.48 0.16 150);
+    --code-bg: oklch(0.94 0.005 90);
+    --code-fg: oklch(0.22 0.01 85);
+    --sheet-shadow: 0 1px 0 oklch(1 1 1 / 80%) inset, 0 20px 40px -20px oklch(0 0 0 / 12%), 0 1px 3px oklch(0 0 0 / 5%);
+    --rule: oklch(0.2 0.01 85 / 15%);
+    --paper: oklch(0.96 0.005 90);
+    --ink: oklch(0.18 0.01 85);
+    --pen: oklch(0.55 0.2 25);
+    color-scheme: light;
+  }
 }
 
 * { box-sizing: border-box; }
@@ -78,8 +167,33 @@ button { font: inherit; color: inherit; }
 h1, h2, h3 { margin: 0; font-family: var(--font-serif); font-weight: 400; letter-spacing: -0.005em; }
 
 /* ------------------------------------------------------------------ wordmark */
-.wordmark { font-family: var(--font-serif); letter-spacing: 0; line-height: 1; white-space: nowrap; }
+.wordmark { font-family: var(--font-serif); letter-spacing: 0; line-height: 1; white-space: nowrap; display: inline-flex; align-items: baseline; gap: 0.35rem; }
+.wordmark .wikae-ar { font-family: var(--font-arabic); font-size: 1.15em; font-weight: 700; color: var(--highlight); }
+.wordmark .wikae-dot { color: var(--muted-foreground); font-size: 0.85em; }
+.wordmark .wikae-en { font-family: var(--font-serif); font-weight: 500; letter-spacing: -0.01em; }
 .wordmark .eps { font-family: "KaTeX_Math", var(--font-serif); font-style: italic; color: var(--highlight); }
+
+/* ------------------------------------------------------------------ theme toggle */
+.theme-toggle {
+  width: 2.1rem; height: 2.1rem; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 0.5rem; border: 1px solid var(--border);
+  background: transparent; color: var(--muted-foreground);
+  cursor: pointer; transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.2s var(--ease);
+}
+.theme-toggle:hover { color: var(--foreground); background: var(--accent); }
+.theme-toggle:active { transform: scale(0.95); }
+.theme-toggle svg { width: 1.1rem; height: 1.1rem; flex: none; }
+:root[data-theme="dark"] .theme-icon-moon,
+:root:not([data-theme="light"]) .theme-icon-moon { display: none; }
+:root[data-theme="dark"] .theme-icon-sun,
+:root:not([data-theme="light"]) .theme-icon-sun { display: block; }
+:root[data-theme="light"] .theme-icon-sun { display: none; }
+:root[data-theme="light"] .theme-icon-moon { display: block; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .theme-icon-sun { display: none; }
+  :root:not([data-theme="dark"]) .theme-icon-moon { display: block; }
+}
 
 /* -------------------------------------------------------------------- nav */
 .nav { position: sticky; top: 0; z-index: 50; }
@@ -92,7 +206,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-serif); font-weight: 400; letter
 .nav-links a { transition: color 0.2s; }
 .nav-links a:hover, .nav-links a[aria-current] { color: var(--foreground); }
 .nav-links a[aria-current] { text-decoration: underline; text-decoration-color: var(--highlight); text-underline-offset: 0.45rem; text-decoration-thickness: 1.5px; }
-.nav-end { margin-left: auto; display: flex; gap: 1rem; align-items: center; }
+.nav-end { margin-left: auto; display: flex; gap: 0.75rem; align-items: center; }
 .nav-gh { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--muted-foreground); font-size: 0.85rem; transition: color 0.2s; }
 .nav-gh:hover { color: var(--foreground); }
 .nav-gh svg { width: 1.1rem; height: 1.1rem; }
@@ -110,7 +224,8 @@ h1, h2, h3 { margin: 0; font-family: var(--font-serif); font-weight: 400; letter
 .btn:active { transform: scale(0.98); }
 .btn svg { width: 1rem; height: 1rem; flex: none; }
 .btn-primary { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
-.btn-primary:hover { background: oklch(1 0 0); }
+.btn-primary:hover { background: color-mix(in oklab, var(--primary) 85%, var(--highlight)); }
+html[data-theme="dark"] .btn-primary:hover { background: oklch(1 0 0); }
 .btn-sm { height: 2.1rem; padding: 0 0.9rem; font-size: 0.82rem; }
 .btn-lg { height: 3rem; padding: 0 1.6rem; font-size: 0.98rem; }
 .btn:disabled { opacity: 0.4; cursor: default; }
@@ -158,7 +273,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-serif); font-weight: 400; letter
 @media (hover: none) and (pointer: coarse) { .note-stage { display: none; } }
 .sheet {
   background: var(--card); border: 1px solid var(--border); border-radius: 0.9rem; overflow: hidden;
-  box-shadow: 0 1px 0 oklch(1 0 0 / 4%) inset, 0 40px 80px -40px oklch(0 0 0 / 85%);
+  box-shadow: var(--sheet-shadow);
 }
 .stage { display: flex; flex-direction: column; position: relative; }
 .window-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.6rem 0.5rem 0.4rem; border-bottom: 1px solid var(--border); }
@@ -355,8 +470,8 @@ h1, h2, h3 { margin: 0; font-family: var(--font-serif); font-weight: 400; letter
 .code-head span:last-child { font-family: var(--font-mono); }
 .code {
   margin: 0; white-space: pre; scrollbar-width: none;
-  mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent); border: 1px solid var(--border); border-radius: 0.6rem; background: oklch(0.12 0.004 85); padding: 1.2rem 1.3rem; overflow-x: auto;
-  font-size: 0.78rem; line-height: 1.75; color: oklch(0.86 0.005 85); tab-size: 2;
+  mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent); border: 1px solid var(--border); border-radius: 0.6rem; background: var(--code-bg); padding: 1.2rem 1.3rem; overflow-x: auto;
+  font-size: 0.78rem; line-height: 1.75; color: var(--code-fg); tab-size: 2;
 }
 .gen-code .code { max-height: 25rem; overflow: auto; scrollbar-width: thin; font-size: 0.74rem; }
 .code { font-variant-ligatures: none; }
@@ -471,7 +586,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-serif); font-weight: 400; letter
   mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 2rem), transparent); }
 .code-tabs::after { content: ""; flex: none; width: 1.5rem; }
 .code-tabs button { flex: none; cursor: pointer; font: 0.72rem var(--font-mono); padding: 0.55rem 0.7rem; border: 1px solid transparent; border-bottom: 0; border-radius: 0.5rem 0.5rem 0 0; background: none; color: var(--muted-foreground); }
-.code-tabs button[aria-selected="true"] { background: oklch(0.12 0.004 85); border-color: var(--border); color: var(--foreground); }
+.code-tabs button[aria-selected="true"] { background: var(--code-bg); border-color: var(--border); color: var(--foreground); }
 .code-tabs + .code { border-top-left-radius: 0; height: 26rem; overflow: auto; scrollbar-width: thin; }
 .fineprint { font-size: 0.8rem; color: var(--muted-foreground); margin: 0.9rem 0 0; }
 .fineprint a { color: var(--foreground); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
@@ -531,7 +646,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-serif); font-weight: 400; letter
 .steps h3 { font-size: 1.15rem; }
 .steps p { margin: 0.3rem 0 0; font-size: 0.88rem; color: var(--muted-foreground); }
 .steps .opt { font: italic 400 0.95rem var(--font-serif); color: var(--muted-foreground); margin-left: 0.4rem; }
-.cmd { margin-top: 0.75rem; display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.75rem 0.6rem 0.75rem 1rem; border-radius: 0.5rem; background: oklch(0.12 0.004 85); border: 1px solid var(--border); }
+.cmd { margin-top: 0.75rem; display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.75rem 0.6rem 0.75rem 1rem; border-radius: 0.5rem; background: var(--code-bg); border: 1px solid var(--border); }
 .cmd pre { margin: 0; flex: 1; min-width: 0; overflow-x: auto; padding-right: 0.5rem; font-size: 0.8rem; line-height: 1.7; color: oklch(0.9 0 0); scrollbar-width: thin;
   mask-image: linear-gradient(90deg, #000 calc(100% - 1.5rem), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 1.5rem), transparent); }
 .cmd pre::after { content: ""; display: inline-block; width: 1.5rem; }
@@ -964,7 +1079,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-serif); font-weight: 400; letter
 .market-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr)); }
 .mk { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 0.8rem; overflow: hidden; background: var(--card); animation: pop 0.45s var(--ease) both; animation-delay: calc(var(--i, 0) * 35ms); transition: border-color 0.2s, translate 0.25s var(--ease); }
 .mk:hover { border-color: var(--rule); translate: 0 -2px; }
-.mk-cover { aspect-ratio: 16 / 10; background: oklch(0.12 0.004 85); overflow: hidden; border-bottom: 1px solid var(--border); }
+.mk-cover { aspect-ratio: 16 / 10; background: var(--code-bg); overflow: hidden; border-bottom: 1px solid var(--border); }
 .mk-cover img { width: 100%; height: 100%; object-fit: cover; }
 .mk-body { padding: 0.85rem 1rem 1rem; display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
 .mk-name { font-family: var(--font-serif); font-size: 1.12rem; line-height: 1.25; }
@@ -1175,4 +1290,160 @@ h1, h2, h3 { margin: 0; font-family: var(--font-serif); font-weight: 400; letter
 }
 @media (max-width: 640px) and (prefers-reduced-motion: reduce) {
   .dock, .programme, .programme-back { transition: none; }
+}
+
+/* --------------------------------------------------- light theme mobile dock */
+html[data-theme="light"] .dock,
+:root[data-theme="light"] .dock {
+  background: oklch(0.97 0.005 90 / 96%);
+  border-color: oklch(0.2 0.01 85 / 15%);
+  box-shadow: 0 18px 40px -12px oklch(0 0 0 / 15%), 0 1px 0 oklch(1 1 1 / 50%) inset;
+}
+html[data-theme="light"] .programme-back.open,
+:root[data-theme="light"] .programme-back.open {
+  background: oklch(0 0 0 / 35%);
+}
+
+/* -------------------------------------------------------------- quran & mutashabihat */
+.ar, [lang="ar"] {
+  font-family: var(--font-arabic);
+  direction: rtl;
+  text-align: right;
+}
+.quran-verse {
+  font-family: var(--font-arabic);
+  font-size: 1.4rem;
+  line-height: 2.2;
+  direction: rtl;
+  color: var(--foreground);
+}
+.mutashabih-grid {
+  display: grid;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+@media (min-width: 900px) {
+  .mutashabih-grid { grid-template-columns: 1fr 1fr; }
+}
+.mutashabih-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: var(--sheet-shadow);
+  transition: transform 0.25s var(--ease), border-color 0.2s;
+}
+.mutashabih-card:hover {
+  border-color: color-mix(in oklab, var(--highlight) 40%, var(--border));
+}
+.mutashabih-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.mutashabih-tag {
+  font: 600 0.75rem var(--font-sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--highlight);
+  background: color-mix(in oklab, var(--highlight) 14%, transparent);
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
+}
+.mutashabih-verses {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.verse-box {
+  background: color-mix(in oklab, var(--background) 65%, var(--card));
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  padding: 1.15rem 1.35rem;
+  direction: rtl;
+  text-align: right;
+}
+.verse-box-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px dashed var(--border);
+}
+.verse-box-surah {
+  font-weight: 700;
+  color: var(--highlight);
+}
+.verse-text {
+  font-family: var(--font-arabic);
+  font-size: 1.25rem;
+  line-height: 2.2;
+}
+.verse-pivotal {
+  color: var(--highlight);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.4rem;
+  text-decoration-thickness: 2.5px;
+}
+.mutashabih-rule {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--accent) 55%, transparent);
+  border-right: 3px solid var(--highlight);
+  border-radius: 0 0.45rem 0.45rem 0;
+  padding: 0.85rem 1.1rem;
+  direction: rtl;
+  text-align: right;
+}
+.mutashabih-rule b {
+  color: var(--highlight);
+  font-weight: 700;
+}
+.quran-pillars {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+@media (min-width: 640px) {
+  .quran-pillars { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 1024px) {
+  .quran-pillars { grid-template-columns: repeat(4, 1fr); }
+}
+.quran-pillar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.5rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.quran-pillar .pillar-num {
+  font-family: var(--font-serif);
+  font-size: 1.8rem;
+  color: var(--highlight);
+  line-height: 1;
+}
+.quran-pillar h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0;
+}
+.quran-pillar p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
 }

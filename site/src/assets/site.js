@@ -1,8 +1,9 @@
-// The Etude website. Everything that looks live is: the hero runs real card types with the app's
+// The Wikae website. Everything that looks live is: the hero runs real card types with the app's
 // card runtime and grades them with the types' own scripts; the deadline chart runs ts-fsrs.
 import katex from "../runtime/vendor/katex.js";
 import math from "../runtime/mathexpr.js";
 import { DEMOS, PRELUDE, TYPE_FILES, GENERATOR, GALLERY, SCHEDULERS } from "../data.js";
+import { initThemeToggle } from "./theme.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -95,6 +96,7 @@ const nav = $("#nav");
 const onScroll = () => nav.classList.toggle("scrolled", scrollY > 8);
 addEventListener("scroll", onScroll, { passive: true });
 onScroll();
+initThemeToggle();
 
 const revealer = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && (e.target.classList.add("in"), revealer.unobserve(e.target))), { rootMargin: "0px 0px -8% 0px" });
 $$("[data-reveal]").forEach((el) => revealer.observe(el));
@@ -107,7 +109,7 @@ for (const b of $$("[data-copy]")) {
   });
 }
 
-fetch("https://api.github.com/repos/Zibhelina/etude")
+fetch("https://api.github.com/repos/Sidali-Djeghbal/wikae")
   .then((r) => (r.ok ? r.json() : null))
   .then((d) => {
     const n = d?.stargazers_count;
@@ -156,7 +158,8 @@ function theme() {
   const cs = getComputedStyle(document.documentElement);
   const vars = {};
   for (const v of THEME_VARS) { const val = cs.getPropertyValue(v).trim(); if (val) vars[v] = val; }
-  return { scheme: "dark", vars };
+  const scheme = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  return { scheme, vars };
 }
 
 function humanInterval(ms) {
