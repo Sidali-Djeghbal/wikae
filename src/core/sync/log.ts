@@ -9,6 +9,22 @@ export function tick(last: Stamp, remote?: Stamp, now = Date.now()): Stamp {
 export const compare = (a: Stamp, b: Stamp) => a[0] - b[0] || a[1] - b[1] || a[2].localeCompare(b[2]);
 export type Change = { v: 1; table: string; key: string; stamp: Stamp; fields: Record<string, unknown>; deleted?: boolean };
 export const TABLES = ["presets", "decks", "types", "schedulers", "type_folders", "type_placement", "items", "cards", "attempts", "reviews", "tag_meta", "settings", "type_assets"];
+/** Local-only type folder defaults, so a fresh collection does not upload them as changes. */
+export const LOCAL_TYPE_DEFAULTS_KEY = "local_type_defaults";
+export type LocalTypeDefault = { folder: string; types: string[] };
+export function localTypeDefaults(db: Db): LocalTypeDefault[] {
+  const row = db.get<{ value: string }>("SELECT value FROM meta WHERE key = ?", LOCAL_TYPE_DEFAULTS_KEY);
+  if (!row) return [];
+  try {
+    const parsed = JSON.parse(row.value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((d: any) => d && typeof d.folder === "string" && Array.isArray(d.types))
+      .map((d: any) => ({ folder: d.folder, types: d.types.map(String) }));
+  } catch {
+    return [];
+  }
+}
 const UUID_TABLES = ["decks", "cards", "attempts", "reviews"];
 const q = (s: string) => `'${s.replaceAll("'", "''")}'`;
 const id = (s: string) => `"${s}"`;
@@ -81,8 +97,16 @@ export function muted<T>(db: Db, fn: () => T): T {
 }
 export function bootstrap(db: Db) {
   if (db.get("SELECT 1 FROM sync_meta WHERE key='bootstrapped'")) return;
+  const defaults = localTypeDefaults(db);
+  const skipDefaults = (table: string, p: string) => {
+    if (!defaults.length) return "";
+    if (table === "type_folders") return ` AND ${p}.path NOT IN (${defaults.map((d) => q(d.folder)).join(",")})`;
+    if (table === "type_placement")
+      return ` AND NOT (${defaults.map((d) => `(${p}.type_id IN (${d.types.map(q).join(",") || "NULL"}) AND ${p}.folder = ${q(d.folder)})`).join(" OR ")})`;
+    return "";
+  };
   db.tx(() => {
-    for (const table of TABLES) db.run(`INSERT INTO sync_outbox(tbl,key,old,value) SELECT ?,${keyExpr(table, "s")},NULL,${rowExpr(db, table, "s")} FROM ${table} s WHERE ${allowed(table, "s")}`, table);
+    for (const table of TABLES) db.run(`INSERT INTO sync_outbox(tbl,key,old,value) SELECT ?,${keyExpr(table, "s")},NULL,${rowExpr(db, table, "s")} FROM ${table} s WHERE ${allowed(table, "s")}${skipDefaults(table, "s")}`, table);
     db.run("INSERT INTO sync_meta VALUES('bootstrapped','true')");
   });
 }

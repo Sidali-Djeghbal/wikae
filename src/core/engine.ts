@@ -67,6 +67,7 @@ import { convertCollection, type PlannedCard } from "./anki/convert.ts";
 import { collectFileNames, MAX_MEDIA_BYTES, mediaType } from "./media.ts";
 import { decodeAssets, hashBytes, type AssetInfo } from "./assets.ts";
 import { imagePixels, normalizeBoxes, OcclusionError } from "./occlusion.ts";
+import { LOCAL_TYPE_DEFAULTS_KEY, localTypeDefaults, type LocalTypeDefault } from "./sync/log.ts";
 
 export class EtudeError extends Error {
   status: number;
@@ -977,8 +978,31 @@ export class Etude {
         this.createTypeFolder(folder);
         this.db.run("INSERT INTO type_placement (type_id, folder) VALUES (?, ?)", id, folder);
       }
+      const defaults = pending.reduce<Record<string, string[]>>((acc, [id, folder]) => {
+        (acc[folder] ??= []).push(id);
+        return acc;
+      }, {});
+      const list: LocalTypeDefault[] = Object.entries(defaults).map(([folder, types]) => ({ folder, types }));
+      if (list.length) this.db.run("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", LOCAL_TYPE_DEFAULTS_KEY, JSON.stringify(list));
+      else this.db.run("DELETE FROM meta WHERE key = ?", LOCAL_TYPE_DEFAULTS_KEY);
       this.db.run("INSERT INTO meta (key, value) VALUES (?, '1') ON CONFLICT(key) DO UPDATE SET value = excluded.value", BUILTIN_TYPE_FOLDERS_KEY);
     });
+  }
+
+  /** Drops a local folder default once the user moves the type or changes the folder. */
+  private clearLocalTypeDefault(typeId?: string, folder?: string) {
+    const defaults = localTypeDefaults(this.db);
+    if (!defaults.length) return;
+    const next = defaults
+      .map((d) => {
+        if (folder && (d.folder === folder || d.folder.startsWith(folder + "::"))) return null;
+        if (!typeId) return d;
+        const types = d.types.filter((id) => id !== typeId);
+        return types.length ? { ...d, types } : null;
+      })
+      .filter((d): d is LocalTypeDefault => !!d);
+    if (next.length) this.db.run("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", LOCAL_TYPE_DEFAULTS_KEY, JSON.stringify(next));
+    else this.db.run("DELETE FROM meta WHERE key = ?", LOCAL_TYPE_DEFAULTS_KEY);
   }
 
   /**
@@ -1054,6 +1078,7 @@ export class Etude {
     if (!this.db.get("SELECT 1 AS x FROM types WHERE id = ?", id)) throw new EtudeError(`unknown type "${id}"`, 404);
     const f = normDeck(folder ?? "");
     this.db.tx(() => {
+      this.clearLocalTypeDefault(id);
       if (!f) this.db.run("DELETE FROM type_placement WHERE type_id = ?", id);
       else {
         this.createTypeFolder(f);
@@ -1077,6 +1102,7 @@ export class Etude {
     const { eq, like } = this.underFolder(src);
     let folders = 0, types = 0;
     this.db.tx(() => {
+      this.clearLocalTypeDefault(undefined, src);
       // Implied folders (only parents of placements) become real rows so they survive the move.
       for (const p of this.listTypeFolders()) if (p === src || p.startsWith(src + "::")) this.db.run("INSERT OR IGNORE INTO type_folders (path) VALUES (?)", p);
       for (const r of this.db.all("SELECT path FROM type_folders WHERE path = ? OR path LIKE ? ESCAPE '\\'", eq, like)) {
@@ -1105,6 +1131,7 @@ export class Etude {
     const moved: string[] = [];
     let folders = 0;
     this.db.tx(() => {
+      this.clearLocalTypeDefault(undefined, p);
       folders = this.listTypeFolders().filter((f) => f === p || f.startsWith(p + "::")).length;
       this.db.run("DELETE FROM type_folders WHERE path = ? OR path LIKE ? ESCAPE '\\'", eq, like);
       for (const r of this.db.all("SELECT type_id FROM type_placement WHERE folder = ? OR folder LIKE ? ESCAPE '\\'", eq, like)) {
@@ -1307,6 +1334,7 @@ export class Etude {
     if (used.items && !opts.items)
       throw new EtudeError(`type "${id}" is used by ${used.items} item(s)${used.archived === used.items ? ", all archived" : used.archived ? `, ${used.archived} of them archived` : ""}`);
     this.db.tx(() => {
+      this.clearLocalTypeDefault(id);
       // Cards, their attempts and reviews, and tags go with the items.
       if (opts.items) this.db.run("DELETE FROM items WHERE type = ?", id);
       this.db.run("DELETE FROM types WHERE id = ?", id);
