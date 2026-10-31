@@ -1,148 +1,153 @@
-# وِكَاء — Wikae
+<p align="center">
+  <img src="assets/banner.svg" alt="وِكَاء — Wikae" width="100%">
+ <h1 align="center">آفَةُ الْعِلْمِ النِّسْيَانُ، وَتَرْكُ الْمُذَاكَرَةِ</h1>
+ 
+ <h3 align="center">
+وِكَاء — رِباطُ المحفوظ وإتقان المتشابهات
+</h3>
+</p>
 
-> **«المذاكرةُ وِكاءُ الحِفْظ»**  
-> **وِكَاء — رِباطُ المحفوظ وإتقان المتشابهات**  
-> **Wikae — Tie Down & Master Your Memorization**
+
+
 
 **منصة متقدمة للتكرار المتباعد وضبط حفظ القرآن الكريم والمتشابهات والحديث الشريف والمتون العلمية.**
 
-In classical Arabic and prophetic tradition, *Al-Wikaa* (الوِكَاء) is the steadfast cord tying the mouth of a vessel to firmly preserve its precious contents from spilling. **Wikae (وِكَاء)** is a modern, self-hosted spaced-repetition platform designed for serious memorizers. Cards go far beyond static text: every card type is an interactive, programmable canvas — from Quranic Mutashabihat with authentic Uthmani script and pivotal blank completion, to Hadith memorization with isnad and grading, cloze deletion, typed recall, and intelligent AI evaluation.
+في لسان العرب وتراثنا الأصيل: **«الوِكَاء»** هو الخيط أو الرباط المتين الذي تُشدّ به فوهة الوعاء فيحفظ ما بداخله من الضياع والتسرب، كما جاء في الأثر: *«المذاكرةُ وِكاءُ الحِفْظ»*. **منصة وِكَاء (Wikae)** هي منصة حرة ومستقلة للتكرار المتباعد (Spaced Repetition) صُممت خصيصاً لخدمة حفاظ كتاب الله وطلاب العلم الشرعي، لترتقي بالبطاقات التعليمية من نصوص جامدة إلى بيئات برمجية تفاعلية. من ضبط المتشابهات القرآنية بالرسم العثماني وحجب الألفاظ المفصلية، إلى حفظ متون الحديث الشريف بأسانيدها، والاختبارات الفورية الدقيقة المدعومة بنماذج الذكاء الاصطناعي التي تحدد بدقة مواضع الخطأ والسقط في الاستذكار.
 
-Open-ended answers and recited text are evaluated with intelligent AI grading (supporting Groq, OpenAI, OpenRouter, and local models) that tells you precisely what you remembered and what was missed. Scheduling is powered by the state-of-the-art **FSRS-6** algorithm, paired with revision targets, exam deadlines, and interactive review modes. Every operation in Wikae is accessible through a modern React/Tailwind interface and through the fast `wikae` CLI with structured JSON output.
+تُقيّم الإجابات المفتوحة والتسميع الشفهي والكتابي عبر مصحح ذكي (يدعم Groq وOpenAI وOpenRouter والنماذج المحلية) يوضح لك بالتفصيل ما تم استحضاره بنجاح وما سقط منك أثناء الاسترجاع. وتعتمد المنصة خوارزمية **FSRS-6** الحديثة لتحديد مواعيد التكرار بدقة علمية، مع إمكانية ربط الجداول بمواعيد الختمات والاختبارات الدورية. تتوفر المنصة عبر واجهة عصرية وسريعة مبنية بتقنيات React وTailwind، بالإضافة إلى أداة سطر أوامر `wikae` السريعة بمخرجات JSON مهيكلة.
 
-## Why Wikae
+## لماذا وِكَاء؟
 
-Classic flashcards test superficial recognition: you see the front, think of the back, flip the card and rate yourself. That works for basic vocabulary, but falls short for serious memorization of Quranic verses, Mutashabihat distinctions, Hadith texts, and structured knowledge where precision matters. Wikae keeps what makes spaced repetition scientifically sound and upgrades what a card is.
+تعتمد تطبيقات البطاقات التقليدية على مجرد التعرف الظاهري: تنظر إلى وجه البطاقة، وتتذكر ظهرها، ثم تقلبها وتقيّم نفسك بنفسك. هذا الأسلوب قد يفيد في حفظ المفردات البسيطة، ولكنه يعجز أمام المتطلبات الدقيقة لحفظ القرآن الكريم وتفريق المتشابهات اللفظية، وضبط متون الحديث والأسانيد. تُحافظ منصة وِكَاء على الأسس العلمية للتكرار المتباعد وترتقي بمفهوم البطاقة إلى مستوى الإتقان العملي.
 
-| | Classic flashcard apps | Wikae |
+| المعيار | تطبيقات البطاقات التقليدية | منصة وِكَاء (Wikae) |
 |---|---|---|
-| What a card is | Static front and back | Interactive program: template, script, and grader |
-| Who grades it | Self-assessment only | Self, script validation, or AI evaluation with detailed feedback |
-| Quranic Mutashabihat | Manual side-by-side comparison | Automatic blanking of distinctive phrasing and contextual Ayah validation |
-| Hadith & Texts | Self-grading prone to bias | Exact word-by-word checking and AI verification of meaning and isnad |
-| Memorization deadlines | Intervals ignore target dates | Deadlines pull cards in ahead of your Khatm or exam review |
-| Automation | Complex add-ons or raw DB edits | Unified CLI commands with clean JSON output for scripts and agents |
+| **مفهوم البطاقة** | وجه وظهر ثابتان لا يتغيران | برنامج تفاعلي مستقل: قالب مرئي، ومنطق برمجي، ونظام تحقق آلي |
+| **آلية التصحيح** | تقييم ذاتي يحتمل الخطأ والتساهل | تحقق برمجي صارم أو تصحيح ذكي يبرز الألفاظ الناقصة والزائدة |
+| **المتشابهات القرآنية** | مقارنة يدوية بين آيتين | طمس الكلمات المفصلية في سياق الآية بالرسم العثماني مع المقارنة الفورية |
+| **الحديث والمتون** | قراءة تقليدية غير مفصلة | فحص تطابق الألفاظ كلمة بكلمة والتأكد من سلامة السند والرواية |
+| **مواعيد الختمة والاختبار** | فترات تكرار آلية تتجاهل أهدافك | تحديد تاريخ الختمة أو الاختبار ليقوم النظام بجدولة الحفظ وضغط المراجعة قبله |
+| **الأتمتة والربط** | إضافات معقدة أو تعديل يدوي للقواعد | سطر أوامر كامل وموحد بمخرجات JSON يسهل دمجه مع البرمجيات والمساعدين |
 
-## With AI or without it
+## مع الذكاء الاصطناعي أو بدونه
 
-AI is completely optional. Wikae does not require an account or an internet connection to function; your collection stays on your computer in a local SQLite file.
+الذكاء الاصطناعي في منصة وِكَاء ميزة إضافية واختيارية بالكامل؛ فالمنصة لا تشترط إنشاء حساب أو الاتصال بالإنترنت، وتبقى بياناتك محفوظة بالكامل على جهازك في قاعدة بيانات SQLite محلية.
 
-**Without AI**, Wikae is a fast, offline spaced-repetition app under your full control. Built-in card types are checked locally by deterministic scripts: typed words with tolerance, cloze blanks, multiple choice, ordering, or manual self-rating. Every card type, theme, and scheduling setting is fully customizable.
+**بدون الذكاء الاصطناعي**: تعمل وِكَاء كمنصة تكرار متباعد سريعة ومحلية بإشرافك التام. يتم تصحيح معظم أنواع البطاقات برمجياً عبر دوال محلية سريعة: المطابقة النصية المرنة، حجب الألفاظ المفصلية، أسئلة الاختيار من متعدد، ترتيب الجمل والآيات، أو التقييم الذاتي المباشر. كما يمكنك تخصيص كافة القوالب والسمات وخوارزميات الجدولة بحرية تامة.
 
-**With AI**, Wikae provides intelligent evaluation:
+**مع تفعيل الذكاء الاصطناعي**: ترتقي المنصة بقدراتك في الحفظ والضبط:
+- **تحليل فوري لإجاباتك وتسميعك**: يحلل النموذج تسميعك للآيات أو شرحك للأحاديث، ويعطيك تقييماً دقيقاً مع جمل توضيحية لما تم إغفاله أو تقديمه وتأخيره.
+- **توليد حزم تعليمية من كتبك ومذكراتك**: يمكنك تزويد المساعد الآلي بنصوص المتون أو المقررات ليقوم بإنشاء حزم وبطاقات مهيكلة، والتحقق منها عبر أمر `wikae pack check` ثم استيرادها.
+- **إدارة ذكية لمجموعاتك**: عبر سطر الأوامر أو المساعد الداخلي، يمكن للنظام ترتيب شجرة المجموعات، واستخراج البطاقات التي يتكرر تعثرك فيها، وإعادة ضبط المواعيد وفق جدول مراجعتك.
 
-- **Instant feedback on your answers.** Quranic recitation, Hadith explanations, and free-text answers get a clear verdict with specific notes on what was omitted or transposed.
-- **Packs created from your texts.** Hand an agent your notes, text files, or study material; it generates structured packs, validates them with `wikae pack check`, and imports them.
-- **Assistant management.** Through the CLI or in-app assistant, an agent can reorganize decks, identify weak cards, and schedule reviews around upcoming deadlines.
+## أنواع البطاقات في وِكَاء
 
-## Card Types in Wikae
+صُمم كل نوع من البطاقات كوحدة برمجية قائمة بذاتها تضم HTML وCSS وJavaScript مع معايير تصحيح مستقلة:
 
-Every card type is a self-contained module of HTML, CSS, and JavaScript with dedicated grading logic:
+- **متشابهات القرآن الكريم (`quran-mutashabihat`)**: تعرض الآية الكريمة بالرسم العثماني المعتمد، وتطمس الألفاظ المفصلية التي تميز الآية عن نظيراتها في السور الأخرى، مع تصحيح ذكي يراعي الحركات والأحرف المتشابهة.
+- **ملء الفراغات (`cloze`)**: حجب كلمات أو عبارات محددة داخل الآية أو متن الحديث لاختبار استحضار اللفظ الصحيح في موضعه.
+- **الإجابة المكتوبة (`typed`)**: تتطلب كتابة النص بدقة لاختبار الحفظ الكتابي والإملائي مع خيارات للتسامح البرمجي مع الفواصل والهمزات.
+- **الاختيار من متعدد (`mcq`)**: أسئلة باختيارات متعددة مع ترتيب عشوائي للخيارات وتوضيح سبب صحة أو خطأ كل خيار.
+- **المطابقة (`match`)**: مطابقة المفردات الغريبة بمعانيها، أو ربط الآيات بموضوعاتها، أو ربط الأحاديث برواتها.
+- **الترتيب (`order`)**: ترتيب الآيات وفق تسلسلها في السورة، أو ترتيب رواة الأسانيد، أو الوقائع التاريخية في السيرة النبوية.
+- **الإجابة المفتوحة (`free`)**: كتابة تفسير، أو استنباط حكم، أو إيراد شرح يُصحح ذكياً وفق نموذج إجابة ومعايير معتمدة.
+- **البطاقة الأساسية (`basic`)**: بطاقة تقليدية ذات وجهين تدعم تنسيق النصوص المتقدم، والصور، والمقاطع الصوتية.
+- **حجب الصور والمخطوطات (`occlusion`)**: إخفاء أجزاء محددة من لوحات التجويد، أو شجرات الأسانيد، أو صفحات المصحف لاختبار الذاكرة البصرية.
+- **الحساب والرياضيات (`numeric`, `math`)**: بطاقات حساب مسائل المواريث والفرائض مع تدقيق رياضي متقدم.
+- **الرسم والأكواد (`draw`, `code`)**: التخطيط والرسم اليدوي، وكتابة الأكواد مع تنفيذها وفحصها داخل بيئة معزولة وآمنة.
 
-- **Quranic Mutashabihat (`quran-mutashabihat`):** Displays the surrounding context in Uthmani calligraphy, blanks out the pivotal distinctive phrases that distinguish similar verses, and grades typed answers with diacritic tolerance and word-level accuracy.
-- **Cloze Deletion (`cloze`):** Hides key words or phrases inside Ayahs, Hadiths, or definitions, allowing focused recall of pivotal terms.
-- **Typed Answer (`typed`):** Requires exact spelling and phrasing, checked with fuzzy matching and customizable case/punctuation rules.
-- **Multiple Choice (`mcq`):** Multiple-choice questions with randomized option ordering and optional explanations per choice.
-- **Match (`match`):** Match terms with their definitions, vocabulary with meanings, or Quranic Surahs with their themes.
-- **Order (`order`):** Arrange verses, Hadith narrators in an isnad, or chronological events into the correct sequence.
-- **Free Answer (`free`):** Type explanations, rulings, or summaries graded by AI against a rubric and reference answer.
-- **Basic (`basic`):** Classical two-sided flashcards with rich markdown and media support.
-- **Image Occlusion (`occlusion`):** Conceal parts of diagrams, calligraphy charts, or manuscripts to test visual memorization.
-- **Numeric & Math (`numeric`, `math`):** Numerical calculations with tolerances and mathematical equivalence.
-- **Code & Drawing (`code`, `draw`):** Syntax-highlighted code execution in a sandbox, and sketch/handwriting input graded by vision models.
+## حزم المتجر المعتمدة
 
-## Decks from the Market
+ترتبط منصة وِكَاء بمتجر حزم مفتوح المصدر يتيح تحميل وتثبيت الحزم الإسلامية بضغطة زر واحدة:
 
-Wikae connects to the community catalog to install curated decks and card types in one click:
+- **متشابهات سورة البقرة (Mutashabihat of Surat Al-Baqarah)**: بطاقات تفاعلية تغطي كافة المواضع المتشابهة في سورة البقرة وتمييزها عن باقي سور المصحف الشريف.
+- **الأربعون النووية (The Forty Hadith of An-Nawawi)**: متون الأحاديث النبوية كاملة مع الأسانيد، وتراجم الرواة، والمفردات اللغوية الهامة.
+- **سمات ومظاهر بصرية راقية**: سمات مريحة للقراءة والمذاكرة المطولة (مثل Midnight وForest وAmber وSand) مع ضبط الخطوط العربية الكلاسيكية.
 
-- **متشابهات سورة البقرة (Mutashabihat of Surat Al-Baqarah):** Interactive cards covering the frequent and subtle Mutashabihat throughout Surat Al-Baqarah.
-- **الأربعون النووية (The Forty Hadith of An-Nawawi):** Complete Hadith texts, narrators, and key vocabulary for foundational Islamic memorization.
-- **Curated themes:** Clean aesthetic themes including Midnight, Forest, Amber, Sand, and modern dark/light variants designed for comfortable reading of Arabic text.
+## أبرز المزايا
 
-## Key Features
+- **عناية فائقة بالخط العربي والرسم العثماني**: دعم كامل لاتجاه الكتابة من اليمين إلى اليسار (RTL) مع خطوط مصحف المدينة النبوية، والخط الأميري، وخطوط الرقعة والنسخ.
+- **خوارزمية الجدولة FSRS-6**: أحدث خوارزمية تكرار متباعد علمية تتنبأ بمستوى استقرار المعلومة في الذاكرة ومعدل النسيان، مع دعم تخصيص معدل الاستبقاء اليومي.
+- **أنظمة جدولة متعددة**: إمكانية التبديل بين خوارزمية FSRS، ونمط التدريب اليومي المستمر (`drill`) دون تقييم، ونظام صناديق لايتنر، أو كتابة مجدول خاص بك.
+- **مواعيد الختمات والمراجعات**: إمكانية تعيين تاريخ مستهدف (مثل شهر رمضان، أو موعد اختبار حفظ)؛ لتقوم المنصة بسحب البطاقات وجدولتها لتثبيت المحفوظ قبل حلول الموعد.
+- **شجرة مجموعات هرمية مرنة**: تنظيم هرمي للمجموعات والمجلدات (مثل `القرآن::البقرة` أو `الحديث::الأربعون_النووية`) مع وراثة الإعدادات وتخصيصها لكل مستوى.
+- **لوحة إحصائيات بيانية متكاملة**: قياس نسبة الاستبقاء الحقيقية، والتنبؤ بعدد المراجعات القادمة، ومخطط منحنى النسيان، ومتابعة سلاسل الاستمرار اليومية (Streak).
+- **أقصى درجات الخصوصية والاستقلالية**: قاعدة بيانات محلية واحدة بصيغة SQLite داخل جهازك (`~/.etude/etude.db`) مع مجلد وسائط محلي دون أي تتبع خارجي.
+- **سطر أوامر متكامل**: أكثر من 140 أمراً عبر أداة `wikae` بمخرجات JSON دقيقة تدعم المعاينة قبل التطبيق (`--dry-run`).
+- **استيراد مجموعات Anki**: استيراد سلس لحزم `.apkg` و `.colpkg` مع نقل المجموعات، والوسوم، والوسائط، وسجل المراجعات بالكامل.
 
-- **Built for Arabic and Uthmani Typography:** Native RTL support, integrated Amiri Quran and Hafs Uthmani font rendering, and diacritic handling.
-- **State-of-the-art FSRS-6 Scheduling:** Modern spaced repetition algorithm predicting memory stability and retrievability, with customizable learning steps, fuzzing, and per-deck daily limits.
-- **Pluggable Schedulers:** Choose between FSRS-6, daily `drill` mode (for continuous recitation practice without ratings), Leitner boxes, or custom scripts.
-- **Revision Deadlines:** Set a target date (e.g. Ramadan, Khatm, or an exam); Wikae pulls upcoming cards forward so everything is consolidated before the date.
-- **Hierarchical Deck Tree:** Drag-and-drop decks and subdecks (`القرآن::البقرة`, `الحديث::الأربعون_النووية`), each inheriting or overriding scheduling presets.
-- **Rich Analytics & Retention Statistics:** Track true retention rate, daily review forecast, memory stability curve, and review streaks.
-- **High Privacy & Local-first:** SQLite storage (`~/.etude/etude.db`), local media directory, and no telemetry.
-- **Comprehensive CLI:** More than 140 commands with structured JSON output, dry-run mode, and machine-readable command schemas.
-- **Anki Import:** Import `.apkg` and `.colpkg` collections, retaining deck hierarchies, tags, media, and review history.
+## دليل البدء السريع
 
-## Quick Start
+### التثبيت من المصدر
 
-### From Source
-
-Wikae requires Node 24 or newer. Node runs the TypeScript sources directly without a backend build step.
+تتطلب منصة وِكَاء بيئة Node.js الإصدار 24 أو أحدث؛ حيث يقوم Node بتشغيل كود TypeScript مباشرة دون الحاجة لمرحلة بناء خلفية.
 
 ```sh
-git clone https://github.com/Zibhelina/etude.git wikae
+git clone https://github.com/Sidali-Djeghbal/wikae.git wikae
 cd wikae
 npm install
-npm run build        # builds the web application into web/dist
-npm start            # starts the server on http://127.0.0.1:4610
+npm run build        # بناء واجهة الويب داخل مجلد web/dist
+npm start            # تشغيل الخادم على الرابط http://127.0.0.1:4610
 ```
 
-Open `http://127.0.0.1:4610` in your browser. Your collection is saved to `~/.etude/etude.db`.
+افتح الرابط `http://127.0.0.1:4610` في متصفحك. تُحفظ مجموعتك وبياناتك في الملف `~/.etude/etude.db`.
 
-### CLI Usage
+### استخدام سطر الأوامر (CLI)
 
 ```sh
-npm link             # makes the `wikae` command available globally
+npm link             # تثبيت أمر wikae في بيئة النظام العامة
 
-wikae serve          # launch the web server and API
-wikae study next     # fetch the next due card
-wikae stats overview # display your review statistics and retention
-wikae pack import examples/quran-mutashabihat.pack.json # import a pack
+wikae serve          # تشغيل خادم المنصة وواجهة البرمجة (API)
+wikae study next     # جلب البطاقة التالية المستحقة للمراجعة
+wikae stats overview # عرض الإحصائيات العامة ونسبة الاستبقاء
+wikae pack import examples/quran-mutashabihat.pack.json # استيراد حزمة بطاقات
 ```
 
-### Desktop Application
+### تطبيق سطح المكتب
 
-To launch Wikae in a standalone desktop window:
+لتشغيل وِكَاء كتطبيق مستقل على سطح المكتب:
 
 ```sh
 npm run desktop
 ```
 
-### Configure AI Grading (Optional)
+### تفعيل التصحيح بالذكاء الاصطناعي (اختياري)
 
-1. Open **Settings → AI grading** in the web interface.
-2. Select your preferred provider (**Groq**, **OpenRouter**, **OpenAI**, or a local Ollama/llama.cpp server).
-3. Enter your API key and choose your models (e.g. `llama-3.3-70b-versatile` on Groq).
-4. Keys are securely stored in `~/.etude/.env` with strict permissions (`0600`).
+1. افتح صفحة **الإعدادات ← تصحيح الذكاء الاصطناعي** في واجهة المنصة.
+2. اختر المزود المفضل لديك (**Groq**، أو **OpenRouter**، أو **OpenAI**، أو خادم محلي مثل Ollama أو llama.cpp).
+3. أدخل مفتاح واجهة البرمجة (API Key) وحدد النموذج المطلوب (مثل `llama-3.3-70b-versatile` على منصة Groq).
+4. تُحفظ المفاتيح في ملف محلي مشفر الصلاحيات `~/.etude/.env` بصلاحية مقيدة (`0600`) ولا تغادر جهازك إلا إلى المزود المختار مباشرة.
 
-You can also set your API key from the terminal:
+يمكنك أيضاً ضبط المفتاح من الطرفية مباشرة:
 
 ```sh
 printf %s "$GROQ_API_KEY" | wikae settings key set GROQ_API_KEY
 ```
 
-### Mobile Access
+### استخدام المنصة من الهاتف المحمول
 
-To access Wikae from your phone or tablet on your local network:
+لفتح المنصة واستخدامها من هاتفك أو جهازك اللوحي عبر الشبكة المحلية نفسها:
 
 ```sh
 wikae serve --host 0.0.0.0 --token "$(openssl rand -hex 16)"
 ```
 
-Open `http://<your-computer-ip>:4610/?token=<token>` on your mobile device and tap **Add to Home Screen**.
+افتح الرابط `http://<عنوان-حاسوبك-المحلي>:4610/?token=<الرمز>` من متصفح الهاتف، ثم اختر **إضافة إلى الشاشة الرئيسية** لتثبيتها كتطبيق مباشر.
 
-## Configuration
+## التهيئة وخيارات التشغيل
 
-| Setting | Description |
+| الإعداد | الوصف |
 |---|---|
-| `~/.etude/.env` | Secure API keys and environment variables. Never committed or sent to third parties. |
-| `--db PATH` or `ETUDE_DB` | Path to the SQLite collection database (default: `~/.etude/etude.db`). |
-| `ETUDE_HOME` | Configuration root directory (default: `~/.etude`). |
-| `--port` or `ETUDE_PORT` | HTTP port (default: 4610). |
-| `--host` or `ETUDE_HOST` | Host address (default: `127.0.0.1`). Non-local addresses require a token. |
-| `--token` or `ETUDE_TOKEN` | Bearer token for authentication when exposed beyond localhost. |
+| `~/.etude/.env` | ملف المفاتيح السرية والمتغيرات البيئية؛ لا يُرفع للمستودع ولا يُشارك مطلقاً. |
+| `--db PATH` أو `ETUDE_DB` | مسار ملف قاعدة بيانات SQLite (الافتراضي: `~/.etude/etude.db`). |
+| `ETUDE_HOME` | المجلد الرئيسي للتهيئة وقاعدة البيانات (الافتراضي: `~/.etude`). |
+| `--port` أو `ETUDE_PORT` | منفذ تشغيل الخادم (الافتراضي: 4610). |
+| `--host` أو `ETUDE_HOST` | عنوان الاستماع (الافتراضي: `127.0.0.1`؛ وأي عنوان خارجي يشترط رمز تحقق). |
+| `--token` أو `ETUDE_TOKEN` | رمز التحقق المطلوب في ترويسة الطلب أو الرابط عند تشغيل الخادم خارج localhost. |
 
-## Packs
+## حزم البطاقات (Packs)
 
-Packs are JSON files containing decks, card types, settings, and items. Importing is idempotent and preserves your review history.
+تُحفظ حزم البطاقات في ملف JSON واحد يضم المجموعات، وأنواع البطاقات، والإعدادات، والبطاقات؛ واستيراد الحزمة عملية آمنة لا تُكرر البيانات وتُحافظ على سجل مراجعاتك السابقة.
 
 ```json
 {
@@ -159,7 +164,7 @@ Packs are JSON files containing decks, card types, settings, and items. Importin
         "verseNumber": 10,
         "verseText": "فِي قُلُوبِهِم مَّرَضٌ فَزَادَهُمُ اللَّهُ مَرَضًا وَلَهُمْ عَذَابٌ أَلِيمٌ بِمَا كَانُوا يَكْذِبُونَ",
         "distinctivePhrase": "بِمَا كَانُوا يَكْذِبُونَ",
-        "comparisonContext": "في سورة البقرة: (بِمَا كَانُوا يَكْذِبُونَ)، وقارنها بآيات أخرى."
+        "comparisonContext": "في سورة البقرة: (بِمَا كَانُوا يَكْذِبُونَ)، وقارنها بسائر المواضع."
       }
     }
   ]
@@ -167,45 +172,62 @@ Packs are JSON files containing decks, card types, settings, and items. Importin
 ```
 
 ```sh
-wikae pack check my-deck.pack.json            # validate deck structure and cards
-wikae pack import my-deck.pack.json --dry-run # preview changes without writing
-wikae pack import my-deck.pack.json           # import into collection
+wikae pack check my-deck.pack.json            # التحقق من صحة بناء الحزمة وبطاقاتها
+wikae pack import my-deck.pack.json --dry-run # معاينة التغييرات دون كتابتها
+wikae pack import my-deck.pack.json           # استيراد الحزمة إلى مجموعتك
 ```
 
-## Architecture
+## البنية المعمارية للنظام
 
-Wikae maintains a clean separation between **what** you memorize (items), **how** it is rendered and evaluated (card types and graders), and **when** it returns (the deck's scheduler):
+تفصل منصة وِكَاء بشكل كامل ومستقل بين **محتوى المحفوظ** (العنصر/Item)، و**طريقة عرضه وتصحيحه** (نوع البطاقة/Card Type والمصحح/Grader)، و**موعد استحقاق مراجعته** (المجدول/Scheduler):
 
 ```mermaid
 flowchart TD
-  deck["Deck"] -->|holds| item["Item<br/>fields, tags, context"]
-  item -->|one card per face| card["Card<br/>FSRS scheduling state"]
-  card -->|study session| type
-  subgraph type ["Card Type"]
+  deck["المجموعة Deck"] -->|تحتوي| item["المحتوى Item<br/>الحقول والوسوم والسياق"]
+  item -->|بطاقة لكل وجه| card["البطاقة Card<br/>حالة الجدولة FSRS"]
+  card -->|جلسة الاستذكار| type
+  subgraph type ["نوع البطاقة Card Type"]
     direction LR
-    prepare["prepare(fields)"] -->|view + validation key| template["template<br/>sandboxed frame"]
-    template -->|user answer| grader["grader"]
+    prepare["دالة الإعداد prepare"] -->|العرض + مفتاح التحقق| template["القالب template<br/>إطار معزول sandboxed"]
+    template -->|إجابة المستخدم| grader["المصحح grader"]
   end
-  type -->|score 0 to 1| review["Attempt & Evaluation"]
-  review -->|rating| scheduler["FSRS-6 Scheduler"]
-  scheduler -->|next due date| card
+  type -->|درجة من 0 إلى 1| review["المحاولة والتقييم"]
+  review -->|التقييم المستحق| scheduler["مجدول FSRS-6"]
+  scheduler -->|تاريخ المراجعة القادمة| card
 ```
 
-| Concept | Description |
-| --- | --- |
-| **Deck** | A node in the hierarchical tree (`القرآن::البقرة`). Holds items and scheduling settings inherited by subdecks. |
-| **Preset** | Named configuration profiles (daily limits, target retention, FSRS parameters, schedulers) shared across decks. |
-| **Item** | The memorization content: fields, tags, and context. Analogous to a note in Anki. |
-| **Card** | An individual study face derived from an item with its own independent FSRS stability, difficulty, and due date. |
-| **Card type** | An isolated module defining fields, template HTML, CSS, client-side card interaction, and grading scripts. |
-| **Grader** | Computes a score from 0 to 1 (`self`, deterministic `script`, `ai` evaluation, or `hybrid`). |
-| **Scheduler** | Determines review intervals (`fsrs` by default, `drill` for unrated practice, or `leitner`). |
-| **Pack** | A portable JSON file carrying decks, card types, and items for easy sharing and versioning. |
+| المفهوم | المعنى والوظيفة |
+|---|---|
+| **المجموعة (Deck)** | عقدة في الشجرة الهرمية (مثل `القرآن::البقرة`)؛ تحتوي البطاقات وإعدادات الجدولة التي ترثها المجموعات الفرعية. |
+| **الملف الإعدادي (Preset)** | نمط إعدادات مسمى (الحدود اليومية، نسبة الاستبقاء المستهدفة، معلمات FSRS) تشترك فيه مجموعات متعددة. |
+| **المحتوى (Item)** | المادة العلمية المراد حفظها: الحقول النصية، والوسوم، والبيانات التوضيحية (يقابل Note في Anki). |
+| **البطاقة (Card)** | الوجه الفعلي الذي يظهر في جلسة المراجعة، ويحتفظ بحالة الجدولة ومستوى الاستقرار والاستحقاق بشكل مستقل. |
+| **نوع البطاقة (Card Type)** | الوحدة البرمجية المسؤولة عن شكل البطاقة وتصميمها (HTML/CSS) ومنطق التفاعل والتحضير. |
+| **المصحح (Grader)** | محرك احتساب النتيجة من 0 إلى 1 (تصحيح ذاتي، أو كود برمجي محلي، أو تقييم ذكي بالذكاء الاصطناعي). |
+| **المجدول (Scheduler)** | المحرك الذي يحدد تاريخ المراجعة القادم (FSRS-6 افتراضياً، أو التدريب المتكرر drill، أو لايتنر). |
+| **الحزمة (Pack)** | ملف JSON يحمل المجموعات، والأنواع، والمحتويات لمشاركتها وتداولها بسهولة. |
 
-## Security
+## الأمان والحماية
 
-Card templates execute in sandboxed iframes with opaque origins. Evaluation scripts execute in an isolated QuickJS WebAssembly environment. The HTTP server binds exclusively to `127.0.0.1` unless an explicit access token is configured.
+تعمل قوالب البطاقات التفاعلية داخل أطر `iframe` معزولة ومحرومة من الوصول إلى الذاكرة الرئيسية أو الشبكة. وتُنفذ أكواد التحضير والتصحيح داخل بيئة QuickJS المعزولة عبر تقنية WebAssembly على الخادم. كما يقتصر خادم HTTP افتراضياً على الاستماع لعنوان الجهاز المحلي `127.0.0.1` ولا يمكن الوصول إليه عن بُعد إلا عبر رمز مصادقة مشفر يتم توليده خصيصاً.
 
-## License
+## شكر وتقدير للمشاريع مفتوحة المصدر (Credits & Acknowledgments)
 
-Wikae is free software licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0).
+تعتز منصة **وِكَاء (Wikae)** بكونها امتداداً وتطويراً لمجتمع البرمجيات الحرة المفتوحة، وتدين بالفضل والتقدير للجهود والمشاريع التقنية الرائدة التي بُنيت المنصة بالاعتماد عليها:
+
+- **مشروع Étude**: المنصة الأصلية الرائدة التي طوّرها المهندس [João Henrique Costa Araujo](https://github.com/jhca) بمستودع [Zibhelina/etude](https://github.com/Zibhelina/etude) بموجب ترخيص AGPL-3.0، والتي وفّرت النواة البرمجية والهندسة المبتكرة لتشغيل البطاقات البرمجية التفاعلية والتكامل مع سطر الأوامر.
+- **خوارزمية FSRS (Free Spaced Repetition Scheduler)**: الخوارزمية العلمية الحديثة لتوقع النسيان ومعدل الاستقرار، ومكتبة [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs) من مجتمع [Open Spaced Repetition](https://github.com/open-spaced-repetition).
+- **محرك QuickJS ومكتبة quickjs-emscripten**: لتمكين تنفيذ أكواد التحضير والتصحيح للبطاقات داخل بيئة WebAssembly معزولة وآمنة بالكامل.
+- **قاعدة بيانات SQLite وsqlite-wasm**: محرك البيانات المحلي فائق السرعة والموثوقية لتخزين المجموعات والبطاقات وسجلات المراجعة.
+- **إطار Hono**: إطار خادم الويب الخفيف لتوفير واجهات البرمجة (API) وخدمة إطارات البطاقات.
+- **مجمع الملك فهد لطباعة المصحف الشريف والخطوط العربية**: لتوفير الخطوط العثمانية المتقنة والمصاحف التي يعتمد عليها عرض الآيات والمتشابهات بالرسم العثماني، بالإضافة إلى خطوط Amiri وAref Ruqaa.
+
+### منظومة مشاريع وِكَاء
+
+- **[Wikae Core](https://github.com/Sidali-Djeghbal/wikae)**: المستودع الرئيسي الذي يضم المنصة، وأداة سطر الأوامر، وتطبيق الويب، وتطبيق سطح المكتب.
+- **[Wikae Market](https://github.com/Sidali-Djeghbal/wikae-market)**: المستودع المفتوح لحزم وبطاقات القرآن الكريم، والمتشابهات، والحديث الشريف، والسمات البصرية.
+- **[Wikae Web](https://sidali-djeghbal.github.io/wikae/)**: البوابة التعريفية وموقع المشروع الرسمي عبر GitHub Pages.
+
+## الترخيص البرمجي
+
+منصة وِكَاء برمجية حرة ومفتوحة المصدر خاضعة لـ [رخصة جنو أفيرو العمومية الإصدار 3.0](LICENSE) (AGPL-3.0).

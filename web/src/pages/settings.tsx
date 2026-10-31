@@ -46,9 +46,9 @@ function GithubMark({ className }: { className?: string }) {
 }
 
 const ABOUT_LINKS = [
-  { label: "GitHub", href: "https://github.com/Zibhelina/etude", icon: GithubMark },
-  { label: "Website", href: "https://etude.study/", icon: Globe },
-  { label: "Docs", href: "https://github.com/Zibhelina/etude/tree/main/docs", icon: BookOpen },
+  { label: "GitHub", href: "https://github.com/Sidali-Djeghbal/wikae", icon: GithubMark },
+  { label: "Website", href: "https://sidali-djeghbal.github.io/wikae/", icon: Globe },
+  { label: "Docs", href: "https://github.com/Sidali-Djeghbal/wikae/tree/main/docs", icon: BookOpen },
 ];
 
 export function SettingsPage() {

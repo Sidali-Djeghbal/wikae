@@ -15,7 +15,7 @@ import { BUILTIN_THEMES, THEME_ID, ThemeError, freeThemeId, normalizeTheme, type
 import { validateType } from "./types.ts";
 import type { CardTypeDef } from "./model.ts";
 
-export const MARKET_REPO = "Zibhelina/etude-market";
+export const MARKET_REPO = "Sidali-Djeghbal/wikae-market";
 export const DEFAULT_MARKET = { url: `https://raw.githubusercontent.com/${MARKET_REPO}/main`, repo: MARKET_REPO };
 export const MARKET_KINDS = ["theme", "deck", "type"] as const;
 export type MarketKind = (typeof MARKET_KINDS)[number];

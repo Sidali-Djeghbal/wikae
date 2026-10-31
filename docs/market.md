@@ -1,6 +1,6 @@
 # Market
 
-The **Market** tab lists themes, decks and card types other people shared. It reads a public GitHub repository, [Zibhelina/etude-market](https://github.com/Zibhelina/etude-market), so browsing and installing need no account.
+The **Market** tab lists themes, decks and card types other people shared. It reads a public GitHub repository, [Sidali-Djeghbal/wikae-market](https://github.com/Sidali-Djeghbal/wikae-market), so browsing and installing need no account.
 
 ## Installing
 

@@ -17,13 +17,13 @@
     "self-hosted"
   ],
   "author": "Joao Araujo",
-  "homepage": "https://github.com/Zibhelina/etude#readme",
+  "homepage": "https://github.com/Sidali-Djeghbal/wikae#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Zibhelina/etude.git"
+    "url": "git+https://github.com/Sidali-Djeghbal/wikae.git"
   },
   "bugs": {
-    "url": "https://github.com/Zibhelina/etude/issues"
+    "url": "https://github.com/Sidali-Djeghbal/wikae/issues"
   },
   "license": "AGPL-3.0-only",
   "files": [
