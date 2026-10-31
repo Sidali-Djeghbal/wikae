@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Etude } from "../src/core/engine.ts";
-import { buildIndex, buildSubmission, checkEntry, entryJson, entryPath, fetchIndex, installEntry, installFile, installState, installedEntries, publishFile, type MarketFile } from "../src/core/market.ts";
+import { buildIndex, buildSubmission, checkEntry, entryJson, entryPath, fetchIndex, installEntry, installFile, installState, installedEntries, publishFile, MARKET_REPO, type MarketFile } from "../src/core/market.ts";
 
 const dir = () => mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), "etude-market-"));
 const SHOWCASE = JSON.parse(readFileSync(new URL("../examples/showcase.pack.json", import.meta.url), "utf8"));
@@ -118,23 +118,24 @@ test("publish opens a pull request through a fork when you can't push", async ()
   const src = await source();
   const file = buildSubmission(src, { kind: "theme", ref: "sea", author: "ana" });
   const calls: { args: string[]; input?: any }[] = [];
+  const [marketOwner, marketName] = MARKET_REPO.split("/");
   const gh = (args: string[], input?: any) => {
     calls.push({ args, input });
     const path = args.find((a) => a.startsWith("repos/") || a === "user") ?? "";
     if (path === "user") return { login: "ana" };
-    if (path === "repos/Zibhelina/etude-market") return { default_branch: "main", permissions: { push: false } };
+    if (path === `repos/${MARKET_REPO}`) return { default_branch: "main", permissions: { push: false } };
     if (path.endsWith("/git/ref/heads/main")) return { object: { sha: "abc123" } };
     if (path.includes("/contents/") && !args.includes("PUT")) throw new Error("404");
-    if (path.endsWith("/pulls")) return { html_url: "https://github.com/Zibhelina/etude-market/pull/7", number: 7 };
+    if (path.endsWith("/pulls")) return { html_url: `https://github.com/${MARKET_REPO}/pull/7`, number: 7 };
     return {};
   };
   const r = publishFile(file, { gh });
   assert.equal(r.number, 7);
-  assert.equal(r.fork, "ana/etude-market");
+  assert.equal(r.fork, `ana/${marketName}`);
   const put = calls.find((c) => c.args.includes("PUT"))!;
-  assert.ok(put.args.includes("repos/ana/etude-market/contents/entries/themes/sea.json"));
+  assert.ok(put.args.includes(`repos/ana/${marketName}/contents/entries/themes/sea.json`));
   assert.deepEqual(JSON.parse(Buffer.from(put.input.content, "base64").toString()), JSON.parse(entryJson(file)));
-  const pr = calls.find((c) => c.args.at(-2) === "repos/Zibhelina/etude-market/pulls" || c.args.includes("repos/Zibhelina/etude-market/pulls"))!;
+  const pr = calls.find((c) => c.args.at(-2) === `repos/${MARKET_REPO}/pulls` || c.args.includes(`repos/${MARKET_REPO}/pulls`))!;
   assert.match(pr.input.head, /^ana:theme-sea-/);
   assert.equal(pr.input.base, "main");
 });
