@@ -8,7 +8,7 @@
 // (then also notarized when APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER are set).
 // Windows: the x64 installer. Linux: AppImage, .deb and .rpm (the .rpm needs rpmbuild).
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { build, type Configuration } from "electron-builder";
 
@@ -110,7 +110,7 @@ const config: Configuration = {
       { target: "dmg", arch: ["arm64", "x64"] },
       { target: "zip", arch: ["arm64", "x64"] },
     ],
-    artifactName: "Etude-mac-${arch}.${ext}",
+    artifactName: "Wikae-mac-${arch}.${ext}",
     minimumSystemVersion: "12.0",
     hardenedRuntime: true,
     // Absolute: codesign doesn't run from this folder.
@@ -121,7 +121,7 @@ const config: Configuration = {
     ...(signed ? { notarize: !!process.env.APPLE_API_KEY } : { identity: "-" }),
   },
   win: { target: [{ target: "nsis", arch: ["x64"] }] },
-  nsis: { oneClick: true, perMachine: false, artifactName: "Etude-windows-setup.${ext}" },
+  nsis: { oneClick: true, perMachine: false, artifactName: "Wikae-windows-setup.${ext}" },
   linux: {
     target: ["AppImage", "deb", ...(hasRpmbuild ? ["rpm"] : [])],
     // /usr/bin/etude is the etude command; the app's program gets another name.
@@ -131,9 +131,9 @@ const config: Configuration = {
     synopsis: "Spaced repetition with programmable card types",
     syncDesktopName: true,
   },
-  appImage: { artifactName: "Etude-linux-x86_64.AppImage" },
-  deb: { artifactName: "Etude-linux-amd64.deb", ...linuxScripts },
-  rpm: { artifactName: "Etude-linux-x86_64.rpm", ...linuxScripts },
+  appImage: { artifactName: "Wikae-linux-x86_64.AppImage" },
+  deb: { artifactName: "Wikae-linux-amd64.deb", ...linuxScripts },
+  rpm: { artifactName: "Wikae-linux-x86_64.rpm", ...linuxScripts },
 };
 
 await build({ projectDir: DESKTOP, config, publish: "never" });
@@ -143,11 +143,18 @@ if (process.platform === "darwin") {
   let text = readFileSync(yml, "utf8");
   for (const [arch, name] of Object.entries(MAC_NAMES)) {
     for (const ext of [".dmg", ".dmg.blockmap"]) {
-      const from = join(OUT, `Etude-mac-${arch}${ext}`);
-      if (existsSync(from)) renameSync(from, join(OUT, `Etude-mac-${name}${ext}`));
+      const from = join(OUT, `Wikae-mac-${arch}${ext}`);
+      if (existsSync(from)) renameSync(from, join(OUT, `Wikae-mac-${name}${ext}`));
     }
-    text = text.replaceAll(`Etude-mac-${arch}.dmg`, `Etude-mac-${name}.dmg`);
+    text = text.replaceAll(`Wikae-mac-${arch}.dmg`, `Wikae-mac-${name}.dmg`);
   }
   writeFileSync(yml, text);
+}
+
+for (const file of readdirSync(OUT)) {
+  if (file.startsWith("Wikae-")) {
+    const legacy = join(OUT, file.replace(/^Wikae-/, "Etude-"));
+    if (!existsSync(legacy)) copyFileSync(join(OUT, file), legacy);
+  }
 }
 console.log(`installers in ${relative(process.cwd(), OUT) || "."}`);

@@ -11,6 +11,11 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to upload installers to (e.g. v2.5.0)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -55,13 +60,14 @@ jobs:
         with:
           name: etude-${{ runner.os }}
           path: |
+            desktop/dist/out/Wikae-*
             desktop/dist/out/Etude-*
             desktop/dist/out/latest*.yml
           if-no-files-found: error
           retention-days: 14
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -74,9 +80,8 @@ jobs:
       - name: Upload installers to release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          # A tag with a dash (v2.5.0-beta.1) is a pre-release: normal users and the updaters skip it.
           pre=$([[ "$TAG" == *-* ]] && echo --prerelease || true)
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1 || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" $pre --title "Wikae ${TAG#v}" --generate-notes
           gh release upload "$TAG" files/* --repo "$GITHUB_REPOSITORY" --clobber
