@@ -96,3 +96,35 @@
   .doc table.booktabs td + td::before { content: attr(data-label) " · "; font-family: var(--font-serif); font-style: italic; color: var(--muted-foreground); }
   .doc table.booktabs td:first-child { font-weight: 500; }
 }
+
+/* ------------------------------------------------------------- RTL text pages */
+html[dir="rtl"] .pg-hero,
+html[dir="rtl"] .pg-grid,
+html[dir="rtl"] .pg-prose,
+html[dir="rtl"] .faq,
+html[dir="rtl"] .legal {
+  text-align: right;
+  direction: rtl;
+}
+html[dir="rtl"] .pg-points li {
+  padding-left: 0;
+  padding-right: 1.4rem;
+}
+html[dir="rtl"] .pg-points li::before {
+  left: auto;
+  right: 0;
+}
+html[dir="rtl"] .doc ul,
+html[dir="rtl"] .doc ol {
+  padding-left: 0;
+  padding-right: 1.3rem;
+}
+html[dir="rtl"] .faq summary {
+  flex-direction: row-reverse;
+}
+html[dir="rtl"] .plan {
+  text-align: right;
+}
+html[dir="rtl"] .plan .btn {
+  align-self: flex-start;
+}

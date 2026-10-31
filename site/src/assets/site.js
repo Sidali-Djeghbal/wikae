@@ -4,6 +4,7 @@ import katex from "../runtime/vendor/katex.js";
 import math from "../runtime/mathexpr.js";
 import { DEMOS, PRELUDE, TYPE_FILES, GENERATOR, GALLERY, SCHEDULERS } from "../data.js";
 import { initThemeToggle } from "./theme.js";
+import { initLanguageToggle, getCurrentLang } from "./i18n.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -97,6 +98,7 @@ const onScroll = () => nav.classList.toggle("scrolled", scrollY > 8);
 addEventListener("scroll", onScroll, { passive: true });
 onScroll();
 initThemeToggle();
+initLanguageToggle();
 
 const revealer = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && (e.target.classList.add("in"), revealer.unobserve(e.target))), { rootMargin: "0px 0px -8% 0px" });
 $$("[data-reveal]").forEach((el) => revealer.observe(el));
@@ -173,8 +175,16 @@ function humanInterval(ms) {
   if (mo < 12) return `${Math.round(mo * 10) / 10}mo`.replace(".0mo", "mo");
   return `${Math.round((d / 365) * 10) / 10}y`.replace(".0y", "y");
 }
-const RATING = { 1: "Again", 2: "Hard", 3: "Good", 4: "Easy" };
-const VERDICT = { correct: "Correct", partial: "Partly right", incorrect: "Not quite" };
+const RATING = {
+  ar: { 1: "مجدداً", 2: "صعب", 3: "جيد", 4: "سهل" },
+  en: { 1: "Again", 2: "Hard", 3: "Good", 4: "Easy" }
+};
+const VERDICT = {
+  ar: { correct: "صحيح", partial: "صحيح جزئياً", incorrect: "غير دقيق" },
+  en: { correct: "Correct", partial: "Partly right", incorrect: "Not quite" }
+};
+const getRating = (r) => (RATING[getCurrentLang()] || RATING.ar)[r];
+const getVerdict = (v) => (VERDICT[getCurrentLang()] || VERDICT.ar)[v];
 /** A drill's numbers, the way the app shows them after a run: "5 invaders · 0.74 s per invader". */
 const metricLine = (metrics, details) => metrics
   .map((m) => { const v = details?.[m.key]; return v == null ? null : `<b class="tabular">${Number(v).toFixed(m.digits ?? 0)}${m.unit === "%" ? "%" : m.unit ? ` ${m.unit}` : ""}</b> ${esc(m.label.toLowerCase().replace(m.unit === "s" ? /^seconds\s+/ : /^$/, ""))}`; })
@@ -291,7 +301,10 @@ if (stage) {
     cur.phase = "result";
     post({ type: "result", result: { grade: g, key: cur.prep.key, answer } });
     const pct = g.verdict === "partial" && g.score != null ? `<span class="m tabular">${Math.round(g.score * 100)}%</span>` : "";
-    verdictEl.innerHTML = `<span class="v ${g.verdict}">${VERDICT[g.verdict] ?? "Rate yourself"}</span>${pct}<span class="m">· checked by the card's script in ${g.grader.ms} ms</span>`;
+    const isAr = getCurrentLang() === "ar";
+    const vLabel = getVerdict(g.verdict) ?? (isAr ? "قيّم نفسك" : "Rate yourself");
+    const checkMsg = isAr ? `· تم التحقق برمجياً في ${g.grader.ms} م ث` : `· checked by the card's script in ${g.grader.ms} ms`;
+    verdictEl.innerHTML = `<span class="v ${g.verdict}">${vLabel}</span>${pct}<span class="m">${checkMsg}</span>`;
     verdictEl.classList.remove("pop"); void verdictEl.offsetWidth; verdictEl.classList.add("pop");
     // The answer and explanation grow the card: bring them into view inside the window.
     // The typing test puts its result (wpm, accuracy) at the top instead, so it stays there.
@@ -301,7 +314,7 @@ if (stage) {
     const f = fsrs(generatorParameters({ enable_fuzz: false, learning_steps: ["1m", "10m"], relearning_steps: ["10m"] }));
     const now = new Date();
     const next = f.repeat(createEmptyCard(now), now);
-    ratings.innerHTML = [1, 2, 3, 4].map((r) => `<button type="button" class="rate r${r}${g.suggested === r ? " suggested" : ""}" data-r="${r}">${RATING[r]}<small>${humanInterval(next[r].card.due - now)}</small></button>`).join("");
+    ratings.innerHTML = [1, 2, 3, 4].map((r) => `<button type="button" class="rate r${r}${g.suggested === r ? " suggested" : ""}" data-r="${r}">${getRating(r)}<small>${humanInterval(next[r].card.due - now)}</small></button>`).join("");
     ratings.hidden = false;
   }
   ratings.addEventListener("click", (e) => {
@@ -312,7 +325,10 @@ if (stage) {
     if (cur?.phase !== "result") return;
     cur.phase = "rated";
     const b = $(`[data-r="${r}"]`, ratings);
-    verdictEl.innerHTML = `<span class="v" style="color:var(--${["", "again", "hard", "good", "easy"][r]})">${RATING[r]}</span><span class="m">· back in ${b?.querySelector("small")?.textContent ?? "a while"}. Next card…</span>`;
+    const isAr = getCurrentLang() === "ar";
+    const interval = b?.querySelector("small")?.textContent ?? (isAr ? "قريباً" : "a while");
+    const backMsg = isAr ? `· المراجعة بعد ${interval}. البطاقة التالية…` : `· back in ${interval}. Next card…`;
+    verdictEl.innerHTML = `<span class="v" style="color:var(--${["", "again", "hard", "good", "easy"][r]})">${getRating(r)}</span><span class="m">${backMsg}</span>`;
     ratings.hidden = true;
     await sleep(1100);
     while (!stageVis.on) await sleep(400);
@@ -403,13 +419,20 @@ if (stage) {
       await until(() => cur.phase === "loading" || cur.phase === "answer", g, 4000);
     }
   }
+  function updateToggleUI() {
+    const isAr = getCurrentLang() === "ar";
+    toggle.innerHTML = auto
+      ? `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span class="dt-label">${isAr ? "التشغيل التلقائي يعمل" : "Playing the deck"}</span>`
+      : `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg><span class="dt-label">${isAr ? "تشغيل تلقائي" : "Play the deck"}</span>`;
+    toggle.setAttribute("aria-label", auto ? (isAr ? "إيقاف التشغيل التلقائي" : "Pause the deck") : (isAr ? "تشغيل تلقائي للحزمة" : "Play the deck"));
+  }
   function setAuto(on) {
     auto = on; gen++;
-    toggle.innerHTML = on ? `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span class="dt-label">Playing the deck</span>` : `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg><span class="dt-label">Play the deck</span>`;
-    toggle.setAttribute("aria-label", on ? "Pause the deck" : "Play the deck");
+    updateToggleUI();
     if (!on) { cursor.classList.remove("on"); if (!cur) open(index); }
     else { if (touched || cur?.phase !== "answer") open((index + 1) % DEMOS.length); touched = false; play(gen); }
   }
+  window.addEventListener("wikae-lang-change", updateToggleUI);
   // A real person takes over: stop the demo where it is and let them finish the card.
   const takeOver = (e) => { if (!e.isTrusted || e.target.closest(".demo-toggle")) return; touched = true; clearTimeout(resumeTimer); if (auto) setAuto(false); };
   stage.addEventListener("pointerdown", takeOver);
@@ -476,30 +499,6 @@ if (ai) {
       fb.classList.remove("caret");
     });
   });
-}
-
-// ------------------------------------------------------------------ the generator
-const gen = $("#generators");
-if (gen) {
-  $("[data-gen-code]", gen).innerHTML = GENERATOR.html;
-  const list = $("[data-variants]", gen);
-  const vis = visibility(gen);
-  let timer = null;
-  // Each roll is a fresh seed, the way a review gets one; the newest variant sits on top.
-  const roll = () => {
-    const seed = (Math.random() * 2 ** 32) >>> 0;
-    const out = runScript(GENERATOR.code, ["rng"], {}, seed);
-    const el = document.createElement("li");
-    el.className = "pre";
-    el.innerHTML = `<div class="q">${md(out.prompt)}</div><div class="s">${seed}</div><div class="a">accepts ${tex(`f'(x) = ${out.answers[0]}`)} or any equivalent form</div>`;
-    list.prepend(el);
-    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove("pre")));
-    while (list.children.length > 4) list.lastElementChild.remove();
-  };
-  const schedule = () => { clearInterval(timer); timer = setInterval(() => vis.on && !reduced && roll(), 3800); };
-  for (let i = 0; i < 4; i++) roll();
-  schedule();
-  $("[data-roll]", gen).addEventListener("click", () => { roll(); schedule(); });
 }
 
 // ----------------------------------------------------------------- exam deadlines
@@ -582,8 +581,14 @@ if (exam) {
       const count = (run) => new Set(run.reviews.map((r) => Math.round((r.t - t0) / DAY))).size;
       const nextDay = Math.ceil((off.reviews.at(-1).card.due.getTime() - t0) / DAY);
       const lastOn = Math.max(...on.reviews.map((r) => Math.round((r.t - t0) / DAY)));
-      $("[data-last-off]", exam).innerHTML = `${count(off)} reviews, then the next is due on day ${nextDay}${nextDay > D ? `, <span class="after">after the exam</span>` : ""}.`;
-      $("[data-last-on]", exam).innerHTML = `${count(on)} reviews, the last on day ${lastOn}, so it's fresh on the day.`;
+      const isAr = getCurrentLang() === "ar";
+      if (isAr) {
+        $("[data-last-off]", exam).innerHTML = `${count(off)} مراجعات، والمراجعة التالية في اليوم ${nextDay}${nextDay > D ? `، <span class="after">بعد موعد الختمة</span>` : ""}.`;
+        $("[data-last-on]", exam).innerHTML = `${count(on)} مراجعات، وآخرها في اليوم ${lastOn}، ليكون المحفوظ حاضراً في اليوم المحدد.`;
+      } else {
+        $("[data-last-off]", exam).innerHTML = `${count(off)} reviews, then the next is due on day ${nextDay}${nextDay > D ? `, <span class="after">after the exam</span>` : ""}.`;
+        $("[data-last-on]", exam).innerHTML = `${count(on)} reviews, the last on day ${lastOn}, so it's fresh on the day.`;
+      }
       // A deck: 40 cards learned over the first 60% of the time, all answered Good.
       let rOff = 0, rOn = 0;
       for (let i = 0; i < 40; i++) {
@@ -596,6 +601,7 @@ if (exam) {
     }
     new ResizeObserver(() => last && draw(...last)).observe(chart);
     slider.addEventListener("input", render);
+    window.addEventListener("wikae-lang-change", render);
     render();
   });
 }
@@ -638,11 +644,20 @@ if (term) {
 
 // -------------------------------------------------------------------- app shots
 const CAPTIONS = {
-  decks: "<b>Decks</b> in a tree, with what's new, learning and due today. Settings and exam deadlines inherit down the tree.",
-  study: "<b>Study</b> one card at a time. Check with <kbd>Ctrl</kbd> <kbd>Enter</kbd>, rate with <kbd>1</kbd> to <kbd>4</kbd>, undo with <kbd>Ctrl</kbd> <kbd>Z</kbd>.",
-  browse: "<b>Browse</b> with the search language, preview any card and edit its fields with live Markdown and math.",
-  types: "<b>Card types</b> are edited in the app too, with a live preview of the card you're writing.",
-  stats: "<b>Stats</b>: true retention, predicted recall, your streak, a review heatmap and the forecast up to a deadline.",
+  ar: {
+    decks: "<b>شجرة الحزم</b>: توضح البطاقات الجديدة، وقيد التعلم، والمستحقة اليوم، مع وراثة الإعدادات ومواعيد الختمة.",
+    study: "<b>جلسة المراجعة</b>: تركيز كامل على بطاقة واحدة. تحقق بـ <kbd>Ctrl</kbd> <kbd>Enter</kbd>، وقيّم من <kbd>1</kbd> إلى <kbd>4</kbd>، وتراجع بـ <kbd>Ctrl</kbd> <kbd>Z</kbd>.",
+    browse: "<b>البحث والتصفح</b>: فلترة متقدمة للبطاقات، مع محرر مباشر يدعم التنسيق والرموز الرياضية.",
+    types: "<b>محرر أنواع البطاقات</b>: أنشئ وعدّل القوالب البرمجية ومصادر التحقق مع معاينة فورية.",
+    stats: "<b>لوحة الإحصائيات</b>: قياس دقيق لنسبة الاستحضار، ومنحنى النسيان، والجدولة حتى موعد الختمة."
+  },
+  en: {
+    decks: "<b>Decks</b> in a tree, with what's new, learning and due today. Settings and exam deadlines inherit down the tree.",
+    study: "<b>Study</b> one card at a time. Check with <kbd>Ctrl</kbd> <kbd>Enter</kbd>, rate with <kbd>1</kbd> to <kbd>4</kbd>, undo with <kbd>Ctrl</kbd> <kbd>Z</kbd>.",
+    browse: "<b>Browse</b> with the search language, preview any card and edit its fields with live Markdown and math.",
+    types: "<b>Card types</b> are edited in the app too, with a live preview of the card you're writing.",
+    stats: "<b>Stats</b>: true retention, predicted recall, your streak, a review heatmap and the forecast up to a deadline."
+  }
 };
 const shotTabs = $("[data-shot-tabs]");
 if (shotTabs) {
@@ -658,7 +673,8 @@ if (shotTabs) {
     const t = ++showing;
     i = names.indexOf(name);
     $$("[data-shot]", shotTabs).forEach((b) => b.setAttribute("aria-selected", String(b.dataset.shot === name)));
-    cap.innerHTML = CAPTIONS[name];
+    const lang = getCurrentLang();
+    cap.innerHTML = (CAPTIONS[lang] || CAPTIONS.ar)[name];
     await warm(name);
     if (t !== showing) return;
     imgs.forEach((el) => el.classList.toggle("on", el.dataset.shotImg === name));
@@ -668,6 +684,7 @@ if (shotTabs) {
     const b = e.target.closest("[data-shot]");
     if (b) { auto = false; show(b.dataset.shot); }
   });
+  window.addEventListener("wikae-lang-change", () => show(names[i]));
   show("decks");
   const vis = visibility(shotTabs.parentElement);
   setInterval(() => auto && vis.on && !reduced && show(names[(i + 1) % names.length]), 5200);
@@ -703,14 +720,28 @@ if (rep && GALLERY?.length) {
   const checkBtn = $("[data-rep-check]", rep), againBtn = $("[data-rep-variant]", rep), verdictEl = $(".rep-verdict", rep);
   const groupEl = $("[data-rep-group]", rep), nameEl = $("[data-rep-name]", rep), descEl = $("[data-rep-desc]", rep), graderEl = $("[data-rep-grader]", rep);
   const coarse = matchMedia("(pointer: coarse)").matches;
-  const AGAIN = { variant: "New variant", shuffle: "Shuffle again", reset: "Start over" };
-  const GRADER = {
-    script: "Graded by the card's own script, right here in your browser.",
-    hybrid: "Graded by running hidden tests in a sandbox; code with no tests goes to AI.",
-    self: "You grade yourself: see the answer, then rate how well you knew it.",
-    ai: "Graded by AI in the app. Here, Check shows the reference it compares against.",
+  const AGAIN = {
+    ar: { variant: "تمرين آخر", shuffle: "إعادة الخلط", reset: "البدء من جديد" },
+    en: { variant: "New variant", shuffle: "Shuffle again", reset: "Start over" }
   };
-  const CHECK = { self: "Show answer", ai: "Show the reference" };
+  const GRADER = {
+    ar: {
+      script: "تصحيح برمجي فوري ينفذه المتصفح مباشرة.",
+      hybrid: "تصحيح باختبارات برمجية معزولة؛ وتُحال الحالات الخاصة للذكاء الاصطناعي.",
+      self: "تقييم ذاتي: راجع الإجابة ثم اختر مستوى إتقانك لها.",
+      ai: "تصحيح بالذكاء الاصطناعي في التطبيق. يُعرض هنا الجواب المرجعي النموذجي."
+    },
+    en: {
+      script: "Graded by the card's own script, right here in your browser.",
+      hybrid: "Graded by running hidden tests in a sandbox; code with no tests goes to AI.",
+      self: "You grade yourself: see the answer, then rate how well you knew it.",
+      ai: "Graded by AI in the app. Here, Check shows the reference it compares against."
+    }
+  };
+  const CHECK = {
+    ar: { self: "إظهار الإجابة", ai: "إظهار المرجع النموذجي", default: "تحقق" },
+    en: { self: "Show answer", ai: "Show the reference", default: "Check" }
+  };
 
   // The programme: types grouped by what they ask of you, numbered in one run like a concert programme.
   let n = 0, html = "";
@@ -741,15 +772,16 @@ if (rep && GALLERY?.length) {
     // Keep the chosen type in view in the phone's horizontal strip, without scrolling the page.
     const b = items[i];
     if (list.scrollWidth > list.clientWidth + 2) list.scrollTo({ left: b.offsetLeft - list.clientWidth / 2 + b.offsetWidth / 2, behavior: reduced ? "auto" : "smooth" });
+    const lang = getCurrentLang();
     groupEl.textContent = entry.group;
     nameEl.textContent = entry.label;
     descEl.textContent = entry.desc;
-    graderEl.textContent = GRADER[entry.grader] ?? "";
+    graderEl.textContent = (GRADER[lang] || GRADER.ar)[entry.grader] ?? "";
     verdictEl.innerHTML = "";
     checkBtn.hidden = false;
     checkBtn.disabled = true;
-    checkBtn.firstChild.textContent = `${CHECK[entry.grader] ?? "Check"} `;
-    againBtn.innerHTML = `${AGAIN[entry.again]} <span aria-hidden="true">↻</span>`;
+    checkBtn.firstChild.textContent = `${(CHECK[lang] || CHECK.ar)[entry.grader] ?? (CHECK[lang] || CHECK.ar).default} `;
+    againBtn.innerHTML = `${(AGAIN[lang] || AGAIN.ar)[entry.again] || (lang === "ar" ? "تمرين آخر" : "New variant")} <span aria-hidden="true">↻</span>`;
     againBtn.classList.remove("btn-primary");
     againBtn.classList.add("btn-ghost");
     let prep;
@@ -812,23 +844,32 @@ if (rep && GALLERY?.length) {
       try {
         const out = runScript(entry.grade, ["answer", "view", "key", "fields"], { answer, view: prep.view, key: prep.key, fields: prep.fields }) ?? {};
         const ms = Math.max(1, Math.round(performance.now() - t0));
-        if (out.defer) line = `<span class="v">Not graded here</span><span class="m">· with no tests, the app hands this to AI</span>`;
+        const isAr = getCurrentLang() === "ar";
+        if (out.defer) line = isAr ? `<span class="v">لم يُصحح هنا</span><span class="m">· لعدم وجود اختبارات، يُحال هذا للذكاء الاصطناعي</span>` : `<span class="v">Not graded here</span><span class="m">· with no tests, the app hands this to AI</span>`;
         else if (entry.quiet && entry.metrics) {
           // A drill (Flippy Bit) hides its verdict in the app and shows what it measured instead.
           g = { score: out.score ?? null, verdict: verdictOf(out.score), details: out.details, grader: { kind: "script", ms } };
-          line = `<span class="v">Run over</span><span class="m">${metricLine(entry.metrics, out.details)}</span>`;
+          line = isAr ? `<span class="v">انتهى التمرين</span><span class="m">${metricLine(entry.metrics, out.details)}</span>` : `<span class="v">Run over</span><span class="m">${metricLine(entry.metrics, out.details)}</span>`;
         }
         else {
           const score = out.score == null ? null : Math.max(0, Math.min(1, Number(out.score)));
           g = { score, verdict: verdictOf(score), feedback: out.feedback, details: out.details, suggested: suggest(score), grader: { kind: "script", ms } };
           const pct = g.verdict === "partial" ? `<span class="m tabular">${Math.round(score * 100)}%</span>` : "";
-          line = `<span class="v ${g.verdict}">${VERDICT[g.verdict] ?? "Graded"}</span>${pct}<span class="m">· by the card's script in ${ms} ms</span>`;
+          const vLabel = getVerdict(g.verdict) ?? (isAr ? "تم التقييم" : "Graded");
+          const byScriptMsg = isAr ? `· تم التحقق برمجياً في ${ms} م ث` : `· by the card's script in ${ms} ms`;
+          line = `<span class="v ${g.verdict}">${vLabel}</span>${pct}<span class="m">${byScriptMsg}</span>`;
         }
       } catch (err) {
-        line = `<span class="v incorrect">Grader error</span><span class="m">${esc(err.message)}</span>`;
+        const isAr = getCurrentLang() === "ar";
+        line = `<span class="v incorrect">${isAr ? "خطأ في المصحح" : "Grader error"}</span><span class="m">${esc(err.message)}</span>`;
       }
-    } else if (entry.grader === "ai") line = `<span class="v">Graded by AI in the app</span><span class="m">· the reference is below</span>`;
-    else line = `<span class="v">How well did you know it?</span><span class="m">· in the app you'd rate it Again, Hard, Good or Easy</span>`;
+    } else if (entry.grader === "ai") {
+      const isAr = getCurrentLang() === "ar";
+      line = isAr ? `<span class="v">يُصحح بالذكاء الاصطناعي في التطبيق</span><span class="m">· الإجابة المرجعية النموذجية موضحة أدناه</span>` : `<span class="v">Graded by AI in the app</span><span class="m">· the reference is below</span>`;
+    } else {
+      const isAr = getCurrentLang() === "ar";
+      line = isAr ? `<span class="v">ما مدى استحضارك للإجابة؟</span><span class="m">· في التطبيق تقيّم نفسك: مجدداً، صعب، جيد، سهل</span>` : `<span class="v">How well did you know it?</span><span class="m">· in the app you'd rate it Again, Hard, Good or Easy</span>`;
+    }
     cur.phase = "result";
     post({ type: "result", result: { grade: g, key: prep.key, answer } });
     verdictEl.innerHTML = line;
@@ -1231,22 +1272,44 @@ if (rep && GALLERY?.length) {
 // rails with a position meter, and the long material folded behind a tap. Nothing here runs wider.
 {
   const phone = matchMedia("(max-width: 640px)");
-  // the programme: every movement with an .opus label, in page order
-  const movements = $$("main .opus").map((o) => {
-    const sec = o.closest("section");
-    const n = [...o.childNodes].filter((c) => c.nodeType === 3).map((c) => c.textContent).join("").replace(/\s+/g, " ").trim();
-    return { sec, n, t: $("span", o)?.textContent.trim() ?? "" };
-  }).filter((m) => m.sec?.id);
   const dock = $("[data-dock]"), dn = $("[data-dock-n]"), dt = $("[data-dock-t]");
   const back = $("[data-programme]"), list = $("[data-programme-list]");
-  if (dock && movements.length) {
-    $("#programme-h em").textContent = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen"][movements.length] ?? String(movements.length);
-    list.innerHTML = movements.map((m, i) => `<li><a href="#${m.sec.id}" data-i="${i}"><span class="pn">${esc(m.n)}</span><span class="pt">${esc(m.t)}</span></a></li>`).join("");
-    let cur = -1;
+  let cur = -1;
+  const getMovements = () => {
+    const lang = getCurrentLang();
+    return $$("main .opus").filter((o) => {
+      const p = o.closest("[data-lang]");
+      return !p || p.getAttribute("data-lang") === lang;
+    }).map((o) => {
+      const sec = o.closest("section");
+      const n = [...o.childNodes].filter((c) => c.nodeType === 3).map((c) => c.textContent).join("").replace(/\s+/g, " ").trim();
+      return { sec, n, t: $("span", o)?.textContent.trim() ?? "" };
+    }).filter((m) => m.sec?.id);
+  };
+  let movements = getMovements();
+  if (dock) {
+    const buildList = () => {
+      movements = getMovements();
+      if (!movements.length) return;
+      const hEm = $("#programme-h em");
+      if (hEm) {
+        const isAr = getCurrentLang() === "ar";
+        const arNums = ["", "الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس", "السابع", "الثامن", "التاسع", "العاشر", "الحادي عشر", "الثاني عشر", "الثالث عشر", "الرابع عشر", "الخامس عشر", "السادس عشر", "السابع عشر", "الثامن عشر"];
+        hEm.textContent = isAr ? (arNums[movements.length] ?? String(movements.length)) : (["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen"][movements.length] ?? String(movements.length));
+      }
+      list.innerHTML = movements.map((m, i) => `<li><a href="#${m.sec.id}" data-i="${i}"><span class="pn">${esc(m.n)}</span><span class="pt">${esc(m.t)}</span></a></li>`).join("");
+      if (cur >= 0 && cur < movements.length) {
+        dn.textContent = movements[cur].n;
+        dt.textContent = movements[cur].t;
+      }
+    };
+    buildList();
+    window.addEventListener("wikae-lang-change", buildList);
     const set = (i) => {
       if (i === cur) return;
       cur = i;
       const m = movements[i];
+      if (!m) return;
       for (const el of [dn, dt]) { el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap"); }
       dn.textContent = m.n; dt.textContent = m.t;
       $$("a", list).forEach((a) => a.toggleAttribute("aria-current", Number(a.dataset.i) === i));

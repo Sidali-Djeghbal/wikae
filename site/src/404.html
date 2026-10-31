@@ -1,9 +1,19 @@
 <!doctype html>
-<html lang="ar" dir="auto">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>الصفحة غير موجودة · 404 · وِكَاء (Wikae)</title>
+<title>الصفحة غير موجودة — 404 — وِكَاء</title>
+<script>
+  (function(){
+    try {
+      var l = localStorage.getItem('wikae-lang') || 'ar';
+      document.documentElement.setAttribute('lang', l);
+      document.documentElement.setAttribute('dir', l === 'ar' ? 'rtl' : 'ltr');
+      if (l === 'en') document.title = 'Page Not Found — 404 — Wikae';
+    } catch(e){}
+  })();
+</script>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +25,24 @@
   h1 { font-weight: 700; letter-spacing: -0.01em; margin: 0.5rem 0 0; }
   p { color: oklch(0.7 0.01 85); margin: 0.5rem 0 1.5rem; }
   a { display: inline-block; padding: 0.65rem 1.35rem; border-radius: 0.6rem; background: oklch(0.72 0.16 155); color: oklch(0.145 0.004 85); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+  html[lang="ar"] [data-lang="en"] { display: none !important; }
+  html[lang="en"] [data-lang="ar"] { display: none !important; }
 </style>
 </head>
-<body><main><div><div class="e">وِكَاء</div><h1>الصفحة غير موجودة · 404</h1><p>لم نتمكن من العثور على الصفحة المطلوبة.</p><a href="./">العودة إلى الرئيسية · Home</a></div></main></body>
+<body>
+<main>
+  <div data-lang="ar">
+    <div class="e">وِكَاء</div>
+    <h1>الصفحة غير موجودة</h1>
+    <p>لم نتمكن من العثور على الصفحة المطلوبة (404).</p>
+    <a href="./">العودة إلى الرئيسية</a>
+  </div>
+  <div data-lang="en">
+    <div class="e" style="font-family:system-ui,sans-serif;font-weight:700;font-size:5rem;">Wikae</div>
+    <h1>Page Not Found</h1>
+    <p>We could not find the page you were looking for (404).</p>
+    <a href="./">Return to Home</a>
+  </div>
+</main>
+</body>
 </html>

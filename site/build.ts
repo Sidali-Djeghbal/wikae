@@ -88,16 +88,15 @@ for (const page of ["index.html", "download.html", "404.html"]) {
 <nav class="legal-nav" aria-label="Legal pages">${nav}</nav>
 <div class="doc">
 ${html}</div>
-<p class="legal-meta">Last updated ${date(meta["last-updated"])}. Questions: <a href="mailto:hello@etude.study">hello@etude.study</a>.</p>
+<p class="legal-meta">Last updated ${date(meta["last-updated"])}. Questions: <a href="mailto:contact@djeghbal.me">contact@djeghbal.me</a>.</p>
 </div></article>`;
     writeFileSync(join(out, `${slug}.html`), page(slug, meta.title, meta.description, body));
   }
   for (const f of ["index.html", "download.html"]) {
     const p = join(out, f);
     const s = readFileSync(p, "utf8");
-    const swapped = s.replace(/<footer class="footer">[\s\S]*?<\/footer>/, () => footer);
-    if (swapped === s) throw new Error(`${f}: no footer to replace`);
-    writeFileSync(p, swapped);
+    if (!/<footer class="footer">[\s\S]*?<\/footer>/.test(s)) throw new Error(`${f}: no footer to replace`);
+    writeFileSync(p, s.replace(/<footer class="footer">[\s\S]*?<\/footer>/, () => footer));
   }
 }
 

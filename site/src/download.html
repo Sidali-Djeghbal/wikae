@@ -1,25 +1,27 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>تحميل وِكَاء · Download Wikae</title>
-<meta name="description" content="Download Wikae for macOS, Windows or Linux: standalone app for Quran memorization, Mutashabihat and spaced repetition. Free and open source.">
+<title>تحميل وِكَاء — لنظام Windows و macOS و Linux</title>
+<meta name="description" content="تحميل تطبيق وِكَاء لأنظمة ويندوز، ماك ولينكس لحفظ القرآن الكريم وتثبيت المتشابهات بالتكرار المتباعد الذكي.">
 <meta name="theme-color" content="#0d0d0c">
 <script>
   (function(){
     try {
-      var s = localStorage.getItem('wikae-theme');
-      var m = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-      var t = s || (m ? 'light' : 'dark');
-      document.documentElement.setAttribute('data-theme', t);
-      document.documentElement.classList.toggle('dark', t === 'dark');
-      document.documentElement.classList.toggle('light', t === 'light');
+      var lang = localStorage.getItem('wikae-lang') || 'ar';
+      var theme = localStorage.getItem('wikae-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('lang', lang);
+      document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      if (lang === 'en') document.title = 'Download Wikae — for Windows, macOS and Linux';
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+      document.documentElement.classList.toggle('light', theme === 'light');
     } catch(e){}
   })();
 </script>
-<meta property="og:title" content="تحميل وِكَاء · Download Wikae">
-<meta property="og:description" content="Download Wikae for macOS, Windows or Linux. Spaced-repetition for Quran, Mutashabihat and knowledge.">
+<meta property="og:title" content="تحميل وِكَاء — لنظام Windows و macOS و Linux">
+<meta property="og:description" content="تحميل تطبيق وِكَاء لأنظمة ويندوز، ماك ولينكس لحفظ القرآن الكريم وتثبيت المتشابهات.">
 <meta property="og:image" content="assets/og.png">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,18 +34,34 @@
 <body>
 <header class="nav" id="nav">
   <div class="wrap">
-    <a href="./" class="wordmark" aria-label="Wikae home"><span class="wikae-ar">وِكَاء</span><span class="wikae-dot">·</span><span class="wikae-en">Wikae</span></a>
-    <nav class="nav-links" aria-label="Sections">
+    <a href="./" class="wordmark" aria-label="Wikae home">
+      <span data-lang="ar" class="wikae-ar">وِكَاء</span>
+      <span data-lang="en" class="wikae-en">Wikae</span>
+    </a>
+    <nav class="nav-links" data-lang="ar" aria-label="أقسام الموقع">
       <a href="./#mutashabihat">المتشابهات</a>
       <a href="./#cards">البطاقات</a>
-      <a href="./#grading">التقييم</a>
-      <a href="./#tempo">FSRS-6</a>
-      <a href="./#exams">الختمة</a>
-      <a href="./#anki">آنكي</a>
+      <a href="./#grading">التقييم الذكي</a>
+      <a href="./#tempo">خوارزمية FSRS</a>
+      <a href="./#exams">الختمة والمواعيد</a>
+      <a href="./#anki">استيراد آنكي</a>
       <a href="download.html" aria-current="page">التحميل</a>
     </nav>
+    <nav class="nav-links" data-lang="en" aria-label="Sections">
+      <a href="./#mutashabihat">Mutashabihat</a>
+      <a href="./#cards">Cards</a>
+      <a href="./#grading">Grading</a>
+      <a href="./#tempo">FSRS Algorithm</a>
+      <a href="./#exams">Deadlines</a>
+      <a href="./#anki">Anki Import</a>
+      <a href="download.html" aria-current="page">Download</a>
+    </nav>
     <div class="nav-end">
-      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="تبديل المظهر / Toggle theme" title="Toggle theme">
+      <button class="lang-toggle" id="lang-toggle" type="button" aria-label="Switch language">
+        <span data-lang="ar">EN</span>
+        <span data-lang="en">عربي</span>
+      </button>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">
         <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
         <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
       </button>
@@ -55,10 +73,18 @@
 <main>
   <section class="dl-hero">
     <div class="wrap">
-      <p class="opus fade-up">التحميل والتثبيت <span>Installation</span></p>
-      <h1 class="fade-up" style="animation-delay:.1s">احصل على <span class="wordmark"><span class="wikae-ar">وِكَاء</span><span class="wikae-dot">·</span><span class="wikae-en">Wikae</span></span></h1>
-      <p class="lede fade-up" style="animation-delay:.2s">يعمل تطبيق وِكَاء مباشرة على جهازك دون الحاجة لحساب أو اتصال دائم. حزم تثبيت مستقلة متكاملة لكافة أنظمة التشغيل، وبياناتك وسجل حفظك بالكامل ملكك على حاسوبك.</p>
-      <div class="dl-version fade-up" style="animation-delay:.25s"><a class="pill" href="https://github.com/Sidali-Djeghbal/wikae/releases/latest"><b>v{{VERSION}}</b> تفاصيل أحدث إصدار وتحديثاته ←</a></div>
+      <div data-lang="ar">
+        <p class="opus fade-up">التحميل والتثبيت</p>
+        <h1 class="fade-up" style="animation-delay:.1s">تثبيت تطبيق <span class="wordmark"><span class="wikae-ar">وِكَاء</span></span></h1>
+        <p class="lede fade-up" style="animation-delay:.2s">يعمل وِكَاء مباشرة على جهازك كتطبيق مستقل متكامل. بياناتك وسجل مراجعاتك في أمان تام ومحفوظة محلياً دون الحاجة لاتصال دائم بالإنترنت.</p>
+        <div class="dl-version fade-up" style="animation-delay:.25s"><a class="pill" href="https://github.com/Sidali-Djeghbal/wikae/releases/latest"><b>v{{VERSION}}</b> تفاصيل أحدث إصدار وتحديثاته ←</a></div>
+      </div>
+      <div data-lang="en">
+        <p class="opus fade-up">Installation</p>
+        <h1 class="fade-up" style="animation-delay:.1s">Get <span class="wordmark"><span class="wikae-en">Wikae</span></span> running.</h1>
+        <p class="lede fade-up" style="animation-delay:.2s">Wikae runs on your own computer as a standalone app with everything inside. Your collection stays with you, completely offline and private.</p>
+        <div class="dl-version fade-up" style="animation-delay:.25s"><a class="pill" href="https://github.com/Sidali-Djeghbal/wikae/releases/latest"><b>v{{VERSION}}</b> what's new in this version →</a></div>
+      </div>
       <div class="os-tabs fade-up" style="animation-delay:.3s">
         <div class="shots-tabs" role="tablist" aria-label="Operating system">
           <button role="tab" data-os="mac" aria-selected="true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 1.43c0 1.14-.42 2.2-1.26 3.18-1 1.17-2.21 1.84-3.52 1.74a3.5 3.5 0 0 1-.03-.43c0-1.1.48-2.27 1.33-3.23.42-.49.96-.89 1.6-1.21.65-.32 1.26-.49 1.83-.52.02.16.05.31.05.47Zm4.6 16.12c-.37.86-.81 1.65-1.32 2.37-.69.99-1.26 1.67-1.7 2.05-.68.63-1.41.95-2.2.97-.56 0-1.24-.16-2.03-.49-.8-.32-1.53-.48-2.2-.48-.7 0-1.46.16-2.27.48-.81.33-1.46.5-1.96.52-.76.03-1.51-.3-2.27-1.01-.48-.42-1.08-1.13-1.8-2.14-.77-1.08-1.4-2.33-1.9-3.76-.53-1.54-.8-3.04-.8-4.48 0-1.66.36-3.08 1.07-4.28a6.3 6.3 0 0 1 2.25-2.28 6.04 6.04 0 0 1 3.04-.86c.6 0 1.38.19 2.35.55.97.36 1.6.55 1.86.55.2 0 .9-.22 2.08-.65 1.12-.4 2.06-.57 2.84-.5 2.1.17 3.67.99 4.72 2.48-1.88 1.14-2.8 2.73-2.79 4.77.02 1.59.6 2.91 1.73 3.96.51.49 1.08.86 1.72 1.13-.14.4-.28.78-.43 1.15Z"/></svg>macOS</button>
@@ -74,112 +100,190 @@
       <div class="dl-grid">
         <div class="dl-card os-panel" data-panel>
           <div class="easy" data-easy="mac">
-            <h2>Download for macOS</h2>
-            <p>One app with everything inside, nothing else to install.</p>
+            <h2 data-lang="ar">التحميل لأجهزة macOS</h2>
+            <h2 data-lang="en">Download for macOS</h2>
+            <p data-lang="ar">تطبيق مكتبي متكامل يحتوي على كل ما تحتاجه، دون الحاجة لتثبيت أي برامج ملحقة.</p>
+            <p data-lang="en">One app with everything inside, nothing else to install.</p>
             <div class="easy-dl">
-              <a class="btn btn-primary btn-lg" data-mac-main href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-mac-apple-silicon.dmg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span data-mac-label>Download for Apple Silicon (M1/M2/M3/M4)</span></a>
-              <a class="easy-alt" data-mac-alt href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-mac-intel.dmg">Mac with an Intel chip?</a>
+              <a class="btn btn-primary btn-lg" data-mac-main href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-mac-apple-silicon.dmg">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+                <span data-lang="ar">تحميل لأجهزة Apple Silicon (معالجات M1/M2/M3/M4)</span>
+                <span data-lang="en">Download for Apple Silicon (M1/M2/M3/M4)</span>
+              </a>
+              <a class="easy-alt" data-mac-alt href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-mac-intel.dmg">
+                <span data-lang="ar">جهاز Mac بمعالج Intel؟ اضغط هنا للتحميل</span>
+                <span data-lang="en">Mac with an Intel chip?</span>
+              </a>
             </div>
-            <ol class="easy-how">
-              <li><span>Open the file and drag <b>Wikae</b> into <b>Applications</b>.</span></li>
-              <li><span>The first time, macOS says Wikae <b>is damaged and can't be opened</b>. It isn't: Apple hasn't signed it yet. Open <b>Terminal</b>, run the two lines below, then open Wikae again:</span></li>
-              <li><span>That's it. A short setup asks how you want to study, and your collection stays on your computer.</span></li>
+            <ol class="easy-how" data-lang="ar">
+              <li><span>افتح الملف الذي تم تحميله واسحب <b>وِكَاء</b> إلى مجلد <b>التطبيقات (Applications)</b>.</span></li>
+              <li><span>في المرة الأولى، قد يظهر تنبيه أمني لأن التطبيق غير موقع من Apple بعد. افتح <b>الطرفية (Terminal)</b> ونفذ السطرين التاليين:</span></li>
+              <li><span>اكتمل التثبيت! يمكنك الآن فتح التطبيق والبدء في الحفظ والمراجعة.</span></li>
+            </ol>
+            <ol class="easy-how" data-lang="en">
+              <li><span>Open the downloaded file and drag <b>Wikae</b> into <b>Applications</b>.</span></li>
+              <li><span>The first time, macOS might say Wikae can't be opened. Open <b>Terminal</b>, run the two lines below, then open Wikae again:</span></li>
+              <li><span>That's it. Wikae opens and your collection stays securely on your Mac.</span></li>
             </ol>
             <div class="cmd" style="margin-top:1.2rem"><pre><span class="ps" data-ps>$ </span>xattr -dr com.apple.quarantine /Applications/Wikae.app
 <span class="ps" data-ps>$ </span>codesign --force --deep --sign - /Applications/Wikae.app</pre></div>
-            <p class="fineprint">macOS 12 or newer, about 134 MB. Not sure which chip you have? Apple menu → About This Mac: "Apple M…" is Apple Silicon.</p>
-            <button class="term-toggle" type="button" data-term-toggle aria-expanded="false">Prefer the terminal? Install from source <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+            <p class="fineprint" data-lang="ar">متوافق مع macOS 12 أو أحدث، بحجم حوالي 134 ميغابايت.</p>
+            <p class="fineprint" data-lang="en">macOS 12 or newer, about 134 MB. Apple Silicon &amp; Intel supported.</p>
+            <button class="term-toggle" type="button" data-term-toggle aria-expanded="false">
+              <span data-lang="ar">تفضل التثبيت من المصدر عبر سطر الأوامر؟ اضغط هنا</span>
+              <span data-lang="en">Prefer the terminal? Install from source</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
           </div>
+
           <div class="easy" data-easy="windows">
-            <h2>Download for Windows</h2>
-            <p>One installer with everything inside. No terminal, no administrator password.</p>
+            <h2 data-lang="ar">التحميل لنظام Windows</h2>
+            <h2 data-lang="en">Download for Windows</h2>
+            <p data-lang="ar">ملف تثبيت موحد وبنقرة واحدة، دون الحاجة لصلاحيات مدير النظام أو فتح سطر الأوامر.</p>
+            <p data-lang="en">One installer with everything inside. No terminal, no administrator password.</p>
             <div class="easy-dl">
-              <a class="btn btn-primary btn-lg" href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-windows-setup.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span>Download for Windows (.exe)</span></a>
+              <a class="btn btn-primary btn-lg" href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-windows-setup.exe">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+                <span data-lang="ar">تحميل لنظام ويندوز (.exe)</span>
+                <span data-lang="en">Download for Windows (.exe)</span>
+              </a>
             </div>
-            <ol class="easy-how">
+            <ol class="easy-how" data-lang="ar">
+              <li><span>افتح الملف <b>Wikae-windows-setup.exe</b> وسيبدأ التثبيت تلقائياً في ثوانٍ معدودة.</span></li>
+              <li><span>إذا ظهرت شاشة الحماية (Windows SmartScreen)، اضغط على <b>مزيد من المعلومات (More info)</b> ثم <b>تشغيل على أية حال (Run anyway)</b>.</span></li>
+              <li><span>اكتمل التثبيت! يعمل وِكَاء مباشرة ويتحدث تلقائياً.</span></li>
+            </ol>
+            <ol class="easy-how" data-lang="en">
               <li><span>Open <b>Wikae-windows-setup.exe</b>. It installs in a few seconds and opens Wikae.</span></li>
               <li><span>If Windows SmartScreen appears, click <b>More info</b>, then <b>Run anyway</b>.</span></li>
               <li><span>That's it. Wikae updates itself, and your collection stays on your PC.</span></li>
             </ol>
-            <p class="fineprint">Windows 10 or 11 (64-bit), about 134 MB. Compatible with offline study.</p>
-            <button class="term-toggle" type="button" data-term-toggle aria-expanded="false">Prefer the terminal? Install from source <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+            <p class="fineprint" data-lang="ar">متوافق مع Windows 10 و Windows 11 (64 بت)، بحجم حوالي 134 ميغابايت.</p>
+            <p class="fineprint" data-lang="en">Windows 10 or 11 (64-bit), about 134 MB.</p>
+            <button class="term-toggle" type="button" data-term-toggle aria-expanded="false">
+              <span data-lang="ar">تفضل التثبيت من المصدر عبر سطر الأوامر؟ اضغط هنا</span>
+              <span data-lang="en">Prefer the terminal? Install from source</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
           </div>
+
           <div class="easy" data-easy="linux">
-            <h2>Download for Linux</h2>
-            <p>One app with everything inside, in the format your distribution uses.</p>
+            <h2 data-lang="ar">التحميل لنظام Linux</h2>
+            <h2 data-lang="en">Download for Linux</h2>
+            <p data-lang="ar">حزم مستقلة ومجهزة بحسب التوزيعة التي تعمل عليها.</p>
+            <p data-lang="en">One app with everything inside, in the format your distribution uses.</p>
             <div class="easy-dl">
-              <a class="btn btn-primary btn-lg" href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-linux-amd64.deb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span>Ubuntu, Debian, Mint (.deb)</span></a>
-              <a class="easy-alt" href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-linux-x86_64.rpm">Fedora or openSUSE (.rpm)</a>
-              <a class="easy-alt" href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-linux-x86_64.AppImage">Any other distribution (AppImage)</a>
+              <a class="btn btn-primary btn-lg" href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-linux-amd64.deb">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+                <span data-lang="ar">توزيعات Ubuntu و Debian و Mint (.deb)</span>
+                <span data-lang="en">Ubuntu, Debian, Mint (.deb)</span>
+              </a>
+              <a class="easy-alt" href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-linux-x86_64.rpm">
+                <span data-lang="ar">توزيعات Fedora و openSUSE (.rpm)</span>
+                <span data-lang="en">Fedora or openSUSE (.rpm)</span>
+              </a>
+              <a class="easy-alt" href="https://github.com/Sidali-Djeghbal/wikae/releases/latest/download/Wikae-linux-x86_64.AppImage">
+                <span data-lang="ar">كافة التوزيعات الأخرى (AppImage)</span>
+                <span data-lang="en">Any other distribution (AppImage)</span>
+              </a>
             </div>
-            <ol class="easy-how">
-              <li><span>Open the <b>.deb</b> or <b>.rpm</b> to install it, or in a terminal: <code>sudo apt install ./Wikae-linux-amd64.deb</code> (or <code>sudo dnf install ./Wikae-linux-x86_64.rpm</code>).</span></li>
-              <li><span>Or the <b>AppImage</b>: allow it to run (<code>chmod +x Wikae-linux-x86_64.AppImage</code>) and execute it directly.</span></li>
+            <ol class="easy-how" data-lang="ar">
+              <li><span>افتح الحزمة <b>.deb</b> أو <b>.rpm</b> لتثبيتها بمدير الحزم، أو عبر الطرفية: <code>sudo apt install ./Wikae-linux-amd64.deb</code></span></li>
+              <li><span>أو بالنسبة لحزمة <b>AppImage</b>: امنح الملف صلاحية التنفيذ (<code>chmod +x Wikae-linux-x86_64.AppImage</code>) وافتحه مباشرة.</span></li>
+              <li><span>اكتمل التثبيت! ستجد وِكَاء متاحاً في قائمة تطبيقاتك.</span></li>
+            </ol>
+            <ol class="easy-how" data-lang="en">
+              <li><span>Open the <b>.deb</b> or <b>.rpm</b> package, or run: <code>sudo apt install ./Wikae-linux-amd64.deb</code></span></li>
+              <li><span>Or for <b>AppImage</b>: allow it to execute (<code>chmod +x Wikae-linux-x86_64.AppImage</code>) and run directly.</span></li>
               <li><span>That's it. Wikae is ready to use in your app menu.</span></li>
             </ol>
-            <p class="fineprint">64-bit (x86_64), about 112 to 139 MB.</p>
-            <button class="term-toggle" type="button" data-term-toggle aria-expanded="false">Prefer the terminal? Install from source <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+            <p class="fineprint" data-lang="ar">بنية 64 بت (x86_64)، بحجم يتراوح بين 112 و 139 ميغابايت.</p>
+            <p class="fineprint" data-lang="en">64-bit (x86_64), about 112 to 139 MB.</p>
+            <button class="term-toggle" type="button" data-term-toggle aria-expanded="false">
+              <span data-lang="ar">تفضل التثبيت من المصدر عبر سطر الأوامر؟ اضغط هنا</span>
+              <span data-lang="en">Prefer the terminal? Install from source</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
           </div>
+
           <div class="term-install" data-term-install>
-          <h2>Install from source</h2>
-          <p>Four steps and Wikae is running. Update it later with <code>git pull</code> and <code>npm run build</code>.</p>
-          <ol class="steps">
-            <li>
-              <div>
-                <h3>Install Node 24 or newer</h3>
-                <p data-node-note>Wikae runs on Node. Node runs its TypeScript directly, so there's no compile step for the server.</p>
-                <div class="cmd"><pre data-node-cmd></pre><button class="copy-btn" type="button" aria-label="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button></div>
-              </div>
-            </li>
-            <li>
-              <div>
-                <h3>Get Wikae and build the app</h3>
-                <p>Clone the repository, install dependencies and build once.</p>
-                <div class="cmd"><pre><span class="ps" data-ps>$ </span>git clone https://github.com/Sidali-Djeghbal/wikae.git
+            <h2 data-lang="ar">التثبيت من الشيفرة المصدرية</h2>
+            <h2 data-lang="en">Install from source</h2>
+            <p data-lang="ar">أربع خطوات بسيطة وسيعمل التطبيق على جهازك. يمكنك تحديثه لاحقاً عبر <code>git pull</code> و <code>npm run build</code>.</p>
+            <p data-lang="en">Four steps and Wikae is running. Update it later with <code>git pull</code> and <code>npm run build</code>.</p>
+            <ol class="steps">
+              <li>
+                <div>
+                  <h3 data-lang="ar">تثبيت بيئة Node.js الإصدار 24 أو أحدث</h3>
+                  <h3 data-lang="en">Install Node 24 or newer</h3>
+                  <p data-node-note></p>
+                  <div class="cmd"><pre data-node-cmd></pre><button class="copy-btn" type="button" aria-label="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button></div>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <h3 data-lang="ar">استنساخ المستودع وبناء الواجهة</h3>
+                  <h3 data-lang="en">Get Wikae and build the app</h3>
+                  <p data-lang="ar">انسخ المستودع وثبّت الحزم وابنِ الواجهة لمرة واحدة:</p>
+                  <p data-lang="en">Clone the repository, install dependencies and build once:</p>
+                  <div class="cmd"><pre><span class="ps" data-ps>$ </span>git clone https://github.com/Sidali-Djeghbal/wikae.git
 <span class="ps" data-ps>$ </span>cd wikae
 <span class="ps" data-ps>$ </span>npm install
 <span class="ps" data-ps>$ </span>npm run build</pre><button class="copy-btn" type="button" aria-label="Copy" data-copy-text="git clone https://github.com/Sidali-Djeghbal/wikae.git
 cd wikae
 npm install
 npm run build"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button></div>
-              </div>
-            </li>
-            <li>
-              <div>
-                <h3>Start it</h3>
-                <div class="cmd"><pre><span class="ps" data-ps>$ </span>npm start</pre><button class="copy-btn" type="button" aria-label="Copy" data-copy-text="npm start"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button></div>
-                <p style="margin-top:.7rem">Then open <a href="http://127.0.0.1:4610">127.0.0.1:4610</a> in your browser.</p>
-              </div>
-            </li>
-            <li>
-              <div>
-                <h3>Try the Quran Mutashabihat deck</h3>
-                <p>Interactive Quranic cards with Uthmani script and pivotal distinctions.</p>
-                <div class="cmd"><pre><span class="ps" data-ps>$ </span>node src/cli/main.ts pack import examples/quran-mutashabihat.pack.json</pre><button class="copy-btn" type="button" aria-label="Copy" data-copy-text="node src/cli/main.ts pack import examples/quran-mutashabihat.pack.json"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button></div>
-              </div>
-            </li>
-          </ol>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <h3 data-lang="ar">تشغيل التطبيق</h3>
+                  <h3 data-lang="en">Start it</h3>
+                  <div class="cmd"><pre><span class="ps" data-ps>$ </span>npm start</pre><button class="copy-btn" type="button" aria-label="Copy" data-copy-text="npm start"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button></div>
+                  <p style="margin-top:.7rem" data-lang="ar">ثم افتح الرابط <a href="http://127.0.0.1:4610">127.0.0.1:4610</a> في متصفحك.</p>
+                  <p style="margin-top:.7rem" data-lang="en">Then open <a href="http://127.0.0.1:4610">127.0.0.1:4610</a> in your browser.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <h3 data-lang="ar">استيراد حزمة متشابهات القرآن</h3>
+                  <h3 data-lang="en">Try the Quran Mutashabihat deck</h3>
+                  <p data-lang="ar">بطاقات تفاعلية بالرسم العثماني لاكتشاف المتشابهات وضبط الفروق اللفظية:</p>
+                  <p data-lang="en">Interactive Quranic cards with Uthmani script and pivotal distinctions:</p>
+                  <div class="cmd"><pre><span class="ps" data-ps>$ </span>node src/cli/main.ts pack import examples/quran-mutashabihat.pack.json</pre><button class="copy-btn" type="button" aria-label="Copy" data-copy-text="node src/cli/main.ts pack import examples/quran-mutashabihat.pack.json"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button></div>
+                </div>
+              </li>
+            </ol>
           </div>
         </div>
 
         <div class="side">
           <a class="dl-link" href="https://github.com/Sidali-Djeghbal/wikae/archive/refs/heads/main.zip">
             <span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></span>
-            <span><b>Source code (.zip)</b><span>No git? Unzip it, then run <code>npm install</code>, <code>npm run build</code> and <code>npm start</code>.</span></span>
+            <span data-lang="ar"><b>الشيفرة المصدرية (.zip)</b><span>تحميل أرشيف مضغوط للمشروع وتشغيله يدوياً.</span></span>
+            <span data-lang="en"><b>Source code (.zip)</b><span>Download repository archive to install without git.</span></span>
             <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
           </a>
           <a class="dl-link" href="https://github.com/Sidali-Djeghbal/wikae">
             <span class="i"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></span>
-            <span><b>GitHub repository</b><span>Code, releases, issues and discussions.</span></span>
+            <span data-lang="ar"><b>مستودع GitHub</b><span>الشيفرات والإصدارات والبلاغات وسجل التطوير.</span></span>
+            <span data-lang="en"><b>GitHub repository</b><span>Code, releases, issues and discussions.</span></span>
             <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
           </a>
           <div class="dl-card">
-            <h2 style="font-size:1.05rem">Requirements</h2>
-            <ul class="reqs">
+            <h2 style="font-size:1.05rem" data-lang="ar">متطلبات التشغيل</h2>
+            <h2 style="font-size:1.05rem" data-lang="en">Requirements</h2>
+            <ul class="reqs" data-lang="ar">
+              <li><span>لا توجد متطلبات خاصة لحزم سطح المكتب المستقلة.</span></li>
+              <li><span>بيئة <b>Node 24 أو أحدث</b> فقط عند التثبيت من المصدر.</span></li>
+              <li><span>أنظمة <b>macOS 12+</b> أو <b>Windows 10/11</b> أو <b>Linux 64 بت</b>.</span></li>
+              <li><span>مفتاح API فقط في حال الرغبة بتفعيل المصحح بالذكاء الاصطناعي.</span></li>
+            </ul>
+            <ul class="reqs" data-lang="en">
               <li><span>Nothing extra for standalone desktop apps.</span></li>
-              <li><span><b>Node 24+</b> only if installing from source</span></li>
-              <li><span><b>macOS 12+</b>, <b>Windows 10/11</b>, or modern <b>Linux</b></span></li>
-              <li><span>API key <b>only if</b> optional AI grading is enabled</span></li>
+              <li><span><b>Node 24+</b> only if installing from source.</span></li>
+              <li><span><b>macOS 12+</b>, <b>Windows 10/11</b>, or modern <b>Linux 64-bit</b>.</span></li>
+              <li><span>API key only if optional AI grading is enabled.</span></li>
             </ul>
           </div>
         </div>
@@ -189,16 +293,28 @@ npm run build"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 </main>
 
 <footer class="footer">
-  <div class="wrap">
+  <div class="wrap" data-lang="ar">
     <div>
-      <a href="./" class="wordmark"><span class="wikae-ar">وِكَاء</span><span class="wikae-dot">·</span><span class="wikae-en">Wikae</span></a>
-      <p>رِباطُ المحفوظ وإتقان المتشابهات بالتكرار المتباعد الذكي.<br>Spaced-repetition practice for Quran, Mutashabihat and knowledge.</p>
+      <a href="./" class="wordmark"><span class="wikae-ar">وِكَاء</span></a>
+      <p>رِباطُ المحفوظ وإتقان المتشابهات بالتكرار المتباعد الذكي.</p>
     </div>
-    <div><h4>المنتج · Product</h4><ul><li><a href="./#mutashabihat">المتشابهات</a></li><li><a href="./#cards">البطاقات</a></li><li><a href="./#grading">التقييم</a></li><li><a href="./#tempo">خوارزمية FSRS</a></li><li><a href="download.html">التحميل</a></li></ul></div>
-    <div><h4>التوثيق · Docs</h4><ul><li><a href="https://github.com/Sidali-Djeghbal/wikae#readme">دليل المشروع · README</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/packs.md">الحزم · Packs</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/types.md">أنواع البطاقات · Types</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/cli.md">أوامر سطر الأوامر · CLI</a></li></ul></div>
-    <div><h4>المشروع · Project</h4><ul><li><a href="https://github.com/Sidali-Djeghbal/wikae">GitHub</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/releases">الإصدارات · Releases</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/issues">البلاغات والمقترحات · Issues</a></li></ul></div>
-    <div><h4>المساعدة · Help</h4><ul><li><a href="support">الدعم · Support</a></li><li><a href="terms">الشروط · Terms</a></li><li><a href="privacy">الخصوصية · Privacy</a></li></ul></div>
-    <div class="fine"><span>AGPL-3.0 · © 2026 Sidali Djeghbal and contributors</span><span>رِباطُ المحفوظ وإتقان المتشابهات · Wikae</span></div>
+    <div><h4>المنتج</h4><ul><li><a href="./#mutashabihat">المتشابهات</a></li><li><a href="./#cards">البطاقات</a></li><li><a href="./#grading">التقييم الذكي</a></li><li><a href="./#tempo">خوارزمية FSRS</a></li><li><a href="./#exams">الختمة والمواعيد</a></li><li><a href="./#stats">الإحصائيات</a></li><li><a href="./#anki">استيراد آنكي</a></li><li><a href="./#market">المتجر</a></li><li><a href="download.html">التحميل</a></li></ul></div>
+    <div><h4>التوثيق</h4><ul><li><a href="https://github.com/Sidali-Djeghbal/wikae#readme">دليل المشروع</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/packs.md">الحزم التعليمية</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/types.md">أنواع البطاقات</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/cli.md">أوامر سطر الأوامر</a></li></ul></div>
+    <div><h4>المشروع</h4><ul><li><a href="https://github.com/Sidali-Djeghbal/wikae">المستودع البرمجي</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/releases">الإصدارات</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/CHANGELOG.md">سجل التغييرات</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/issues">البلاغات والمقترحات</a></li></ul></div>
+    <div><h4>المساعدة</h4><ul><li><a href="support">الدعم الفني</a></li><li><a href="mailto:contact@djeghbal.me">تواصل معنا</a></li><li><a href="terms">الشروط والأحكام</a></li><li><a href="privacy">سياسة الخصوصية</a></li></ul></div>
+    <div class="fine"><span>رخصة AGPL-3.0 · © 2026 سيد علي دجعبال والمساهمون</span><span>رِباطُ المحفوظ وإتقان المتشابهات</span></div>
+  </div>
+
+  <div class="wrap" data-lang="en">
+    <div>
+      <a href="./" class="wordmark"><span class="wikae-en">Wikae</span></a>
+      <p>Spaced-repetition practice for Quran, Mutashabihat and knowledge.</p>
+    </div>
+    <div><h4>Product</h4><ul><li><a href="./#mutashabihat">Mutashabihat</a></li><li><a href="./#cards">Cards</a></li><li><a href="./#grading">Grading</a></li><li><a href="./#tempo">FSRS Algorithm</a></li><li><a href="./#exams">Deadlines</a></li><li><a href="./#stats">Stats</a></li><li><a href="./#anki">Anki Import</a></li><li><a href="./#market">Market</a></li><li><a href="download.html">Download</a></li></ul></div>
+    <div><h4>Docs</h4><ul><li><a href="https://github.com/Sidali-Djeghbal/wikae#readme">README</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/packs.md">Packs</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/types.md">Card Types</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/docs/cli.md">CLI Reference</a></li></ul></div>
+    <div><h4>Project</h4><ul><li><a href="https://github.com/Sidali-Djeghbal/wikae">GitHub</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/releases">Releases</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Sidali-Djeghbal/wikae/issues">Issues</a></li></ul></div>
+    <div><h4>Help</h4><ul><li><a href="support">Support</a></li><li><a href="mailto:contact@djeghbal.me">Contact</a></li><li><a href="terms">Terms</a></li><li><a href="privacy">Privacy</a></li></ul></div>
+    <div class="fine"><span>AGPL-3.0 · © 2026 Sidali Djeghbal and contributors</span><span>Spaced-repetition for Quran &amp; knowledge</span></div>
   </div>
 </footer>
 </body>

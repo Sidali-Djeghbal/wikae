@@ -195,6 +195,156 @@ h1, h2, h3 { margin: 0; font-family: var(--font-serif); font-weight: 400; letter
   :root:not([data-theme="dark"]) .theme-icon-moon { display: block; }
 }
 
+/* ------------------------------------------------------------------ language toggle */
+.lang-toggle {
+  height: 2.1rem; padding: 0 0.65rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 0.5rem; border: 1px solid var(--border);
+  background: transparent; color: var(--foreground);
+  font: 600 0.8rem var(--font-sans);
+  cursor: pointer; transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.2s var(--ease);
+}
+.lang-toggle:hover { background: var(--accent); }
+.lang-toggle:active { transform: scale(0.95); }
+
+/* ------------------------------------------------------------------ i18n visibility */
+html[lang="ar"] [data-lang="en"] { display: none !important; }
+html[lang="en"] [data-lang="ar"] { display: none !important; }
+
+/* ------------------------------------------------------------------ RTL layout */
+html[dir="rtl"] {
+  direction: rtl;
+}
+html[dir="rtl"] body {
+  font-family: var(--font-arabic);
+  direction: rtl;
+  text-align: right;
+}
+html[dir="rtl"] h1,
+html[dir="rtl"] h2,
+html[dir="rtl"] h3,
+html[dir="rtl"] h4 {
+  font-family: var(--font-arabic);
+  letter-spacing: normal;
+}
+html[dir="rtl"] .opus {
+  font-family: var(--font-arabic);
+  font-style: normal;
+}
+html[dir="rtl"] .note {
+  font-family: var(--font-arabic);
+}
+html[dir="rtl"] .nav-end {
+  margin-left: 0;
+  margin-right: auto;
+}
+html[dir="rtl"] .head::before {
+  margin-left: auto;
+  margin-right: 0;
+}
+html[dir="rtl"] .booktabs th,
+html[dir="rtl"] .booktabs td {
+  text-align: right;
+  padding: 0.7rem 0 0.7rem 1.25rem;
+}
+html[dir="rtl"] .plate-list button {
+  text-align: right;
+  padding: 0.85rem 1rem 0.9rem 0.25rem;
+  border-left: none;
+  border-right: 2px solid transparent;
+}
+html[dir="rtl"] .plate-list button[aria-selected="true"] {
+  border-right-color: var(--highlight);
+  border-left-color: transparent;
+}
+html[dir="rtl"] .hw-q,
+html[dir="rtl"] .hw-a,
+html[dir="rtl"] .hw-grade,
+html[dir="rtl"] .feedback-text,
+html[dir="rtl"] .homework figcaption {
+  padding-left: 0;
+  padding-right: clamp(0rem, 2vw, 1.5rem);
+  text-align: right;
+}
+html[dir="rtl"] .note-hw {
+  right: auto;
+  left: 1.5rem;
+}
+html[dir="rtl"] .rep-programme button {
+  text-align: right;
+}
+html[dir="rtl"] .rep-n {
+  text-align: left;
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+html[dir="rtl"] .rep-actions {
+  margin-left: 0;
+  margin-right: auto;
+}
+html[dir="rtl"] .rep-notes {
+  text-align: right;
+}
+html[dir="rtl"] .stage-actions {
+  margin-left: 0;
+  margin-right: auto;
+}
+html[dir="rtl"] .note-stage {
+  text-align: left;
+  transform: rotate(1deg);
+  transform-origin: left;
+  margin: 1.1rem 0 0 0.25rem;
+}
+html[dir="rtl"] .tree {
+  text-align: right;
+}
+html[dir="rtl"] .tree span {
+  margin-left: 0;
+  margin-right: auto;
+}
+html[dir="rtl"] .tree .ind {
+  padding-left: 0;
+  padding-right: 1.5rem;
+}
+html[dir="rtl"] .anki-copy {
+  text-align: right;
+}
+html[dir="rtl"] .anki-map dt {
+  text-align: right;
+}
+html[dir="rtl"] .suite-list button {
+  text-align: right;
+}
+html[dir="rtl"] .footer {
+  text-align: right;
+}
+html[dir="rtl"] .footer .fine {
+  flex-direction: row-reverse;
+}
+html[dir="rtl"] .dock-now {
+  text-align: right;
+}
+html[dir="rtl"] .dock-now svg {
+  margin-left: 0;
+  margin-right: auto;
+  transform: scaleX(-1);
+}
+html[dir="rtl"] .programme {
+  text-align: right;
+}
+html[dir="rtl"] .programme-x {
+  right: auto;
+  left: 0.9rem;
+}
+html[dir="rtl"] .textlink:hover span {
+  transform: translateX(-3px);
+}
+/* Ensure code and commands are strictly LTR regardless of page direction */
+.cmd, .code, .term-body, pre code, .tok-keyword, .tok-string, .cm-editor {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
 /* -------------------------------------------------------------------- nav */
 .nav { position: sticky; top: 0; z-index: 50; }
 .nav::before { content: ""; position: absolute; inset: 0 0 -1.5rem; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 0.35s;
@@ -1447,3 +1597,24 @@ html[data-theme="light"] .programme-back.open,
   line-height: 1.6;
   color: var(--muted-foreground);
 }
+
+html[dir="ltr"] .mutashabih-rule {
+  border-right: 0;
+  border-left: 3px solid var(--highlight);
+  border-radius: 0.45rem 0 0 0.45rem;
+  direction: ltr;
+  text-align: left;
+}
+html[dir="ltr"] .verse-text {
+  direction: rtl;
+  text-align: right;
+}
+html[dir="rtl"] .stage .demo-toggle {
+  border-left: 0;
+  border-right: 1px solid var(--border);
+  padding-left: 0.45rem;
+  padding-right: 0.75rem;
+  margin-left: 0;
+  margin-right: 0.25rem;
+}
+
