@@ -103,7 +103,7 @@ const config: Configuration = {
     enableNodeOptionsEnvironmentVariable: false,
     enableNodeCliInspectArguments: false,
   },
-  publish: { provider: "github", owner: "Zibhelina", repo: "etude" },
+  publish: { provider: "github", owner: "Sidali-Djeghbal", repo: "wikae" },
   mac: {
     category: "public.app-category.education",
     target: [

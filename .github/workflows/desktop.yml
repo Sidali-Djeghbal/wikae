@@ -71,12 +71,12 @@ jobs:
         with:
           path: files
           merge-multiple: true
-      - name: Draft release with the installers
+      - name: Upload installers to release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
           # A tag with a dash (v2.5.0-beta.1) is a pre-release: normal users and the updaters skip it.
           pre=$([[ "$TAG" == *-* ]] && echo --prerelease || true)
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1 || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft $pre --title "Etude ${TAG#v}" --notes "See CHANGELOG.md."
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1 || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" $pre --title "Wikae ${TAG#v}" --generate-notes
           gh release upload "$TAG" files/* --repo "$GITHUB_REPOSITORY" --clobber
