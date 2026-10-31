@@ -108,7 +108,6 @@ const config: Configuration = {
     category: "public.app-category.education",
     target: [
       { target: "dmg", arch: ["arm64", "x64"] },
-      { target: "zip", arch: ["arm64", "x64"] },
     ],
     artifactName: "Wikae-mac-${arch}.${ext}",
     minimumSystemVersion: "12.0",
@@ -151,10 +150,4 @@ if (process.platform === "darwin") {
   writeFileSync(yml, text);
 }
 
-for (const file of readdirSync(OUT)) {
-  if (file.startsWith("Wikae-")) {
-    const legacy = join(OUT, file.replace(/^Wikae-/, "Etude-"));
-    if (!existsSync(legacy)) copyFileSync(join(OUT, file), legacy);
-  }
-}
 console.log(`installers in ${relative(process.cwd(), OUT) || "."}`);

@@ -58,11 +58,13 @@ jobs:
         run: node desktop/smoke.ts
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: etude-${{ runner.os }}
+          name: wikae-${{ runner.os }}
           path: |
-            desktop/dist/out/Wikae-*
-            desktop/dist/out/Etude-*
-            desktop/dist/out/latest*.yml
+            desktop/dist/out/Wikae-*.exe
+            desktop/dist/out/Wikae-*.dmg
+            desktop/dist/out/Wikae-*.deb
+            desktop/dist/out/Wikae-*.AppImage
+            desktop/dist/out/Wikae-*.rpm
           if-no-files-found: error
           retention-days: 14
 
