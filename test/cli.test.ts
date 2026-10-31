@@ -570,7 +570,7 @@ test("old top-level commands still work", async () => {
 test("subprocess: exit codes, stderr JSON, stdin, --db", () => {
   const dir = home();
   const db = join(dir, "sub.db");
-  const sh = (args: string[], input = "") => spawnSync(process.execPath, [MAIN, "--db", db, ...args], { input, encoding: "utf8", env: { ...process.env, ETUDE_HOME: join(dir, "h") } });
+  const sh = (args: string[], input = "") => spawnSync(process.execPath, ["--no-warnings", MAIN, "--db", db, ...args], { input, encoding: "utf8", env: { ...process.env, ETUDE_HOME: join(dir, "h") } });
   const a = sh(["item", "add", "--deck", "P", "--id", "p.1", "--front", "-", "--back", "b"], "front from stdin");
   assert.equal(a.status, 0, a.stderr);
   assert.equal(JSON.parse(a.stdout).result, "created");

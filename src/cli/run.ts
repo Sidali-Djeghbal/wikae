@@ -279,10 +279,10 @@ export async function run(argv: string[], io: Io = defaultIo(), opts: RunOptions
     if (values.compact) pretty = false;
     if (cmd.confirm && !values.yes && !values["dry-run"]) throw new CliError(`\`etude ${cmd.name}\` is destructive; add --yes to confirm (or --dry-run to preview)`);
 
-    const home = shared ? shared.home : resolve(io.env.ETUDE_HOME ?? join(homedir(), ".etude"));
+    const home = shared ? shared.home : resolve(io.env.WIKAE_HOME ?? io.env.WIKAA_HOME ?? io.env.ETUDE_HOME ?? (existsSync(join(homedir(), ".wikae")) ? join(homedir(), ".wikae") : existsSync(join(homedir(), ".wikaa")) ? join(homedir(), ".wikaa") : join(homedir(), ".etude")));
     const envFile = join(home, ".env");
     if (!shared && existsSync(envFile) && io.env === process.env) process.loadEnvFile(envFile);
-    const dbPath = shared ? shared.path : resolve(values.db ?? io.env.ETUDE_DB ?? join(home, "etude.db"));
+    const dbPath = shared ? shared.path : resolve(values.db ?? io.env.WIKAE_DB ?? io.env.WIKAA_DB ?? io.env.ETUDE_DB ?? join(home, existsSync(join(home, "wikae.db")) ? "wikae.db" : existsSync(join(home, "wikaa.db")) ? "wikaa.db" : "etude.db"));
     if (shared) etude = shared;
     else if (!cmd.noDb) etude = await Etude.open(dbPath, { home });
 

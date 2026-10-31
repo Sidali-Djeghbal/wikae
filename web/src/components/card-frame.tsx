@@ -92,7 +92,7 @@ export const CardFrame = forwardRef<CardFrameHandle, Props>(function CardFrame(p
   latest.current = props;
 
   const post = useCallback((msg: Record<string, unknown>, transfer: Transferable[] = []) => {
-    iframe.current?.contentWindow?.postMessage({ etude: 1, ...msg }, "*", transfer);
+    iframe.current?.contentWindow?.postMessage({ wikae: 1, wikaa: 1, etude: 1, ...msg }, "*", transfer);
   }, []);
 
   // The height left on screen from the frame's top to the bottom of the window (less a margin), or null.
@@ -158,7 +158,7 @@ export const CardFrame = forwardRef<CardFrameHandle, Props>(function CardFrame(p
     const onMessage = (e: MessageEvent) => {
       if (e.source !== iframe.current?.contentWindow) return;
       const msg = e.data;
-      if (!msg || msg.etude !== 1) return;
+      if (!msg || (msg.wikae !== 1 && msg.wikaa !== 1 && msg.etude !== 1)) return;
       const p = latest.current;
       switch (msg.type) {
         case "loaded":

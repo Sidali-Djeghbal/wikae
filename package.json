@@ -1,9 +1,13 @@
 {
-  "name": "@zibhelina/etude",
+  "name": "wikae",
   "version": "2.5.0",
-  "description": "Spaced-repetition practice with programmable card types and AI grading.",
+  "description": "وِكَاء — رِباطُ المحفوظ وإتقان المتشابهات | Wikae — Spaced-repetition practice for Quran, Mutashabihat and knowledge.",
   "keywords": [
     "spaced-repetition",
+    "quran",
+    "mutashabihat",
+    "hadith",
+    "islamic",
     "flashcards",
     "fsrs",
     "anki",
@@ -37,6 +41,8 @@
   ],
   "type": "module",
   "bin": {
+    "wikae": "./bin/wikae.js",
+    "wikaa": "./bin/wikae.js",
     "etude": "./bin/etude.js"
   },
   "engines": {

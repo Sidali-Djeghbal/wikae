@@ -29,7 +29,7 @@ export function DecksPage({ archived = false }: { archived?: boolean }) {
 function DesktopDecks({ archived }: { archived: boolean }) {
   const { t } = useLocale();
   const [decks, setDecks] = useState<(DeckNode & { displayDepth: number })[] | null>(null);
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(JSON.parse(localStorage.getItem("etude.collapsed") ?? "[]")));
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(JSON.parse((localStorage.getItem("wikae.collapsed") ?? localStorage.getItem("wikaa.collapsed") ?? localStorage.getItem("etude.collapsed")) ?? "[]")));
   const [creating, setCreating] = useState(false);
 
   const reload = () => api.decks(archived).then((all) => {
@@ -49,7 +49,10 @@ function DesktopDecks({ archived }: { archived: boolean }) {
     const next = new Set(collapsed);
     next.has(name) ? next.delete(name) : next.add(name);
     setCollapsed(next);
-    localStorage.setItem("etude.collapsed", JSON.stringify([...next]));
+    const val = JSON.stringify([...next]);
+    localStorage.setItem("wikae.collapsed", val);
+    localStorage.setItem("wikaa.collapsed", val);
+    localStorage.setItem("etude.collapsed", val);
   };
 
   const visible = useMemo(() => {

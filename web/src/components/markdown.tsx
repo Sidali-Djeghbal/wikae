@@ -16,5 +16,5 @@ export function Markdown({ children, className }: { children: string; className?
   useEffect(() => {
     if (ref.current) void highlightBlocks(ref.current);
   }, [html]);
-  return <div ref={ref} className={cn("prose-etude", className)} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <div ref={ref} className={cn("prose-wikae prose-wikaa prose-etude", className)} dangerouslySetInnerHTML={{ __html: html }} />;
 }

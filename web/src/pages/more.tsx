@@ -5,7 +5,7 @@ import { Blocks, ChevronRight, CircleArrowUp, Globe, Settings, Store } from "luc
 import { navigate } from "@/lib/router";
 import { usePhone } from "@/lib/phone";
 import { PhoneTitle } from "@/components/phone-shell";
-import { Logo, Wordmark } from "@/components/logo";
+import { Logo, Wordmark, WikaeLogo } from "@/components/logo";
 import { useUpdater } from "@/components/update-bar";
 import { ImportButton } from "@/pages/decks";
 import { useLocale } from "@/lib/useLocale";
@@ -50,22 +50,21 @@ export function MorePage() {
       <div className="mt-8 px-5">
         <div className="score-kicker mb-3">{t("Bring cards in")}</div>
         <ImportButton onDone={() => navigate("/")} phone />
-        <p className="mt-2 text-[13px] text-muted-foreground">{t("An Etude pack (.json) or an Anki deck (.apkg, .colpkg).")}</p>
+        <p className="mt-2 text-[13px] text-muted-foreground">{t("A Wikae pack (.json) or an Anki deck (.apkg, .colpkg).")}</p>
       </div>
 
       {behind > 0 && st && (
         <button onClick={() => navigate("/settings")} className="mx-5 mt-8 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-2xl border bg-card px-4 py-3.5 text-left rtl:text-right">
           <CircleArrowUp className="size-5 shrink-0 text-highlight" />
-          <span className="min-w-0 flex-1 text-[15px]">{st.kind === "git" ? `Update Etude · ${behind} new` : `Etude ${st.latest} is out`}</span>
+          <span className="min-w-0 flex-1 text-[15px]">{st.kind === "git" ? `Update Wikae · ${behind} new` : `Wikae ${st.latest} is out`}</span>
           <ChevronRight className="size-4 text-muted-foreground rtl-flip" />
         </button>
       )}
 
-      <div className="mt-12 flex items-center gap-3 px-5 text-muted-foreground">
-        <Logo tile className="size-9 shrink-0 rounded-[9px]" />
-        <div className="min-w-0 text-[13px] leading-snug">
-          <Wordmark className="text-[1.05rem] text-foreground" />
-          <div>{st?.version ? `${t("Version")} ${st.version}` : t("Practice anything.")}</div>
+      <div className="mt-12 flex flex-col gap-2 px-5 text-muted-foreground">
+        <WikaeLogo variant="full" size="md" showTagline />
+        <div className="text-[12px] opacity-75">
+          {st?.version ? `${t("Version")} ${st.version}` : ""}
         </div>
       </div>
     </div>

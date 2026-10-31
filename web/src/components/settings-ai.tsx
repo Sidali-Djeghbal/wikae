@@ -247,7 +247,7 @@ function AgentBlock({ ai, onChange }: { ai: AiSettings; onChange(patch: { model?
   const value = ai.agent?.model ?? "";
   const known = (groups ?? []).some((g) => g.models.some((m) => m.ref === value));
   return (
-    <Block title={t("Assistant")} description={t("The model Ask Etude starts new chats with, and how long it thinks before acting. You can switch the model per chat; the last one you picked is remembered. Lower effort answers much faster.")}>
+    <Block title={t("Assistant")} description={t("The model Ask Wikae starts new chats with, and how long it thinks before acting. You can switch the model per chat; the last one you picked is remembered. Lower effort answers much faster.")}>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={t("Default model")}>
           <Select value={value || "__feedback"} onValueChange={(v) => onChange({ model: v === "__feedback" ? null : v })}>
@@ -297,8 +297,8 @@ function KeysBlock({ ai, saved }: { ai: AiSettings; saved: SettingsResponse }) {
       saved={saved}
       description={
         <>
-          {t("Saved to {path}, readable only by you, and used right away. Etude never shows a key again after you save it.", { path: "~/.etude/.env" })}
-          {" "}{t("From a terminal: {cmd} reads the key from stdin.", { cmd: "etude settings key set NAME" })}
+          {t("Saved to {path}, readable only by you, and used right away. Wikae never shows a key again after you save it.", { path: "~/.etude/.env" })}
+          {" "}{t("From a terminal: {cmd} reads the key from stdin.", { cmd: "wikae settings key set NAME" })}
         </>
       }
     />
@@ -324,7 +324,7 @@ function LocalKeysBlock({ vars, saved, description }: { vars: { name: string; us
     }
   };
   return (
-    <Block title={t("API keys")} description={description ?? t("Stored only on this device, in the app's private storage. Etude never shows a key again after you save it.")}>
+    <Block title={t("API keys")} description={description ?? t("Stored only on this device, in the app's private storage. Wikae never shows a key again after you save it.")}>
       <ul className="flex flex-col gap-4">
         {vars.map((v) => (
           <li key={v.name} className="flex flex-col gap-2" data-local-key={v.name}>

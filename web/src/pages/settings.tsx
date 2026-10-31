@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { UpdateSettingsRow } from "@/components/update-bar";
-import { Logo, Wordmark } from "@/components/logo";
+import { Logo, Wordmark, WikaeLogo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { serverless } from "@/lib/native";
 import { PHONE_H1 } from "@/components/page";
@@ -212,13 +212,10 @@ export function SettingsPage() {
           <div className="flex flex-col gap-12">
             <Section id="about" title={t("About")}>
               <Block>
-                <div className="flex items-center gap-3.5">
-                  <Logo tile className="size-11 shrink-0 rounded-[10px]" />
-                  <div className="min-w-0 flex-1">
-                    <Wordmark className="text-[1.35rem] leading-none" />
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {t("Version")} <span className="font-mono text-[12px] text-foreground/90">{saved.version ?? "unknown"}</span> · FSRS-6 · AGPL-3.0
-                    </div>
+                <div className="flex flex-col gap-2">
+                  <WikaeLogo variant="full" size="lg" showTagline />
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {t("Version")} <span className="font-mono text-[12px] text-foreground/90">{saved.version ?? "unknown"}</span> · FSRS-6 · AGPL-3.0
                   </div>
                 </div>
                 <UpdateSettingsRow />
@@ -231,12 +228,12 @@ export function SettingsPage() {
                   ))}
                 </div>
                 {!serverless() && <p className="text-xs text-muted-foreground">
-                  {t("From a terminal: {cmd}", { cmd: "etude update --check" })}
+                  {t("From a terminal: {cmd}", { cmd: "wikae update --check" })}
                 </p>}
               </Block>
               <Block
                 title={t("First-run setup")}
-                description={t("The questions Etude asks on a new install: AI grading, Sync, and something to start with. Your decks stay as they are.")}
+                description={t("The questions Wikae asks on a new install: AI grading, Sync, and something to start with. Your decks stay as they are.")}
                 stackAside
                 aside={
                   <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" onClick={() => window.dispatchEvent(new Event(ONBOARDING_EVENT))}>

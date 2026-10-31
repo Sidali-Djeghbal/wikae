@@ -360,7 +360,7 @@ export class Etude {
     await initSandbox();
     const db = await Db.open(path);
     const media = path === ":memory:" ? join(process.env.TMPDIR ?? "/tmp", `etude-media-${process.pid}`) : join(dirname(path), "media");
-    const home = resolve(opts.home ?? process.env.ETUDE_HOME ?? join(homedir(), ".etude"));
+    const home = resolve(opts.home ?? process.env.WIKAE_HOME ?? process.env.WIKAA_HOME ?? process.env.ETUDE_HOME ?? (existsSync(join(homedir(), ".wikae")) ? join(homedir(), ".wikae") : existsSync(join(homedir(), ".wikaa")) ? join(homedir(), ".wikaa") : join(homedir(), ".etude")));
     const e = new Etude(db, media, path, home);
     e.syncBuiltinTypes(opts.builtinTypesDir ?? BUILTIN_TYPES_DIR);
     e.applyBuiltinTypeFolders();
@@ -3914,4 +3914,4 @@ function canonical(value: unknown): string {
   return JSON.stringify(walk(parsed ?? {}));
 }
 
-export { DEFAULT_PRESET };
+export { DEFAULT_PRESET, Etude as Wikae, Etude as Wikaa, EtudeError as WikaeError, EtudeError as WikaaError };

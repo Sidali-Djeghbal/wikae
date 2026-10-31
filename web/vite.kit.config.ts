@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 export default defineConfig({
   root: fileURLToPath(new URL(".", import.meta.url)),
   build: {
-    outDir: process.env.ETUDE_KIT_OUT ?? "dist/kit",
+    outDir: process.env.WIKAE_KIT_OUT ?? process.env.WIKAA_KIT_OUT ?? process.env.ETUDE_KIT_OUT ?? "dist/kit",
     emptyOutDir: true,
     copyPublicDir: false,
     chunkSizeWarningLimit: 1500,

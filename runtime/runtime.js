@@ -9,7 +9,7 @@ let kitPromise = null;
 const kit = () => (kitPromise ??= import(new URL("./kit/kit.js", import.meta.url).href));
 
 const parent = window.parent;
-const send = (type, data = {}) => parent.postMessage({ etude: 1, type, ...data }, "*");
+const send = (type, data = {}) => parent.postMessage({ wikae: 1, wikaa: 1, etude: 1, type, ...data }, "*");
 
 // ---------- markdown with math ----------
 
@@ -344,7 +344,7 @@ export function boot(main, templateHtml, assets) {
   window.addEventListener("message", async (e) => {
     if (e.source !== parent) return;
     const msg = e.data;
-    if (!msg || msg.etude !== 1) return;
+    if (!msg || (msg.wikae !== 1 && msg.wikaa !== 1 && msg.etude !== 1)) return;
     if (msg.type === "init") {
       applyTheme(msg.theme);
       document.body.dataset.mode = msg.mode ?? "answer";

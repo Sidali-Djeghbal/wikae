@@ -184,7 +184,7 @@ export function MarketPage() {
             <section className="mb-8" data-paid-section>
               <div className="mb-3 flex items-baseline gap-2">
                 <h2 className="text-base font-semibold">{canShowPurchases() ? t("Paid decks") : t("Your decks")}</h2>
-                <span className="text-xs text-muted-foreground">{canShowPurchases() ? t("From creators, sold on etude.study") : t("Bought with your Etude account")}</span>
+                <span className="text-xs text-muted-foreground">{canShowPurchases() ? t("From creators, sold on etude.study") : t("Bought with your Wikae account")}</span>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {paidShown.map((e) => <PaidTile key={e.listing} entry={e} onOpen={() => setOpenPaid(e)} />)}
@@ -609,7 +609,7 @@ function PublishDialog({ repo, onClose }: { repo: string; onClose(): void }) {
           )}
           {gh && !gh.ok && (
             <p className="rounded-md border px-3 py-2 text-[13px] text-muted-foreground">
-              {t("To open the pull request from here, Etude needs the GitHub CLI signed in on the machine running it ({reason}). You can also save the file and add it on GitHub yourself.", { reason: gh.reason ?? "" })}
+              {t("To open the pull request from here, Wikae needs the GitHub CLI signed in on the machine running it ({reason}). You can also save the file and add it on GitHub yourself.", { reason: gh.reason ?? "" })}
             </p>
           )}
         </div>

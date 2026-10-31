@@ -400,7 +400,7 @@ export function TypeEditor({ id }: { id: string }) {
 
       {saved?.builtin && (
         <p className="mx-4 mt-4 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground sm:mx-6 lg:mx-8">
-          {t("This is a built-in type. Saving makes it your own version: Etude updates won't replace it, and you can reset it to the shipped version at any time.")}
+          {t("This is a built-in type. Saving makes it your own version: Wikae updates won't replace it, and you can reset it to the shipped version at any time.")}
         </p>
       )}
 
@@ -680,7 +680,7 @@ export function TypeEditor({ id }: { id: string }) {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("Make {name} your own?", { name: saved?.name ?? "" })}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Saving replaces the built-in version for every item that uses it{items}. Later Etude updates won't change your version. You can reset to the shipped version at any time.", { items: items ? ` (${t(items === 1 ? "{n} item" : "{n} items", { n: items })})` : "" })}
+              {t("Saving replaces the built-in version for every item that uses it{items}. Later Wikae updates won't change your version. You can reset to the shipped version at any time.", { items: items ? ` (${t(items === 1 ? "{n} item" : "{n} items", { n: items })})` : "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

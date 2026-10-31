@@ -24,9 +24,9 @@ export function TypesPage({ id }: { id: string | null }) {
 // The page is a small file browser: the left rail (desktop) is the folder tree, the main column shows
 // one place at a time (everything at the top level, a folder, or the built-ins), and search goes flat.
 
-const COLLAPSED_KEY = "etude.typeFolders.collapsed";
-const DRAG_TYPE = "application/x-etude-type";
-const DRAG_FOLDER = "application/x-etude-folder";
+const COLLAPSED_KEY = "wikae.typeFolders.collapsed";
+const DRAG_TYPE = "application/x-wikae-type";
+const DRAG_FOLDER = "application/x-wikae-folder";
 /** The `folder` URL value for the built-in types, which aren't a real folder. */
 const BUILT_IN = "@builtin";
 
@@ -57,7 +57,7 @@ function TypeLibrary() {
   const [creating, setCreating] = useState<{ source?: string; folder?: string } | null>(null);
   const [importing, setImporting] = useState(false);
   const [query, setQuery] = useState("");
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? "[]")));
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(JSON.parse((localStorage.getItem(COLLAPSED_KEY) ?? localStorage.getItem("wikaa.typeFolders.collapsed") ?? localStorage.getItem("etude.typeFolders.collapsed")) ?? "[]")));
   const [moving, setMoving] = useState<MoveTarget | null>(null);
   const [folderDialog, setFolderDialog] = useState<FolderDialog | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -93,7 +93,10 @@ function TypeLibrary() {
 
   const saveCollapsed = (next: Set<string>) => {
     setCollapsed(next);
-    localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next]));
+    const json = JSON.stringify([...next]);
+    localStorage.setItem(COLLAPSED_KEY, json);
+    localStorage.setItem("wikaa.typeFolders.collapsed", json);
+    localStorage.setItem("etude.typeFolders.collapsed", json);
   };
   const toggle = (path: string) => {
     const next = new Set(collapsed);
@@ -156,7 +159,7 @@ function TypeLibrary() {
   });
   const drop = (folder: string): DropProps => ({
     onDragOver: (e) => {
-      if (![...e.dataTransfer.types].some((t) => t === DRAG_TYPE || t === DRAG_FOLDER)) return;
+      if (![...e.dataTransfer.types].some((t) => t === DRAG_TYPE || t === "application/x-wikaa-type" || t === "application/x-etude-type" || t === DRAG_FOLDER || t === "application/x-wikaa-folder" || t === "application/x-etude-folder")) return;
       e.preventDefault();
       e.stopPropagation();
       e.dataTransfer.dropEffect = "move";
@@ -169,8 +172,8 @@ function TypeLibrary() {
       e.preventDefault();
       e.stopPropagation();
       setDropAt(null);
-      const type = e.dataTransfer.getData(DRAG_TYPE);
-      const path = e.dataTransfer.getData(DRAG_FOLDER);
+      const type = e.dataTransfer.getData(DRAG_TYPE) || e.dataTransfer.getData("application/x-wikaa-type") || e.dataTransfer.getData("application/x-etude-type");
+      const path = e.dataTransfer.getData(DRAG_FOLDER) || e.dataTransfer.getData("application/x-wikaa-folder") || e.dataTransfer.getData("application/x-etude-folder");
       if (type) {
         const t = all.find((x) => x.id === type);
         if (t && t.folder !== folder) moveType(type, folder);
@@ -227,7 +230,7 @@ function TypeLibrary() {
             </div>
             <p className="mt-1 max-w-xl text-sm text-pretty text-muted-foreground">
               {inBuiltIn
-                ? tr("These ship with Etude. Open one to see how it's made, or duplicate it to start your own.")
+                ? tr("These ship with Wikae. Open one to see how it's made, or duplicate it to start your own.")
                 : here
                   ? [plural(listed.length, "type", "types"), subfolders.length ? plural(subfolders.length, "folder", "folders") : ""].filter(Boolean).join(" · ")
                   : tr("Fields, an HTML/CSS/JS template and a grader. Built\u2011in types are written the same way, so any of them can be copied or changed.")}
@@ -576,7 +579,7 @@ function BuiltInCard({ count }: { count: number }) {
       <Package className="size-5 shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[0.95rem] font-medium">{tr("Built in")}</span>
-        <span className="block truncate text-xs text-muted-foreground">{count === 1 ? tr("1 type that ships with Etude") : tr("{n} types that ship with Etude", { n: count })}</span>
+        <span className="block truncate text-xs text-muted-foreground">{count === 1 ? tr("1 type that ships with Wikae") : tr("{n} types that ship with Wikae", { n: count })}</span>
       </span>
       <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl-flip" />
     </button>

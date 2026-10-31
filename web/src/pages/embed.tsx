@@ -216,7 +216,7 @@ export function EmbedStudy({ scope, limit, cardId, title }: { scope: Scope; limi
     const tally = ([1, 2, 3, 4] as Rating[]).map((r) => [RATING_LABEL[r], done.filter((d) => d.rating === r).length] as const).filter(([, c]) => c);
     const missed = done.filter((d) => d.rating === 1 || d.verdict === "incorrect" || d.verdict === "partial");
     const lines = [
-      `[Etude] Finished ${n} card${n === 1 ? "" : "s"} in ${title}: ${tally.map(([l, c]) => `${c} ${l.toLowerCase()}`).join(", ")}.`,
+      `[Wikae] Finished ${n} card${n === 1 ? "" : "s"} in ${title}: ${tally.map(([l, c]) => `${c} ${l.toLowerCase()}`).join(", ")}.`,
       ...(missed.length ? [`Struggled with: ${missed.map((d) => `${d.title.trim()} (${d.itemId})`).join("; ")}.`] : []),
       counts ? `Still due here: ${counts.new} new, ${counts.learning} learning, ${counts.review} review.` : "",
     ].filter(Boolean);

@@ -19,7 +19,7 @@ function CommandStatus({ cmd }: { cmd: DesktopCommandState | null }) {
   if (cmd.path)
     return (
       <p className="text-sm text-muted-foreground">
-        There's already an etude at <code className="rounded bg-muted px-1 py-0.5 font-mono text-[12px] text-foreground/85">{cmd.path}</code>, from npm or a copy of the source code. Etude leaves it as it is.
+        There's already a command at <code className="rounded bg-muted px-1 py-0.5 font-mono text-[12px] text-foreground/85">{cmd.path}</code>, from npm or a copy of the source code. Wikae leaves it as it is.
       </p>
     );
   return <p className="text-sm text-muted-foreground">{cmd.note}</p>;
@@ -39,8 +39,8 @@ export function DesktopSection() {
     try {
       const r = await app.command.install();
       setCmd(r);
-      if (r.error) toast.error("Couldn't install the etude command", { description: r.error });
-      else toast.success("The etude command is installed", { description: "Open a new terminal and try etude --help." });
+      if (r.error) toast.error("Couldn't install the wikae command", { description: r.error });
+      else toast.success("The wikae command is installed", { description: "Open a new terminal and try wikae --help." });
     } finally {
       setBusy(false);
     }
@@ -49,14 +49,14 @@ export function DesktopSection() {
   return (
     <Section id="desktop" title="Desktop app">
       <Block
-        title="The etude command"
+        title="The wikae command"
         description="The command line for scripts and agents, always the same version as this app. It needs no Node of its own."
         stackAside
         aside={
           cmd?.canInstall && !cmd.ours ? (
             <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" disabled={busy} onClick={install}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Terminal className="size-4" />}
-              Install the etude command
+              Install the wikae command
             </Button>
           ) : undefined
         }

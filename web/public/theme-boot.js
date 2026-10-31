@@ -2,18 +2,23 @@
 (function () {
   try {
     if (location.pathname === "/embed") return;
-    var t = JSON.parse(localStorage.getItem("etude.theme") || "null");
+    var rawTheme = localStorage.getItem("wikae.theme") || localStorage.getItem("wikaa.theme") || localStorage.getItem("etude.theme");
+    var t = JSON.parse(rawTheme || "null");
     if (!t || typeof t.css !== "string") return;
     var s = document.createElement("style");
-    s.id = "etude-theme";
+    s.id = "wikae-theme";
     s.textContent = t.css;
     document.head.appendChild(s);
     var root = document.documentElement;
     root.classList.toggle("dark", t.scheme !== "light");
     root.dataset.theme = t.id;
-    document.querySelector('meta[name="color-scheme"]').content = t.scheme === "light" ? "light" : "dark";
-    if (t.bg) document.querySelector('meta[name="theme-color"]').content = t.bg;
-    var lang = localStorage.getItem("etude.language");
+    var metaScheme = document.querySelector('meta[name="color-scheme"]');
+    if (metaScheme) metaScheme.content = t.scheme === "light" ? "light" : "dark";
+    if (t.bg) {
+      var metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) metaTheme.content = t.bg;
+    }
+    var lang = localStorage.getItem("wikae.language") || localStorage.getItem("wikaa.language") || localStorage.getItem("etude.language");
     if (lang === "ar") {
       root.lang = "ar";
       root.dir = "rtl";

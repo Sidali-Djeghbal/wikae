@@ -131,17 +131,17 @@
 .tabular { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .viz-anim { transition: none !important; } }
 
-.prose-etude { line-height: 1.6; }
-.prose-etude > :first-child { margin-top: 0; }
-.prose-etude > :last-child { margin-bottom: 0; }
-.prose-etude p { margin: 0.5em 0; }
-.prose-etude ul, .prose-etude ol { padding-left: 1.3em; margin: 0.4em 0; list-style: revert; }
-.prose-etude code { font-family: var(--font-mono); font-size: 0.88em; background: var(--muted); padding: 0.1em 0.35em; border-radius: 0.35em; }
-.prose-etude pre { background: var(--muted); padding: 0.75em 1em; border-radius: var(--radius); overflow-x: auto; line-height: 1.55; }
-.prose-etude pre code { background: none; padding: 0; }
-.prose-etude strong { font-weight: 600; }
-.prose-etude a { text-decoration: underline; text-underline-offset: 2px; }
-.prose-etude .katex-display { margin: 0.5em 0; overflow-x: auto; overflow-y: hidden; }
+.prose-wikae, .prose-wikaa, .prose-etude { line-height: 1.6; }
+.prose-wikae > :first-child, .prose-wikaa > :first-child, .prose-etude > :first-child { margin-top: 0; }
+.prose-wikae > :last-child, .prose-wikaa > :last-child, .prose-etude > :last-child { margin-bottom: 0; }
+.prose-wikae p, .prose-wikaa p, .prose-etude p { margin: 0.5em 0; }
+.prose-wikae ul, .prose-wikae ol, .prose-wikaa ul, .prose-wikaa ol, .prose-etude ul, .prose-etude ol { padding-left: 1.3em; margin: 0.4em 0; list-style: revert; }
+.prose-wikae code, .prose-wikaa code, .prose-etude code { font-family: var(--font-mono); font-size: 0.88em; background: var(--muted); padding: 0.1em 0.35em; border-radius: 0.35em; }
+.prose-wikae pre, .prose-wikaa pre, .prose-etude pre { background: var(--muted); padding: 0.75em 1em; border-radius: var(--radius); overflow-x: auto; line-height: 1.55; }
+.prose-wikae pre code, .prose-wikaa pre code, .prose-etude pre code { background: none; padding: 0; }
+.prose-wikae strong, .prose-wikaa strong, .prose-etude strong { font-weight: 600; }
+.prose-wikae a, .prose-wikaa a, .prose-etude a { text-decoration: underline; text-underline-offset: 2px; }
+.prose-wikae .katex-display, .prose-wikaa .katex-display, .prose-etude .katex-display { margin: 0.5em 0; overflow-x: auto; overflow-y: hidden; }
 kbd { font-family: var(--font-mono); font-size: 0.72rem; }
 
 /* Ask Etude: the panel slides in, new turns rise in; replies are set for a ~400 px column. */
@@ -253,7 +253,7 @@ html.embed, html.embed body { background: transparent; }
 }
 [dir="rtl"] .text-left { text-align: right; }
 [dir="rtl"] .text-right { text-align: left; }
-[dir="rtl"] .prose-etude ul, [dir="rtl"] .prose-etude ol {
+[dir="rtl"] .prose-wikae ul, [dir="rtl"] .prose-wikae ol, [dir="rtl"] .prose-wikaa ul, [dir="rtl"] .prose-wikaa ol, [dir="rtl"] .prose-etude ul, [dir="rtl"] .prose-etude ol {
   padding-left: 0;
   padding-right: 1.3em;
 }

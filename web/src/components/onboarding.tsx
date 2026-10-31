@@ -44,9 +44,10 @@ import { etudeFetch } from "@/lib/transport";
 import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
+import { WikaeLogo } from "@/components/brand/wikae-logo";
 
 /** Settings → About → Run setup again. */
-export const ONBOARDING_EVENT = "etude:onboarding";
+export const ONBOARDING_EVENT = "wikae:onboarding";
 
 type Step = "welcome" | "level" | "ai" | "accounts" | "setup" | "sync" | "done";
 type Account = "chatgpt" | "openrouter" | "openai" | "local" | "none";
@@ -347,16 +348,15 @@ function Welcome({ onStart, onSignIn, onSkip }: { onStart(): void; onSignIn(): v
           {t("Skip")}
         </button>
       </div>
-      <div className="mt-12 flex flex-col items-center text-center md:mt-10">
-        <Logo className="size-28" />
-        <div className="mt-3 text-[32px] font-semibold tracking-[-0.02em]">Etude</div>
-        <p className="mt-2.5 max-w-[22rem] px-2 text-[15px] leading-normal text-muted-foreground">
+      <div className="mt-10 flex flex-col items-center text-center md:mt-8">
+        <WikaeLogo variant="full" size="xl" showTagline className="flex-col items-center gap-3 text-center" />
+        <p className="mt-4 max-w-[22rem] px-2 text-[15px] leading-normal text-muted-foreground">
           {t("Flashcards that check your answers, schedule your reviews and adapt to what you actually know.")}
         </p>
       </div>
       <Spacer />
       <Primary onClick={onStart}>{t("Get started")}</Primary>
-      <Ghost onClick={onSignIn}>{t("I already use Etude · Sign in to Sync")}</Ghost>
+      <Ghost onClick={onSignIn}>{t("I already use Wikae · Sign in to Sync")}</Ghost>
     </>
   );
 }
@@ -496,8 +496,8 @@ function ChatGptSetup({ apply, onDone }: { apply: Apply; onDone(o: AiOutcome): v
 
   return (
     <>
-      <Title lead={t("A browser window opens, you sign in, and come back here. Etude never sees your password.")}>{t("Connect ChatGPT")}</Title>
-      <Steps items={[<>{t("Tap {btn}", { btn: t("Sign in with ChatGPT") })}</>, <>{t("Approve Etude on the OpenAI page")}</>, <>{t("We grade a sample answer to make sure it works")}</>]} />
+      <Title lead={t("A browser window opens, you sign in, and come back here. Wikae never sees your password.")}>{t("Connect ChatGPT")}</Title>
+      <Steps items={[<>{t("Tap {btn}", { btn: t("Sign in with ChatGPT") })}</>, <>{t("Approve Wikae on the OpenAI page")}</>, <>{t("We grade a sample answer to make sure it works")}</>]} />
       <Note>{t("Grading counts toward your ChatGPT usage, like any chat. Free ChatGPT accounts don't work.")}</Note>
       {signedIn && status && (
         <p className="mt-3 flex items-center gap-1.5 text-[13px] text-foreground/90">
@@ -510,7 +510,7 @@ function ChatGptSetup({ apply, onDone }: { apply: Apply; onDone(o: AiOutcome): v
       {remote && (
         <div className="mt-3 flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning/[0.04] px-3.5 py-3">
           <p className="text-[13px] leading-relaxed">{remote.message}</p>
-          <CopyValue label={t("Run on the machine that runs Etude")} value={remote.cli} />
+          <CopyValue label={t("Run on the machine that runs Wikae")} value={remote.cli} />
         </div>
       )}
       {failure && <Problem>{failure}</Problem>}
@@ -760,12 +760,12 @@ function SyncStep({ level, onDone }: { level: OnboardingLevel; onDone(o: SyncOut
 
   return (
     <>
-      <Title lead={t("Your cards and reviews stay the same on the phone and the computer.")}>{t("Use Etude on more than one device?")}</Title>
+      <Title lead={t("Your cards and reviews stay the same on the phone and the computer.")}>{t("Use Wikae on more than one device?")}</Title>
       <Options role="radiogroup">
         <Option
           kind="radio"
           icon={CloudLock}
-          title={t("Etude Sync")}
+          title={t("Wikae Sync")}
           hint={canShowPurchases() ? t("Encrypted, works everywhere. US$5/month or US$40/year.") : t("Encrypted, works everywhere.")}
           selected={choice === "cloud"}
           onClick={() => setChoice("cloud")}
@@ -781,13 +781,13 @@ function SyncStep({ level, onDone }: { level: OnboardingLevel; onDone(o: SyncOut
         >
           {choice === "folder" && (
             <div className="flex gap-2 px-3.5 pb-3">
-              <Input autoFocus value={folder} onChange={(e) => setFolder(e.target.value)} placeholder="/home/you/Dropbox/Etude" spellCheck={false} aria-label={t("Folder")} className="h-10 min-w-0 flex-1 rounded-xl bg-background font-mono text-[13px]" />
+              <Input autoFocus value={folder} onChange={(e) => setFolder(e.target.value)} placeholder="/home/you/Dropbox/Wikae" spellCheck={false} aria-label={t("Folder")} className="h-10 min-w-0 flex-1 rounded-xl bg-background font-mono text-[13px]" />
               <ChooseFolder onPick={setFolder} className="rounded-xl md:h-10" />
             </div>
           )}
         </Option>
         {level === "tinker" && (
-          <Option kind="radio" icon={Server} title={t("My own server")} hint={t("An Etude Sync server you run yourself.")} selected={choice === "server"} onClick={() => setChoice("server")}>
+          <Option kind="radio" icon={Server} title={t("My own server")} hint={t("A Wikae Sync server you run yourself.")} selected={choice === "server"} onClick={() => setChoice("server")}>
             {choice === "server" && (
               <div className="px-3.5 pb-3">
                 <Input autoFocus value={server} onChange={(e) => setServer(e.target.value)} placeholder="https://sync.example.com" spellCheck={false} aria-label={t("Server address")} className="h-10 rounded-xl bg-background font-mono text-[13px]" />
@@ -851,7 +851,7 @@ function CloudSignup({ stage, onStage, onDone }: { stage: CloudStage; onStage(s:
   if (stage === "email")
     return (
       <>
-        <Title lead={t("We'll email you a code. No password to remember.")}>{t("Sign in to Etude Sync")}</Title>
+        <Title lead={t("We'll email you a code. No password to remember.")}>{t("Sign in to Wikae Sync")}</Title>
         <form className="mt-5" onSubmit={(e) => (e.preventDefault(), void run(async () => {
           if (!email.trim()) throw new Error(t("Enter your email address."));
           await postJson("/api/sync/signin", { email: email.trim() });
@@ -931,7 +931,7 @@ function DoneStep({ level, ai, sync, onFinish }: { level: OnboardingLevel; ai: A
   }, [ai]);
   const syncRow = useMemo(() => {
     if (!sync || sync === "skipped") return { value: t("Not set up"), pill: null };
-    const label: Record<SyncChoice, string> = { cloud: t("Etude Sync"), folder: t("My own folder"), server: t("My own server"), device: t("Just this device") };
+    const label: Record<SyncChoice, string> = { cloud: t("Wikae Sync"), folder: t("My own folder"), server: t("My own server"), device: t("Just this device") };
     return { value: label[sync.choice], pill: sync.next ? t(sync.next) : null };
   }, [sync]);
 
@@ -940,7 +940,7 @@ function DoneStep({ level, ai, sync, onFinish }: { level: OnboardingLevel; ai: A
     try {
       const pack = JSON.parse((await import("../../../examples/showcase.pack.json?raw")).default);
       await api.importPack(pack);
-      await onFinish(() => navigate(`/deck?name=${encodeURIComponent(pack.decks?.[0]?.name ?? "Etude Showcase")}`));
+      await onFinish(() => navigate(`/deck?name=${encodeURIComponent(pack.decks?.[0]?.name ?? "Wikae Showcase")}`));
     } catch (e) {
       setImporting(false);
       toast.error(t("Couldn't add the Showcase deck"), { description: (e as Error).message.slice(0, 300) });

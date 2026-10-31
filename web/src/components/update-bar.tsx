@@ -28,8 +28,8 @@ const headline = (st: UpdateStatus) =>
       ? t("1 update available")
       : t("{n} updates available", { n: st.behind })
     : st.kind === "desktop" && st.ready
-      ? t("Etude {version} is ready", { version: st.latest ?? "" })
-      : t("Etude {version} is out", { version: st.latest ?? "" });
+      ? t("Wikae {version} is ready", { version: st.latest ?? "" })
+      : t("Wikae {version} is out", { version: st.latest ?? "" });
 
 /** In the desktop app: its own updater, or (link, system) the engine's check worded for how this copy updates. */
 async function fetchStatus(force: boolean): Promise<UpdateStatus> {
@@ -72,7 +72,7 @@ async function update(onDone?: () => void) {
       return;
     }
     if (!r.restarting) {
-      toast.success(t("Updated to {to}", { to: r.to }), { description: t("Restart Etude to run the new version.") });
+      toast.success(t("Updated to {to}", { to: r.to }), { description: t("Restart Wikae to run the new version.") });
       onDone?.();
       set({ phase: "idle" });
       await check();
@@ -90,7 +90,7 @@ async function update(onDone?: () => void) {
         }
       } catch {}
     }
-    toast.error(t("Etude hasn't come back yet"), { description: t("The update finished; reload the page in a moment.") });
+    toast.error(t("Wikae hasn't come back yet"), { description: t("The update finished; reload the page in a moment.") });
     set({ phase: "idle" });
   } catch (e) {
     toast.error(t("Update failed"), { description: (e as Error).message.slice(0, 400) });
@@ -124,7 +124,7 @@ export function useUpdater() {
 function DesktopDetails({ st }: { st: Extract<UpdateStatus, { kind: "desktop" }> }) {
   const text =
     st.mode === "self"
-      ? t("Restart Etude to finish. Or keep going: it installs the next time you quit.")
+      ? t("Restart Wikae to finish. Or keep going: it installs the next time you quit.")
       : st.mode === "system"
         ? t("It comes with your system's updates (on Arch: yay -Syu).")
         : t("Download it and install it over this one. Your collection stays as it is.");
@@ -153,7 +153,7 @@ function UpdateDetails({ st, onUpdate }: { st: UpdateStatus; onUpdate(): void })
   if (st.kind !== "git")
     return (
       <div className="px-4 py-3 text-sm">
-        <div className="font-medium">{t("Etude {version} is out", { version: st.latest ?? "" })}</div>
+        <div className="font-medium">{t("Wikae {version} is out", { version: st.latest ?? "" })}</div>
         <div className="mt-1 text-xs text-muted-foreground">{t("This copy wasn't installed from git, so it can't update itself. Download the new version from GitHub.")}</div>
         <Button size="sm" className="mt-3" asChild>
           <a href={st.url} target="_blank" rel="noreferrer">
@@ -186,7 +186,7 @@ function UpdateDetails({ st, onUpdate }: { st: UpdateStatus; onUpdate(): void })
         {st.behind > st.incoming.length && <li className="py-1 text-muted-foreground">{t("and {n} more", { n: st.behind - st.incoming.length })}</li>}
       </ul>
       <div className="flex items-center justify-between gap-3 border-t px-4 py-3">
-        <span className="text-xs text-muted-foreground">{st.blocked ?? (st.canRestart ? t("Takes about a minute.") : t("Restart Etude afterwards."))}</span>
+        <span className="text-xs text-muted-foreground">{st.blocked ?? (st.canRestart ? t("Takes about a minute.") : t("Restart Wikae afterwards."))}</span>
         <Button size="sm" className="shrink-0" disabled={!!st.blocked} onClick={onUpdate}>
           {t("Update")}
         </Button>
@@ -204,7 +204,7 @@ export function SidebarUpdate({ collapsed }: { collapsed: boolean }) {
   const [open, setOpen] = useState(false);
   if (!st || (!behind && !busy)) return null;
   const count = st.kind === "git" ? String(st.behind) : null;
-  const label = busy ? (phase === "updating" ? t("Updating…") : t("Restarting…")) : st.kind === "git" ? t("Update Etude") : headline(st);
+  const label = busy ? (phase === "updating" ? t("Updating…") : t("Restarting…")) : st.kind === "git" ? t("Update Wikae") : headline(st);
   const aria = busy ? label : st.kind === "git" ? (st.behind === 1 ? t("Update available: 1 new commit") : t("Update available: {n} new commits", { n: st.behind })) : label;
   const button = (
     <button
@@ -289,7 +289,7 @@ export function UpdateSettingsRow() {
         ) : st.kind === "desktop" && st.mode === "self" && st.latest ? (
           <>
             <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
-            {t("Downloading Etude {version}… {percent}%", { version: st.latest, percent: st.percent ?? 0 })}
+            {t("Downloading Wikae {version}… {percent}%", { version: st.latest, percent: st.percent ?? 0 })}
           </>
         ) : st.checkError ? (
           <span className="text-muted-foreground">{t("Couldn't check: {error}", { error: st.checkError })}</span>

@@ -64,7 +64,7 @@ export function AccountSection() {
     <Section
       id="account"
       title="Account"
-      description="Optional. An Etude account is only needed for Sync and decks from the paid Market. Everything else works without one."
+      description="Optional. A Wikae account is only needed for Sync and decks from the paid Market. Everything else works without one."
     >
       {!st && !loadError && (
         <Block>
@@ -185,7 +185,7 @@ function SignIn({ st, onDone }: { st: AccountStatus; onDone(): Promise<void> }) 
             setEditServer(false);
             await onDone();
           }))}>
-            <TextInput label="Etude server" value={server} onChange={setServer} mono placeholder="https://sync.etude.study" hint="Leave empty for sync.etude.study. Self-hosted servers have Sync without the paid Market." />
+            <TextInput label="Wikae server" value={server} onChange={setServer} mono placeholder="https://sync.etude.study" hint="Leave empty for sync.etude.study. Self-hosted servers have Sync without the paid Market." />
             <Button type="submit" size="sm" variant="outline" className="h-10 md:h-9" disabled={!!busy}>Save</Button>
           </form>
         )}
@@ -279,7 +279,7 @@ function Passkeys({ rpId, guarded }: { rpId?: string; guarded: Guarded }) {
   return (
     <Block
       title="Passkeys"
-      description={here ? "Sign in with your fingerprint, face or device PIN instead of an email code." : `Passkeys for this account belong to ${rpId ?? "the server"}, so they can be added from the Etude app or etude.study.`}
+      description={here ? "Sign in with your fingerprint, face or device PIN instead of an email code." : `Passkeys for this account belong to ${rpId ?? "the server"}, so they can be added from the Wikae app or etude.study.`}
       aside={here ? (
         <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" onClick={() => void guarded("add a passkey", async () => {
           const o = await account.passkeyRegisterOptions();
@@ -369,7 +369,7 @@ function DataAndDeletion({ st, confirmFresh, onDeleted }: { st: AccountStatus; c
         <Button variant="outline" size="sm" className="h-10 md:h-8" disabled={busy} onClick={async () => {
           setBusy(true);
           try {
-            download(`etude-account-${new Date().toISOString().slice(0, 10)}.json`, await account.exportData());
+            download(`wikae-account-${new Date().toISOString().slice(0, 10)}.json`, await account.exportData());
           } catch (e) {
             toast.error("Export failed", { description: msg(e) });
           } finally {
@@ -383,7 +383,7 @@ function DataAndDeletion({ st, confirmFresh, onDeleted }: { st: AccountStatus; c
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete your Etude account?</AlertDialogTitle>
+            <AlertDialogTitle>Delete your Wikae account?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                 <p>This removes the account, every signed-in device, your passkeys and the encrypted Sync copy on the server, and ends access to decks you bought. A Sync subscription should be canceled first. Orders are kept without your name for tax records.</p>

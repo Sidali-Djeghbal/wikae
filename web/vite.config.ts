@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
 
-const api = `http://127.0.0.1:${process.env.ETUDE_PORT ?? 4610}`;
+const api = `http://127.0.0.1:${process.env.WIKAE_PORT ?? process.env.WIKAA_PORT ?? process.env.ETUDE_PORT ?? 4610}`;
 
 export default defineConfig({
   root: fileURLToPath(new URL(".", import.meta.url)),

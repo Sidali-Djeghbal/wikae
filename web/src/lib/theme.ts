@@ -8,8 +8,8 @@ import { api } from "@/lib/api";
 export { BUILTIN_THEMES, DEFAULT_THEME, themeCss };
 export type { Scheme, Theme };
 
-export const THEME_EVENT = "etude:theme";
-const CACHE_KEY = "etude.theme";
+export const THEME_EVENT = "wikae:theme";
+const CACHE_KEY = "wikae.theme";
 
 let current: Theme = BUILTIN_THEMES[0];
 /** While the theme editor is open, background syncs leave its live draft alone. */
@@ -49,10 +49,10 @@ function setMeta(name: string, content: string) {
 /** Puts a theme on the page. `persist: false` is for live previews that may be thrown away. */
 export function applyTheme(t: Theme, opts: { persist?: boolean } = {}) {
   if (isEmbed()) return;
-  let style = document.getElementById("etude-theme") as HTMLStyleElement | null;
+  let style = (document.getElementById("wikae-theme") || document.getElementById("wikaa-theme") || document.getElementById("etude-theme")) as HTMLStyleElement | null;
   if (!style) {
     style = document.createElement("style");
-    style.id = "etude-theme";
+    style.id = "wikae-theme";
     document.head.appendChild(style);
   }
   const css = themeCss(t);
@@ -66,12 +66,17 @@ export function applyTheme(t: Theme, opts: { persist?: boolean } = {}) {
   current = t;
   if (opts.persist !== false) {
     try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ id: t.id, scheme: t.scheme, css, bg: bg.slice(0, 7) }));
+      const serialized = JSON.stringify({ id: t.id, scheme: t.scheme, css, bg: bg.slice(0, 7) });
+      localStorage.setItem(CACHE_KEY, serialized);
+      localStorage.setItem("wikaa.theme", serialized);
+      localStorage.setItem("etude.theme", serialized);
     } catch {
       // Private mode or full storage: the theme still applies, it just won't skip the flash next time.
     }
   }
-  window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: t }));
+  window.dispatchEvent(new CustomEvent("wikae:theme", { detail: t }));
+  window.dispatchEvent(new CustomEvent("wikaa:theme", { detail: t }));
+  window.dispatchEvent(new CustomEvent("etude:theme", { detail: t }));
 }
 
 export function setPreviewing(on: boolean) {
@@ -128,7 +133,13 @@ export function useScheme(): Scheme {
   useEffect(() => {
     const h = () => setScheme(pageScheme());
     window.addEventListener(THEME_EVENT, h);
-    return () => window.removeEventListener(THEME_EVENT, h);
+    window.addEventListener("wikaa:theme", h);
+    window.addEventListener("etude:theme", h);
+    return () => {
+      window.removeEventListener(THEME_EVENT, h);
+      window.removeEventListener("wikaa:theme", h);
+      window.removeEventListener("etude:theme", h);
+    };
   }, []);
   return scheme;
 }

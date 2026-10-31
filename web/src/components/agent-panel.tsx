@@ -16,9 +16,9 @@ import { api, relative } from "@/lib/api";
 import { locale, t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const OPEN_KEY = "etude.agent.open";
-const WIDTH_KEY = "etude.agent.width";
-const CONV_KEY = "etude.agent.conversation";
+const OPEN_KEY = "wikae.agent.open";
+const WIDTH_KEY = "wikae.agent.width";
+const CONV_KEY = "wikae.agent.conversation";
 export const AGENT_SHORTCUT = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘J" : "Ctrl+J";
 
 const usePhone = () => {
@@ -35,14 +35,22 @@ const usePhone = () => {
 
 /** Open state and width, shared by the launcher, the panel and the layout. */
 export function useAgentPanel() {
-  const [open, setOpen] = useState(() => localStorage.getItem(OPEN_KEY) === "1");
+  const [open, setOpen] = useState(() => (localStorage.getItem(OPEN_KEY) ?? localStorage.getItem("wikaa.agent.open") ?? localStorage.getItem("etude.agent.open")) === "1");
   const [width, setWidth] = useState(() => {
-    const saved = Number(localStorage.getItem(WIDTH_KEY));
+    const saved = Number(localStorage.getItem(WIDTH_KEY) ?? localStorage.getItem("wikaa.agent.width") ?? localStorage.getItem("etude.agent.width"));
     // 400 was the old default; the panel now opens at 428.
     return Math.min(720, Math.max(340, !saved || saved === 400 ? 428 : saved));
   });
-  useEffect(() => localStorage.setItem(OPEN_KEY, open ? "1" : "0"), [open]);
-  useEffect(() => localStorage.setItem(WIDTH_KEY, String(width)), [width]);
+  useEffect(() => {
+    localStorage.setItem(OPEN_KEY, open ? "1" : "0");
+    localStorage.setItem("wikaa.agent.open", open ? "1" : "0");
+    localStorage.setItem("etude.agent.open", open ? "1" : "0");
+  }, [open]);
+  useEffect(() => {
+    localStorage.setItem(WIDTH_KEY, String(width));
+    localStorage.setItem("wikaa.agent.width", String(width));
+    localStorage.setItem("etude.agent.width", String(width));
+  }, [width]);
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "j") {
@@ -56,21 +64,25 @@ export function useAgentPanel() {
   return { open, setOpen, width, setWidth };
 }
 
-const HINT_KEY = "etude.agent.hinted";
+const HINT_KEY = "wikae.agent.hinted";
 
-/** The ε on the card surface, bottom-right. On the first visit a small "Ask Etude" label shows beside it for a few seconds. */
+/** The launcher on the card surface, bottom-right. On the first visit a small "Ask Wikae" label shows beside it for a few seconds. */
 export function AgentLauncher({ onOpen }: { onOpen(): void }) {
-  const [hint, setHint] = useState(() => localStorage.getItem(HINT_KEY) !== "1");
+  const [hint, setHint] = useState(() => (localStorage.getItem(HINT_KEY) ?? localStorage.getItem("wikaa.agent.hinted") ?? localStorage.getItem("etude.agent.hinted")) !== "1");
   useEffect(() => {
     if (!hint) return;
     const t = setTimeout(() => {
       setHint(false);
       localStorage.setItem(HINT_KEY, "1");
+      localStorage.setItem("wikaa.agent.hinted", "1");
+      localStorage.setItem("etude.agent.hinted", "1");
     }, 5000);
     return () => clearTimeout(t);
   }, [hint]);
   const open = () => {
     localStorage.setItem(HINT_KEY, "1");
+    localStorage.setItem("wikaa.agent.hinted", "1");
+    localStorage.setItem("etude.agent.hinted", "1");
     setHint(false);
     onOpen();
   };
@@ -81,14 +93,14 @@ export function AgentLauncher({ onOpen }: { onOpen(): void }) {
     >
       {hint && (
         <button onClick={open} tabIndex={-1} aria-hidden className="agent-rise h-8 rounded-full border bg-card px-3 text-xs font-medium whitespace-nowrap text-foreground shadow-sm">
-          {t("Ask Etude")}
+          {t("Ask Wikae")}
         </button>
       )}
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             onClick={open}
-            aria-label={t("Ask Etude")}
+            aria-label={t("Ask Wikae")}
             data-agent-launcher
             className="flex size-11 items-center justify-center rounded-full border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.18),0_4px_12px_-4px_rgb(0_0_0/0.28)] transition-[translate,border-color,box-shadow] duration-150 outline-ring hover:-translate-y-px hover:border-foreground/30 focus-visible:outline-2 active:translate-y-0 motion-reduce:transition-none"
           >
@@ -96,7 +108,7 @@ export function AgentLauncher({ onOpen }: { onOpen(): void }) {
           </button>
         </TooltipTrigger>
         <TooltipContent side={locale() === "ar" ? "right" : "left"}>
-          {t("Ask Etude")} <span className="opacity-60">· {AGENT_SHORTCUT}</span>
+          {t("Ask Wikae")} <span className="opacity-60">· {AGENT_SHORTCUT}</span>
         </TooltipContent>
       </Tooltip>
     </div>
@@ -221,6 +233,8 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
     if (!id) {
       setConv(null);
       localStorage.removeItem(CONV_KEY);
+      localStorage.removeItem("wikaa.agent.conversation");
+      localStorage.removeItem("etude.agent.conversation");
       return;
     }
     try {
@@ -228,17 +242,21 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
       setConv(c);
       if (c.model) setModel(c.model);
       localStorage.setItem(CONV_KEY, id);
+      localStorage.setItem("wikaa.agent.conversation", id);
+      localStorage.setItem("etude.agent.conversation", id);
       stick.current = true;
       if (c.running) setLive((l) => l ?? { turnId: c.running, user: null, items: [], changed: false, error: null });
     } catch {
       setConv(null);
       localStorage.removeItem(CONV_KEY);
+      localStorage.removeItem("wikaa.agent.conversation");
+      localStorage.removeItem("etude.agent.conversation");
     }
   }, []);
 
   useEffect(() => {
     loadList();
-    openConv(localStorage.getItem(CONV_KEY));
+    openConv(localStorage.getItem(CONV_KEY) ?? localStorage.getItem("wikaa.agent.conversation") ?? localStorage.getItem("etude.agent.conversation"));
     agentApi
       .models()
       .then((m) => {
@@ -284,6 +302,8 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
     const full = { ...c, messages: [] };
     setConv(full);
     localStorage.setItem(CONV_KEY, c.id);
+    localStorage.setItem("wikaa.agent.conversation", c.id);
+    localStorage.setItem("etude.agent.conversation", c.id);
     loadList();
     return c.id;
   };
@@ -518,7 +538,7 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
     <div
       ref={panel}
       role="complementary"
-      aria-label={t("Ask Etude")}
+      aria-label={t("Ask Wikae")}
       data-agent-panel
       className={cn(
         "flex flex-col bg-background text-foreground",
@@ -611,7 +631,7 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
             <div className="mt-auto flex flex-col items-start gap-3 pb-2">
               <Logo className="size-11" />
               <p className="text-[17px] font-semibold tracking-tight">{t("Set up an AI provider first")}</p>
-              <p className="text-[13px] text-muted-foreground">{t("Ask Etude uses the model you connect in Settings: your ChatGPT plan, an API key, or a local server.")}</p>
+              <p className="text-[13px] text-muted-foreground">{t("Ask Wikae uses the model you connect in Settings: your ChatGPT plan, an API key, or a local server.")}</p>
               <Button size="sm" variant="outline" onClick={openAiSettings}>
                 {t("Settings → AI")}
               </Button>
@@ -668,7 +688,7 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
                 addFiles(files);
               }
             }}
-            placeholder={t("Ask Etude…")}
+            placeholder={t("Ask Wikae…")}
             aria-label={t("Message")}
             className="block max-h-52 min-h-11 w-full resize-none bg-transparent px-3 pt-3 pb-1.5 text-sm text-foreground leading-normal outline-none placeholder:text-muted-foreground [field-sizing:content] max-sm:text-base"
           />
@@ -1009,7 +1029,7 @@ function toolVerb(item: ToolItem, live = false) {
 }
 
 function toolLabel(item: ToolItem) {
-  if (item.tool === "etude_run") return item.label.replace(/^etude /, "").replace(/ --yes\b/, "").replace(/ -(?= |$)/g, "");
+  if (item.tool === "wikae_run" || item.tool === "wikaa_run" || item.tool === "etude_run") return item.label.replace(/^(wikae|wikaa|etude) /, "").replace(/ --yes\b/, "").replace(/ -(?= |$)/g, "");
   if (item.tool === "read_attachment") return item.label.replace(/^read /, "");
   return item.label.replace(/^help ?/, "") || "commands";
 }
@@ -1094,8 +1114,8 @@ function ConfirmCard({ item, onAnswer }: { item: ToolItem; onAnswer(item: ToolIt
   const [sent, setSent] = useState(false);
   const dangerText = useDangerText();
   const [open, setOpen] = useState(true);
-  const label = item.label.replace(/^etude /, "").replace(/ --yes\b/, "");
-  const summary = item.summary ?? `Runs etude ${label}.`;
+  const label = item.label.replace(/^(wikae|wikaa|etude) /, "").replace(/ --yes\b/, "");
+  const summary = item.summary ?? `Runs ${label}.`;
   const affected = previewList(item.preview);
   return (
     <div className="agent-rise rounded-[14px] border border-foreground/20 bg-[color-mix(in_oklab,var(--background),var(--foreground)_3.5%)] p-3.5" role="alertdialog" aria-label={t("Confirm")} aria-describedby={`cf-${item.id}`}>

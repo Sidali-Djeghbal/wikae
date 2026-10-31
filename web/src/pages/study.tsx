@@ -27,7 +27,7 @@ const RATING_STYLE: Record<Rating, string> = {
   4: "text-easy border-easy/30 hover:bg-easy/10",
 };
 
-const FOCUS_KEY = "etude.study.focus";
+const FOCUS_KEY = "wikae.study.focus";
 
 // On a phone, focus mode runs the card edge to edge; this strip under it holds the leave-focus button,
 // so the button never covers the card.
@@ -54,8 +54,14 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
   const [tools, setTools] = useState(false);
   const [plus, setPlus] = useState(false);
   // Focus mode: only the card, for cards that fill the screen (games). Remembered per browser.
-  const [focus, setFocus] = useState(() => { try { return localStorage.getItem(FOCUS_KEY) === "1"; } catch { return false; } });
-  useEffect(() => { try { localStorage.setItem(FOCUS_KEY, focus ? "1" : "0"); } catch { /* storage blocked */ } }, [focus]);
+  const [focus, setFocus] = useState(() => { try { return (localStorage.getItem(FOCUS_KEY) ?? localStorage.getItem("wikaa.study.focus") ?? localStorage.getItem("etude.study.focus")) === "1"; } catch { return false; } });
+  useEffect(() => {
+    try {
+      localStorage.setItem(FOCUS_KEY, focus ? "1" : "0");
+      localStorage.setItem("wikaa.study.focus", focus ? "1" : "0");
+      localStorage.setItem("etude.study.focus", focus ? "1" : "0");
+    } catch { /* storage blocked */ }
+  }, [focus]);
   const mainRef = useRef<HTMLElement>(null);
   const frame = useRef<CardFrameHandle>(null);
   const shownAt = useRef(Date.now());

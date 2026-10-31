@@ -6,8 +6,14 @@ export function useLocale() {
   const [, rerender] = useState(0);
   useEffect(() => {
     const h = () => rerender((n) => n + 1);
+    window.addEventListener("wikae:locale", h);
+    window.addEventListener("wikaa:locale", h);
     window.addEventListener("etude:locale", h);
-    return () => window.removeEventListener("etude:locale", h);
+    return () => {
+      window.removeEventListener("wikae:locale", h);
+      window.removeEventListener("wikaa:locale", h);
+      window.removeEventListener("etude:locale", h);
+    };
   }, []);
   const current = locale();
   const toggle = () => setLocale(current === "ar" ? "en" : "ar");

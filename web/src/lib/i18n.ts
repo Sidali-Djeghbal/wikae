@@ -1,4 +1,4 @@
-// Lightweight, robust i18n system for Etude
+// Lightweight, robust i18n system for Wikae (وِكَاء)
 // Supports English & professional Arabic, with reactive locale switching, RTL support,
 // and automatic DOM translation coverage for all UI elements.
 
@@ -10,12 +10,12 @@ export type TranslationMap = Record<string, string>;
 
 const locales: Record<LocaleId, TranslationMap> = { en, ar };
 
-const STORAGE_KEY = "etude.language";
+const STORAGE_KEY = "wikae.language";
 const RTL_LOCALES: Set<LocaleId> = new Set(["ar"]);
 
 function detect(): LocaleId {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem("wikae.language") || localStorage.getItem("wikaa.language") || localStorage.getItem("etude.language");
     if (stored && stored in locales) return stored as LocaleId;
   } catch { /* storage blocked */ }
   const nav = navigator.language?.split("-")[0]?.toLowerCase();
@@ -41,12 +41,16 @@ export function setLocale(id: LocaleId) {
   if (id === current && document.documentElement.lang === id) return;
   current = id;
   try {
-    localStorage.setItem(STORAGE_KEY, id);
+    localStorage.setItem("wikae.language", id);
+    localStorage.setItem("wikaa.language", id);
+    localStorage.setItem("etude.language", id);
   } catch { /* storage blocked */ }
   applyLocaleToDocument();
   if (typeof document !== "undefined" && document.body) {
     walkAndTranslate(document.body);
   }
+  window.dispatchEvent(new Event("wikae:locale"));
+  window.dispatchEvent(new Event("wikaa:locale"));
   window.dispatchEvent(new Event("etude:locale"));
 }
 

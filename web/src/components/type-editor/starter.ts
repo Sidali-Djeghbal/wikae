@@ -91,13 +91,15 @@ export interface PendingType {
   /** Types-page folder to file it in once it's saved. */
   folder?: string;
 }
-const pendingKey = (id: string) => `etude.pendingType.${id}`;
+const pendingKey = (id: string) => `wikae.pendingType.${id}`;
 export function stashPending(p: PendingType) {
   sessionStorage.setItem(pendingKey(p.def.id), JSON.stringify(p));
+  sessionStorage.setItem(`wikaa.pendingType.${p.def.id}`, JSON.stringify(p));
+  sessionStorage.setItem(`etude.pendingType.${p.def.id}`, JSON.stringify(p));
 }
 export function readPending(id: string): PendingType | null {
   try {
-    const raw = sessionStorage.getItem(pendingKey(id));
+    const raw = sessionStorage.getItem(pendingKey(id)) || sessionStorage.getItem(`wikaa.pendingType.${id}`) || sessionStorage.getItem(`etude.pendingType.${id}`);
     return raw ? (JSON.parse(raw) as PendingType) : null;
   } catch {
     return null;
@@ -105,6 +107,8 @@ export function readPending(id: string): PendingType | null {
 }
 export function clearPending(id: string) {
   sessionStorage.removeItem(pendingKey(id));
+  sessionStorage.removeItem(`wikaa.pendingType.${id}`);
+  sessionStorage.removeItem(`etude.pendingType.${id}`);
 }
 
 export const GRADER_LABEL: Record<string, string> = { self: "Self-rated", script: "Script", ai: "AI", hybrid: "Hybrid" };

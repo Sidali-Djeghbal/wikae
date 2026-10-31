@@ -49,7 +49,9 @@ export function useChatGptSignIn() {
       if (s.signedIn && !wasSignedIn.current) {
         wasSignedIn.current = true;
         try {
-          if (!localStorage.getItem("etude.chatgpt.welcomed")) {
+          if (!localStorage.getItem("wikae.chatgpt.welcomed") && !localStorage.getItem("wikaa.chatgpt.welcomed") && !localStorage.getItem("etude.chatgpt.welcomed")) {
+            localStorage.setItem("wikae.chatgpt.welcomed", "1");
+            localStorage.setItem("wikaa.chatgpt.welcomed", "1");
             localStorage.setItem("etude.chatgpt.welcomed", "1");
             toast.success("You're using your ChatGPT plan", { description: "Eligible grading uses your plan. Manage it in ChatGPT settings." });
           }
@@ -86,7 +88,7 @@ export function useChatGptSignIn() {
 
   const start = async () => {
     // Opened synchronously inside the click, or the browser blocks it.
-    const win = window.open("", "etude-chatgpt-signin");
+    const win = window.open("", "wikae-chatgpt-signin");
     if (win) win.opener = null;
     setBusy("login");
     setFailure(null);
@@ -95,7 +97,7 @@ export function useChatGptSignIn() {
       const r = (await api.chatgptLogin()) as LoginReply;
       if (r.remote) {
         win?.close();
-        setRemote({ message: r.message ?? "Sign-in has to finish on the machine running Etude.", cli: r.cli ?? "etude settings chatgpt login" });
+        setRemote({ message: r.message ?? "Sign-in has to finish on the machine running Wikae.", cli: r.cli ?? "wikae settings chatgpt login" });
         return;
       }
       if (r.url) {
@@ -144,7 +146,7 @@ export function ChatGptBlock({ provider, error, onChange }: { provider: ChatGptP
       description={
         signedIn
           ? "Eligible grading uses your ChatGPT plan or credits balance instead of an API key. Manage the limit in ChatGPT settings."
-          : "Use your ChatGPT Plus or Pro plan for grading, with no API key. Etude stays free; this only changes who pays for the model."
+          : "Use your ChatGPT Plus or Pro plan for grading, with no API key. Wikae stays free; this only changes who pays for the model."
       }
       stackAside
       aside={
@@ -188,7 +190,7 @@ export function ChatGptBlock({ provider, error, onChange }: { provider: ChatGptP
             <Field
               label="Model"
               error={error}
-              hint={status.models.length ? "From your account's model list. Save to apply." : `Save to apply. Run \`etude settings chatgpt models\` to list what your plan offers.`}
+              hint={status.models.length ? "From your account's model list. Save to apply." : `Save to apply. Run \`wikae settings chatgpt models\` to list what your plan offers.`}
             >
               <Select value={currentModel} onValueChange={(v) => onChange({ model: v })}>
                 <SelectTrigger className="h-10 w-full md:h-9">
@@ -211,7 +213,7 @@ export function ChatGptBlock({ provider, error, onChange }: { provider: ChatGptP
                 <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
                 <p className="leading-relaxed">{remote.message}</p>
               </div>
-              <CopyValue label="Run on the machine that runs Etude" value={remote.cli} />
+              <CopyValue label="Run on the machine that runs Wikae" value={remote.cli} />
             </div>
           )}
           {failure && (
@@ -245,7 +247,7 @@ export function ChatGptBlock({ provider, error, onChange }: { provider: ChatGptP
                 <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
                 <p className="leading-relaxed">{remote.message}</p>
               </div>
-              <CopyValue label="Run on the machine that runs Etude" value={remote.cli} />
+              <CopyValue label="Run on the machine that runs Wikae" value={remote.cli} />
             </div>
           )}
           {failure && (
@@ -256,7 +258,7 @@ export function ChatGptBlock({ provider, error, onChange }: { provider: ChatGptP
           )}
           <p className="text-xs leading-relaxed text-muted-foreground">
             Sign-in opens auth.openai.com and returns to a callback on 127.0.0.1, so the browser must be on this machine. On a phone or another computer, run{" "}
-            <code className="font-mono text-foreground/90">etude settings chatgpt login</code> where Etude runs.
+            <code className="font-mono text-foreground/90">wikae settings chatgpt login</code> where Wikae runs.
           </p>
         </div>
       )}

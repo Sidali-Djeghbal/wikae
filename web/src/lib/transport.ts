@@ -9,8 +9,12 @@ const local = (): Transport | undefined => (globalThis as { __etudeTransport?: T
 const TOKEN = (() => {
   try {
     const fromUrl = new URLSearchParams(location.search).get("token");
-    if (fromUrl) localStorage.setItem("etude.token", fromUrl);
-    return fromUrl ?? localStorage.getItem("etude.token");
+    if (fromUrl) {
+      localStorage.setItem("wikae.token", fromUrl);
+      localStorage.setItem("wikaa.token", fromUrl);
+      localStorage.setItem("etude.token", fromUrl);
+    }
+    return fromUrl ?? localStorage.getItem("wikae.token") ?? localStorage.getItem("wikaa.token") ?? localStorage.getItem("etude.token");
   } catch {
     return null;
   }
@@ -23,7 +27,7 @@ const isApi = (input: RequestInfo | URL) => {
   return u.origin === location.origin && u.pathname.startsWith("/api/");
 };
 
-/** `fetch` for Etude's own URLs, with the server's token on API calls. */
+/** `fetch` for Wikae's own URLs, with the server's token on API calls. */
 export const etudeFetch: Transport = (input, init) => {
   const l = local();
   if (l) return l(input, init);
@@ -32,6 +36,9 @@ export const etudeFetch: Transport = (input, init) => {
   if (!headers.has("Authorization")) headers.set("Authorization", `Bearer ${TOKEN}`);
   return fetch(input, { ...init, headers });
 };
+
+export const wikaeFetch = etudeFetch;
+export const wikaaFetch = etudeFetch;
 
 /** True when there is no server: the core runs in this tab. */
 export const isLocal = () => !!local();

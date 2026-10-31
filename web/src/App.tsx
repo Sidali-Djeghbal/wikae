@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarIcon } from "@/components/sidebar-icon";
 import { navigate, useLocation } from "@/lib/router";
-import { Wordmark } from "@/components/logo";
+import { Wordmark, WikaeLogo, WikaeMark } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { DecksPage } from "@/pages/decks";
 import { StudyPage } from "@/pages/study";
@@ -56,12 +56,16 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: Settings, match: (p: string) => p === "/settings" },
 ];
 
-const COLLAPSED_KEY = "etude.sidebar.collapsed";
+const COLLAPSED_KEY = "wikae.sidebar.collapsed";
 const toggleKey = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘B" : "Ctrl+B";
 
 function useSidebarCollapsed() {
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSED_KEY) === "1");
-  useEffect(() => localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0"), [collapsed]);
+  const [collapsed, setCollapsed] = useState(() => (localStorage.getItem(COLLAPSED_KEY) ?? localStorage.getItem("wikaa.sidebar.collapsed") ?? localStorage.getItem("etude.sidebar.collapsed")) === "1");
+  useEffect(() => {
+    localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0");
+    localStorage.setItem("wikaa.sidebar.collapsed", collapsed ? "1" : "0");
+    localStorage.setItem("etude.sidebar.collapsed", collapsed ? "1" : "0");
+  }, [collapsed]);
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "b") {
@@ -94,7 +98,7 @@ function LanguageToggle({ collapsed }: { collapsed: boolean }) {
   return collapsed ? (
     <Tooltip>
       <TooltipTrigger asChild>{btn}</TooltipTrigger>
-      <TooltipContent side="right">{nextLang}</TooltipContent>
+      <TooltipContent side={locale === "ar" ? "left" : "right"}>{nextLang}</TooltipContent>
     </Tooltip>
   ) : (
     btn
@@ -122,7 +126,7 @@ export function App() {
     const deck = params.get("deck") ?? undefined;
     const q = params.get("q") ?? undefined;
     const card = params.get("card") ? Number(params.get("card")) : undefined;
-    const title = params.get("title") ?? (deck ? deck.split("::").pop()! : q ? q : "Etude");
+    const title = params.get("title") ?? (deck ? deck.split("::").pop()! : q ? q : (locale === "ar" ? "وِكَاء" : "Wikae"));
     return (
       <Direction.DirectionProvider dir={locale === "ar" ? "rtl" : "ltr"}>
         <TooltipProvider delayDuration={300}>
@@ -170,26 +174,48 @@ export function App() {
             )}
           >
             <div className={cn("mb-6 flex h-8 items-center", collapsed ? "justify-center" : "justify-between pl-2 rtl:pl-0 rtl:pr-2")}>
-              {!collapsed && (
-                <button onClick={() => navigate("/")} className="text-left rtl:text-right">
-                  <Wordmark className="text-[1.45rem] leading-none" />
-                </button>
-              )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setCollapsed((c) => !c)}
-                    aria-label={collapsed ? t("Expand sidebar") : t("Collapse sidebar")}
-                    aria-expanded={!collapsed}
-                    className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
-                  >
-                    <SidebarIcon className="size-[18px] rtl-flip" />
+              {collapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setCollapsed(false)}
+                      aria-label={t("Expand sidebar")}
+                      className="group relative flex size-8 items-center justify-center rounded-md text-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+                    >
+                      <span className="flex items-center justify-center transition-all duration-200 ease-in-out group-hover:scale-75 group-hover:opacity-0 group-hover:rotate-6">
+                        <WikaeMark size={22} />
+                      </span>
+                      <span className="absolute inset-0 flex items-center justify-center opacity-0 scale-75 transition-all duration-200 ease-in-out group-hover:scale-100 group-hover:opacity-100 text-muted-foreground group-hover:text-foreground">
+                        <SidebarIcon className="size-[18px] rtl-flip" />
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side={locale === "ar" ? "left" : "right"}>
+                    {t("Expand sidebar")} <span className="opacity-60">{toggleKey}</span>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <>
+                  <button onClick={() => navigate("/")} className="text-left rtl:text-right transition-opacity hover:opacity-90" aria-label="Wikae">
+                    <WikaeLogo variant="full" size="md" />
                   </button>
-                </TooltipTrigger>
-                <TooltipContent side={locale === "ar" ? "left" : "right"}>
-                  {collapsed ? t("Expand") : t("Collapse")} <span className="opacity-60">{toggleKey}</span>
-                </TooltipContent>
-              </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setCollapsed(true)}
+                        aria-label={t("Collapse sidebar")}
+                        aria-expanded={true}
+                        className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+                      >
+                        <SidebarIcon className="size-[18px] rtl-flip" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side={locale === "ar" ? "left" : "right"}>
+                      {t("Collapse sidebar")} <span className="opacity-60">{toggleKey}</span>
+                    </TooltipContent>
+                  </Tooltip>
+                </>
+              )}
             </div>
             {NAV.map((n) => {
               const label = t(n.label);

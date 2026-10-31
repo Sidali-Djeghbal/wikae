@@ -55,7 +55,7 @@ export function DataSection({ dbPath, mediaDir }: { dbPath: string; mediaDir: st
   const stamp = new Date().toISOString().slice(0, 10);
 
   return (
-    <Section id="data" title={t("Data")} description={t("The collection lives in a SQLite file. Pasted images, audio, video, imported media and drawings are copied into Etude's own media folder next to it.")}>
+    <Section id="data" title={t("Data")} description={t("The collection lives in a SQLite file. Pasted images, audio, video, imported media and drawings are copied into Wikae's own media folder next to it.")}>
       <Block>
         <div className="grid gap-4">
           <CopyValue label={t("Database")} value={dbPath} />
@@ -105,7 +105,7 @@ export function DataSection({ dbPath, mediaDir }: { dbPath: string; mediaDir: st
         stackAside
         aside={
           <Button asChild variant="outline" size="sm" className="h-10 gap-1.5 md:h-8">
-            <a href={api.exportUrl({})} download={`etude-${stamp}.pack.json`}>
+            <a href={api.exportUrl({})} download={`wikae-${stamp}.pack.json`}>
               <Download className="size-4" />{t("Export pack")}
             </a>
           </Button>

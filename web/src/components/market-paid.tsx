@@ -27,7 +27,7 @@ function SignInFirst({ what }: { what: string }) {
     <div className="rounded-xl border px-5 py-10 text-center">
       <ShoppingBag className="mx-auto mb-3 size-6 text-muted-foreground" />
       <div className="text-sm font-medium">{label}</div>
-      <div className="mx-auto mt-1 max-w-md text-[13px] text-muted-foreground">{t("Purchased decks and selling are tied to your Etude account.")}</div>
+      <div className="mx-auto mt-1 max-w-md text-[13px] text-muted-foreground">{t("Purchased decks and selling are tied to your Wikae account.")}</div>
       <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate("/settings#account")}>{t("Sign in")}</Button>
     </div>
   );
@@ -299,7 +299,7 @@ export function SellingView() {
       {!c ? (
         <div className="rounded-xl border p-5">
           <h3 className="text-base font-semibold">Sell your decks</h3>
-          <p className="mt-1 max-w-prose text-sm text-muted-foreground">Set a price of US$5 or more. Etude keeps 20% and handles sales tax; you get the rest every month through Stripe once it reaches US$25. Payouts reach the US, Canada, the UK, the EEA and Switzerland.</p>
+          <p className="mt-1 max-w-prose text-sm text-muted-foreground">Set a price of US$5 or more. Wikae keeps 20% and handles sales tax; you get the rest every month through Stripe once it reaches US$25. Payouts reach the US, Canada, the UK, the EEA and Switzerland.</p>
           <div className="mt-4 flex flex-wrap items-end gap-2">
             <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
               Where you get paid
@@ -434,7 +434,7 @@ function NewListingDialog({ onClose, onCreated }: { onClose(): void; onCreated()
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>List a deck</DialogTitle>
-          <DialogDescription>Etude exports the deck as it is now. Buyers get later versions you upload, after review.</DialogDescription>
+          <DialogDescription>Wikae exports the deck as it is now. Buyers get later versions you upload, after review.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
