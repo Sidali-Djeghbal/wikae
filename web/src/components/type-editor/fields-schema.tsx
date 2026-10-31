@@ -25,6 +25,7 @@ const EDITORS = [
   { value: "choices", label: "Choices: [{ text, correct, why }]" },
   { value: "pairs", label: "Pairs: [[left, right]]" },
   { value: "parts", label: "Parts: [{ label, answer, unit, tolerance }]" },
+  { value: "mutashabihat", label: "Quranic Verses with [...]" },
 ];
 
 export function FieldsSchema({

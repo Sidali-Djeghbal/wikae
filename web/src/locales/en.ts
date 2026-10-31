@@ -1,5 +1,14 @@
 // English translations (source locale)
 const en: Record<string, string> = {
+  "Quranic Verses with [...]": "Quranic Verses with [...]",
+  "Add sibling verse": "Add sibling verse",
+  "Surah": "Surah",
+  "Ayah": "Ayah",
+  "Wrap selected word or phrase in brackets [ ]": "Wrap selected word or phrase in brackets [ ]",
+  "[ اللفظ المفصلي ]": "[ Pivotal phrase ]",
+  "اكتب نص الآية وضع اللفظ المفصلي المختلف بين قوسين [هكذا]...": "Enter verse text and place the distinguishing wording in brackets [like this]...",
+  "Pivotal phrase:": "Pivotal phrase:",
+  "Put the distinguishing word/phrase in brackets [like this]": "Put the distinguishing word/phrase in brackets [like this]",
   "(drawings, images)": "(drawings, images)",
   "(empty)": "(empty)",
   "(optional, keeps the card matched across imports)": "(optional, keeps the card matched across imports)",

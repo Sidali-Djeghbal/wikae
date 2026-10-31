@@ -1,10 +1,11 @@
 // Edits an item's fields from its type's schema. Common JSON shapes get real forms;
 // anything else falls back to a JSON editor, so every type stays editable.
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Check, EyeOff, MoreVertical, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowDown, ArrowUp, Brackets, Check, EyeOff, MoreVertical, Plus, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { CodeEditor } from "@/components/code-editor";
@@ -15,6 +16,7 @@ import { MediaPasteProvider } from "@/components/media-paste";
 import { MediaTextInput, useMediaInput } from "@/components/media-input";
 import { OcclusionEditor, type OcclusionBox } from "@/components/occlusion-editor";
 import { t } from "@/lib/i18n";
+import { SURAH_NAMES, getSurahName } from "@/lib/quran-meta";
 
 type Fields = Record<string, unknown>;
 
@@ -107,6 +109,9 @@ function FieldInput({ spec, value, onChange, language }: { spec: FieldSpec; valu
   if (spec.editor === "choices") return <ChoicesEditor value={(value as any[]) ?? []} onChange={onChange} />;
   if (spec.editor === "pairs") return <PairsEditor value={(value as any[]) ?? []} onChange={onChange} />;
   if (spec.editor === "parts") return <PartsEditor value={value as any[] | undefined} onChange={onChange} />;
+  if (spec.editor === "mutashabihat" || (spec.kind === "json" && spec.name === "siblings")) {
+    return <MutashabihatEditor value={value} onChange={onChange} />;
+  }
   switch (spec.kind) {
     case "markdown":
       return <LiveMarkdown value={String(value ?? "")} onChange={(v) => onChange(v)} placeholder={spec.default !== undefined ? String(spec.default) : "Markdown, $math$ and ```code``` render as you type"} />;
@@ -306,4 +311,252 @@ function PartsEditor({ value, onChange }: { value: { label: string; answer: numb
       )}
     />
   );
+}
+
+interface MutashabihDraft {
+  surahNumber: number;
+  ayahNumber: number;
+  text: string;
+}
+
+function MutashabihRow({
+  item,
+  onChange,
+}: {
+  item: MutashabihDraft;
+  onChange(v: MutashabihDraft): void;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const bStart = item.text.indexOf("[");
+  const bEnd = item.text.indexOf("]", bStart + 1);
+  const pivotal = bStart !== -1 && bEnd !== -1 ? item.text.slice(bStart + 1, bEnd).trim() : null;
+
+  const handleWrap = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const current = item.text ?? "";
+    if (start !== end) {
+      const selected = current.slice(start, end);
+      const next = current.slice(0, start) + `[${selected}]` + current.slice(end);
+      onChange({ ...item, text: next });
+    } else {
+      const next = current.slice(0, start) + `[ ]` + current.slice(start);
+      onChange({ ...item, text: next });
+      setTimeout(() => {
+        el.focus();
+        el.setSelectionRange(start + 1, start + 1);
+      }, 0);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2.5 rounded-lg border bg-card/60 p-3 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">{t("Surah")}:</span>
+            <Select
+              value={String(item.surahNumber || 2)}
+              onValueChange={(v) => onChange({ ...item, surahNumber: Number(v) })}
+            >
+              <SelectTrigger className="h-8 w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                {SURAH_NAMES.map((name, idx) => (
+                  <SelectItem key={idx + 1} value={String(idx + 1)}>
+                    {idx + 1}. {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">{t("Ayah")}:</span>
+            <Input
+              type="number"
+              min={1}
+              max={286}
+              className="h-8 w-20 font-mono text-xs"
+              value={item.ayahNumber || ""}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                onChange({ ...item, ayahNumber: isNaN(val) ? 1 : val });
+              }}
+            />
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 px-2.5 text-xs font-medium"
+          onClick={handleWrap}
+          title={t("Wrap selected word or phrase in brackets [ ]")}
+        >
+          <Brackets className="size-3.5" />
+          <span>{t("[ اللفظ المفصلي ]")}</span>
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Textarea
+          ref={textareaRef}
+          rows={3}
+          dir="rtl"
+          className="resize-y font-serif text-base leading-relaxed tracking-wide"
+          placeholder={t("اكتب نص الآية وضع اللفظ المفصلي المختلف بين قوسين [هكذا]...")}
+          value={item.text}
+          onChange={(e) => onChange({ ...item, text: e.target.value })}
+        />
+
+        <div className="flex items-center justify-between min-h-5 px-0.5">
+          {pivotal ? (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              <Check className="size-3.5" />
+              <span>{t("Pivotal phrase:")}</span>
+              <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-serif font-bold text-foreground">
+                {pivotal}
+              </span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+              <AlertCircle className="size-3.5" />
+              <span>{t("Put the distinguishing word/phrase in brackets [like this]")}</span>
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MutashabihatEditor({ value, onChange }: { value: unknown; onChange(v: unknown): void }) {
+  const parseRawItems = (raw: unknown): MutashabihDraft[] => {
+    if (!Array.isArray(raw) || raw.length === 0) {
+      return [
+        { surahNumber: 2, ayahNumber: 126, text: "" },
+        { surahNumber: 14, ayahNumber: 35, text: "" },
+      ];
+    }
+    return raw.map((entry, idx) => {
+      let surahNumber = idx === 0 ? 2 : 14;
+      let ayahNumber = 1;
+      let text = "";
+
+      if (typeof entry === "string") {
+        const rawStr = entry.trim();
+        const bracketHeader = rawStr.match(/^\[([^\]:]+)[:\s]+(\d+)\]\s*(.*)$/);
+        if (bracketHeader) {
+          const num = findSurahIdx(bracketHeader[1]);
+          if (num) surahNumber = num;
+          ayahNumber = parseInt(bracketHeader[2], 10) || 1;
+          text = bracketHeader[3];
+        } else {
+          const pipeMatch = rawStr.match(/^([^|:]+)[:\s]+(\d+)\s*\|\s*(.*)$/);
+          if (pipeMatch) {
+            const num = findSurahIdx(pipeMatch[1]);
+            if (num) surahNumber = num;
+            ayahNumber = parseInt(pipeMatch[2], 10) || 1;
+            text = pipeMatch[3];
+          } else {
+            text = rawStr;
+          }
+        }
+      } else if (typeof entry === "object" && entry !== null) {
+        const obj = entry as Record<string, unknown>;
+        if (obj.surahNumber) surahNumber = Number(obj.surahNumber);
+        else if (obj.surah || obj.surahNameAr) {
+          const s = findSurahIdx(String(obj.surah || obj.surahNameAr));
+          if (s) surahNumber = s;
+        }
+        if (obj.ayahNumber) ayahNumber = Number(obj.ayahNumber);
+        else if (obj.ayah) ayahNumber = Number(obj.ayah);
+
+        if (obj.text) {
+          text = String(obj.text);
+        } else if (obj.pivotalUthmani) {
+          text = [obj.prefixUthmani, `[${obj.pivotalUthmani}]`, obj.suffixUthmani].filter(Boolean).join(" ");
+        } else if (obj.textUthmani) {
+          text = String(obj.textUthmani);
+        }
+      }
+      return { surahNumber, ayahNumber, text };
+    });
+  };
+
+  const toOutput = (drafts: MutashabihDraft[]) => {
+    return drafts.map((d) => {
+      const surahNameAr = getSurahName(d.surahNumber);
+      const id = `${d.surahNumber}_${d.ayahNumber}`;
+      const text = d.text || "";
+      const bStart = text.indexOf("[");
+      const bEnd = text.indexOf("]", bStart + 1);
+
+      if (bStart !== -1 && bEnd !== -1) {
+        const prefixUthmani = text.slice(0, bStart).trim();
+        const pivotalUthmani = text.slice(bStart + 1, bEnd).trim();
+        const suffixUthmani = text.slice(bEnd + 1).trim();
+        const textUthmani = [prefixUthmani, pivotalUthmani, suffixUthmani].filter(Boolean).join(" ");
+        return {
+          id,
+          surahNumber: d.surahNumber,
+          surahNameAr,
+          ayahNumber: d.ayahNumber,
+          prefixUthmani,
+          pivotalUthmani,
+          suffixUthmani,
+          textUthmani,
+          text,
+        };
+      }
+
+      return {
+        id,
+        surahNumber: d.surahNumber,
+        surahNameAr,
+        ayahNumber: d.ayahNumber,
+        text,
+      };
+    });
+  };
+
+  const drafts = parseRawItems(value);
+
+  const handleUpdate = (updated: MutashabihDraft[]) => {
+    onChange(toOutput(updated));
+  };
+
+  return (
+    <Rows
+      items={drafts}
+      onChange={handleUpdate}
+      empty={{ surahNumber: 2, ayahNumber: 1, text: "" }}
+      add={t("Add sibling verse")}
+      render={(d, set) => (
+        <MutashabihRow item={d} onChange={set} />
+      )}
+    />
+  );
+}
+
+function findSurahIdx(str: string): number | null {
+  const norm = (s: string) =>
+    s
+      .replace(/^سورة\s+/, "")
+      .replace(/[أإآٱٲٳ]/g, "ا")
+      .replace(/ة/g, "ه")
+      .replace(/\s+/g, "")
+      .trim();
+  const rawNum = parseInt(str.trim(), 10);
+  if (!isNaN(rawNum) && rawNum >= 1 && rawNum <= 114) return rawNum;
+  const n = norm(str);
+  const idx = SURAH_NAMES.findIndex((name) => norm(name) === n);
+  if (idx !== -1) return idx + 1;
+  return null;
 }

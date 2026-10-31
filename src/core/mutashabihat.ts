@@ -1,3 +1,135 @@
+import { normalizeArabic } from "./arabicNormalizer.ts";
+
+export const SURAH_NAMES = [
+  "الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس",
+  "هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه",
+  "الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم",
+  "لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر",
+  "فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق",
+  "الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة",
+  "الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج",
+  "نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس",
+  "التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد",
+  "الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات",
+  "القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر",
+  "المسد","الإخلاص","الفلق","الناس"
+];
+
+export function normSurah(s: string | null | undefined): string {
+  return String(s || "")
+    .replace(/^سورة\s+/, "")
+    .replace(/[أإآٱٲٳ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
+export function findSurah(val: string | number | null | undefined): { number: number; nameAr: string } | null {
+  if (typeof val === "number" && val >= 1 && val <= 114) {
+    return { number: val, nameAr: SURAH_NAMES[val - 1] };
+  }
+  const str = String(val || "").trim();
+  const num = parseInt(str, 10);
+  if (!isNaN(num) && num >= 1 && num <= 114 && String(num) === str) {
+    return { number: num, nameAr: SURAH_NAMES[num - 1] };
+  }
+  const n = normSurah(str);
+  const idx = SURAH_NAMES.findIndex((name) => normSurah(name) === n);
+  if (idx !== -1) return { number: idx + 1, nameAr: SURAH_NAMES[idx] };
+  return null;
+}
+
+export function parseSiblingNode(input: unknown, index = 0): MutashabihVerseNode {
+  if (!input) throw new Error(`sibling ${index + 1} is empty`);
+
+  if (typeof input === "object" && input !== null) {
+    const obj = input as Record<string, unknown>;
+    if (obj.pivotalUthmani && obj.surahNumber && obj.surahNameAr) {
+      return {
+        id: String(obj.id || `${obj.surahNumber}_${obj.ayahNumber}`),
+        surahNumber: Number(obj.surahNumber),
+        surahNameAr: String(obj.surahNameAr),
+        ayahNumber: Number(obj.ayahNumber),
+        prefixUthmani: String(obj.prefixUthmani || ""),
+        pivotalUthmani: String(obj.pivotalUthmani || ""),
+        suffixUthmani: String(obj.suffixUthmani || ""),
+        textUthmani: String(obj.textUthmani || [obj.prefixUthmani, obj.pivotalUthmani, obj.suffixUthmani].filter(Boolean).join(" ")),
+        pivotalNormalized: String(obj.pivotalNormalized || normalizeArabic(String(obj.pivotalUthmani))),
+      };
+    }
+  }
+
+  let surahRef = "";
+  let ayahRef = 0;
+  let verseText = "";
+
+  if (typeof input === "string") {
+    const raw = input.trim();
+    const bracketHeader = raw.match(/^\[([^\]:]+)[:\s]+(\d+)\]\s*(.*)$/);
+    if (bracketHeader) {
+      surahRef = bracketHeader[1];
+      ayahRef = parseInt(bracketHeader[2], 10);
+      verseText = bracketHeader[3];
+    } else {
+      const pipeMatch = raw.match(/^([^|:]+)[:\s]+(\d+)\s*\|\s*(.*)$/);
+      if (pipeMatch) {
+        surahRef = pipeMatch[1];
+        ayahRef = parseInt(pipeMatch[2], 10);
+        verseText = pipeMatch[3];
+      } else {
+        const colonMatch = raw.match(/^([^\d:]+?)[:\s]+(\d+)[:\s]+(.*)$/);
+        if (colonMatch) {
+          surahRef = colonMatch[1];
+          ayahRef = parseInt(colonMatch[2], 10);
+          verseText = colonMatch[3];
+        } else {
+          verseText = raw;
+        }
+      }
+    }
+  } else if (typeof input === "object" && input !== null) {
+    const obj = input as Record<string, unknown>;
+    surahRef = String(obj.surah || obj.surahNameAr || obj.surahNumber || "");
+    ayahRef = parseInt(String(obj.ayah || obj.ayahNumber), 10) || 0;
+    verseText = String(obj.text || obj.textUthmani || "");
+    if (!verseText && obj.pivotalUthmani) {
+      verseText = [obj.prefixUthmani, `[${obj.pivotalUthmani}]`, obj.suffixUthmani].filter(Boolean).join(" ");
+    }
+  }
+
+  const surahInfo = findSurah(surahRef);
+  const surahNumber = surahInfo ? surahInfo.number : (parseInt(surahRef, 10) || (index + 1));
+  const surahNameAr = surahInfo ? surahInfo.nameAr : (String(surahRef) || `سورة ${surahNumber}`);
+  const ayahNumber = ayahRef || 1;
+
+  const bStart = verseText.indexOf("[");
+  const bEnd = verseText.indexOf("]", bStart + 1);
+  if (bStart === -1 || bEnd === -1) {
+    throw new Error(`آية ${surahNameAr} (${ayahNumber}): يجب وضع اللفظ المفصلي المختلف بين قوسين [هكذا]`);
+  }
+
+  const prefixUthmani = verseText.slice(0, bStart).trim();
+  const pivotalUthmani = verseText.slice(bStart + 1, bEnd).trim();
+  const suffixUthmani = verseText.slice(bEnd + 1).trim();
+  const textUthmani = [prefixUthmani, pivotalUthmani, suffixUthmani].filter(Boolean).join(" ");
+  const pivotalNormalized = normalizeArabic(pivotalUthmani);
+  const id = (input && typeof input === "object" && (input as Record<string, unknown>).id)
+    ? String((input as Record<string, unknown>).id)
+    : `${surahNumber}_${ayahNumber}`;
+
+  return {
+    id,
+    surahNumber,
+    surahNameAr,
+    ayahNumber,
+    prefixUthmani,
+    pivotalUthmani,
+    suffixUthmani,
+    textUthmani,
+    pivotalNormalized,
+  };
+}
+
 export interface MutashabihVerseNode {
   id: string;
   surahNumber: number;
@@ -44,8 +176,15 @@ export interface MutashabihatClusterInput {
  * Validates a MutashabihVerseNode. Returns an array of error messages (empty if valid).
  */
 export function validateVerseNode(node: unknown, index = 0): string[] {
+  let n: any = node;
+  if (typeof node === "string" || (typeof node === "object" && node !== null && !("prefixUthmani" in node) && !("pivotalUthmani" in node))) {
+    try {
+      n = parseSiblingNode(node, index);
+    } catch (e: any) {
+      return [`sibling[${index}]: ${e?.message || "invalid format"}`];
+    }
+  }
   const errs: string[] = [];
-  const n = node as Partial<MutashabihVerseNode>;
   if (!n || typeof n !== "object") return [`sibling[${index}] must be an object`];
   if (!n.id || typeof n.id !== "string") errs.push(`sibling[${index}].id is required`);
   if (typeof n.surahNumber !== "number" || !Number.isInteger(n.surahNumber) || n.surahNumber < 1 || n.surahNumber > 114) {
@@ -81,10 +220,15 @@ export function validateMutashabihatCard(card: unknown): string[] {
     errs.push("siblings must be an array of at least 2 verses");
   } else {
     c.siblings.forEach((s, idx) => errs.push(...validateVerseNode(s, idx)));
-    if (!c.targetVerseId || typeof c.targetVerseId !== "string") {
-      errs.push("targetVerseId is required");
-    } else if (!c.siblings.some((s) => s.id === c.targetVerseId)) {
-      errs.push(`targetVerseId "${c.targetVerseId}" not found in siblings`);
+    if (c.targetVerseId !== undefined) {
+      if (!c.targetVerseId || typeof c.targetVerseId !== "string") {
+        errs.push("targetVerseId is required");
+      } else {
+        const ids = c.siblings.map((s: any) => s?.id || (s?.surahNumber && s?.ayahNumber ? `${s.surahNumber}_${s.ayahNumber}` : undefined));
+        if (!ids.includes(c.targetVerseId)) {
+          errs.push(`targetVerseId "${c.targetVerseId}" not found in siblings`);
+        }
+      }
     }
   }
   if (c.extraDistractorsUthmani !== undefined) {
@@ -118,10 +262,11 @@ export function generateCardsFromMutashabihatCluster(
   cluster: MutashabihatClusterCard | MutashabihatClusterInput
 ): MutashabihatClusterCard[] {
   if (!cluster.id || typeof cluster.id !== "string") throw new Error("cluster id is required");
-  const siblings = cluster.siblings;
-  if (!Array.isArray(siblings) || siblings.length < 2) {
+  const rawSiblings = cluster.siblings;
+  if (!Array.isArray(rawSiblings) || rawSiblings.length < 2) {
     throw new Error("a Mutashabihat cluster needs at least two sibling verses");
   }
+  const siblings = rawSiblings.map((s, idx) => parseSiblingNode(s, idx));
   const errs = siblings.flatMap((s, idx) => validateVerseNode(s, idx));
   if (errs.length) throw new Error(errs.join("; "));
 

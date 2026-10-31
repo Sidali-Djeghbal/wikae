@@ -1,6 +1,17 @@
 // Arabic translations (العربية)
 // Complete, accurate, professional terminology for Etude flashcards & spaced repetition
 const ar: Record<string, string> = {
+  "Quranic Verses with [...]": "المواضع المتشابهة مع أقواس [...]",
+  "Add sibling verse": "إضافة موضع متشابه",
+  "Surah": "السورة",
+  "Ayah": "الآية",
+  "Wrap selected word or phrase in brackets [ ]": "وضع الكلمة أو العبارة المحددة بين قوسين [ ]",
+  "[ اللفظ المفصلي ]": "[ اللفظ المفصلي ]",
+  "اكتب نص الآية وضع اللفظ المفصلي المختلف بين قوسين [هكذا]...": "اكتب نص الآية وضع اللفظ المفصلي المختلف بين قوسين [هكذا]...",
+  "Pivotal phrase:": "اللفظ المفصلي:",
+  "Put the distinguishing word/phrase in brackets [like this]": "ضع اللفظ المفصلي المختلف بين قوسين [هكذا] أو ظلله واضغط الزر أعلاه",
+  "المواضع المتشابهة: بالصيغة المرئية أو نص مع أقواس [اللفظ المفصلي]": "المواضع المتشابهة: بالصيغة المرئية أو نص مع أقواس [اللفظ المفصلي]",
+  "معرف الآية المستهدفة للاختبار (اختياري: الافتراضي هو الموضع الأول)": "معرف الآية المستهدفة للاختبار (اختياري: الافتراضي هو الموضع الأول)",
   "\"Correct\", \"Not quite\" and the grader's comments. Turn it off when the card's own result says it all, like a typing test. The score is still recorded.": "تعليقات \"صحيح\" و\"ليس تماماً\" وملاحظات المصحح. عطل هذا الخيار عندما تكون نتيجة البطاقة كافية بذاتها، مثل اختبار الكتابة. يتم تسجيل النتيجة في جميع الأحوال.",
   "(drawings, images)": "(رسومات، صور)",
   "(empty)": "(فارغ)",

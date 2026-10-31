@@ -345,3 +345,68 @@ test("engine integration: quran-mutashabihat card type grades correctly in Etude
 
   e.close();
 });
+
+test("simplified bracket syntax: accepts simple bracket strings and objects without targetVerseId", async () => {
+  const e = await Etude.open(":memory:");
+
+  // Upsert item using simplified bracket strings and omitting targetVerseId
+  e.upsertItem({
+    id: "simple.bracket.item",
+    type: "quran-mutashabihat",
+    deck: "متشابهات سريعة",
+    fields: {
+      siblings: [
+        "البقرة:126 | وَإِذْ قَالَ إِبْرَٰهِـۧمُ رَبِّ ٱجْعَلْ هَـٰذَا [بَلَدًا ءَامِنًا] وَٱرْزُقْ أَهْلَهُۥ مِنَ ٱلثَّمَرَٰتِ",
+        {
+          surah: "إبراهيم",
+          ayah: 35,
+          text: "وَإِذْ قَالَ إِبْرَٰهِيمُ رَبِّ ٱجْعَلْ هَـٰذَا [ٱلْبَلَدَ ءَامِنًا] وَٱجْنُبْنِى وَبَنِىَّ أَن نَّعْبُدَ ٱلْأَصْنَامَ",
+        },
+      ],
+      mode: "pivotal_completion",
+    },
+  });
+
+  const cards = e.db.all<{ id: number; item_id: string }>("SELECT c.id, c.item_id FROM cards c JOIN items i ON c.item_id = i.id WHERE i.deck_id = (SELECT id FROM decks WHERE name = 'متشابهات سريعة')");
+  assert.equal(cards.length, 1);
+
+  const prep = e.prepare("simple.bracket.item", "main", 123);
+  const view = prep.view as Record<string, unknown>;
+  assert.equal(view.mode, "pivotal_completion");
+  assert.equal(view.targetSurahNameAr, "البقرة");
+  assert.equal(view.targetAyahNumber, 126);
+
+  // Grade choice with the parsed target correct option ID
+  const correctOptionId = (prep.key as Record<string, unknown>).correctOptionId;
+  const gradeChoice = await e.grade(cards[0].id, 123, {
+    mode: "pivotal_completion",
+    submode: "choice",
+    chosenOptionId: correctOptionId,
+    timeMs: 3000,
+    usedHint: false,
+  });
+  assert.equal(gradeChoice.grade.score, 1.0);
+  assert.equal(gradeChoice.grade.verdict, "correct");
+
+  // Also verify surah_identification mode works with simplified bracket syntax
+  e.upsertItem({
+    id: "simple.surah.item",
+    type: "quran-mutashabihat",
+    deck: "متشابهات سريعة",
+    fields: {
+      siblings: [
+        "[الأنعام: 151] وَلَا تَقْتُلُوٓا۟ أَوْلَـٰدَكُم [مِّنْ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُكُمْ وَإِيَّاهُمْ] وَلَا تَقْرَبُوا۟ ٱلْفَوَٰحِشَ",
+        "[الإسراء: 31] وَلَا تَقْتُلُوٓا۟ أَوْلَـٰدَكُمْ [خَشْيَةَ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُهُمْ وَإِيَّاهُمْ] إِنَّ قَتْلَهُمْ",
+      ],
+      mode: "surah_identification",
+    },
+  });
+
+  const prepSurah = e.prepare("simple.surah.item", "main", 456);
+  const viewSurah = prepSurah.view as Record<string, unknown>;
+  assert.equal(viewSurah.mode, "surah_identification");
+  const options = viewSurah.surahOptions as { id: string; labelAr: string }[];
+  assert.ok(options.length >= 2);
+
+  e.close();
+});

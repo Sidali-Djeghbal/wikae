@@ -11,9 +11,8 @@
     {
       "name": "targetVerseId",
       "kind": "text",
-      "required": true,
       "private": true,
-      "description": "معرف الآية المستهدفة في موضع الاختبار"
+      "description": "معرف الآية المستهدفة للاختبار (اختياري: الافتراضي هو الموضع الأول)"
     },
     {
       "name": "mode",
@@ -25,8 +24,9 @@
       "name": "siblings",
       "kind": "json",
       "required": true,
+      "editor": "mutashabihat",
       "private": true,
-      "description": "قائمة المواضع المتشابهة في المجموعة"
+      "description": "المواضع المتشابهة: بالصيغة المرئية أو نص مع أقواس [اللفظ المفصلي]"
     },
     {
       "name": "extraDistractorsUthmani",
