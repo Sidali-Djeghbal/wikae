@@ -16,17 +16,19 @@ import { api } from "@/lib/api";
 import { canShowPurchases } from "@/lib/platform";
 import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : "The request failed.");
 const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 function SignInFirst({ what }: { what: string }) {
+  const label = what === "your library" ? t("Sign in to see your library") : what === "selling" ? t("Sign in to see selling") : t("Sign in to see {what}", { what: t(what) });
   return (
     <div className="rounded-xl border px-5 py-10 text-center">
       <ShoppingBag className="mx-auto mb-3 size-6 text-muted-foreground" />
-      <div className="text-sm font-medium">Sign in to see {what}</div>
-      <div className="mx-auto mt-1 max-w-md text-[13px] text-muted-foreground">Purchased decks and selling are tied to your Etude account.</div>
-      <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate("/settings#account")}>Sign in</Button>
+      <div className="text-sm font-medium">{label}</div>
+      <div className="mx-auto mt-1 max-w-md text-[13px] text-muted-foreground">{t("Purchased decks and selling are tied to your Etude account.")}</div>
+      <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate("/settings#account")}>{t("Sign in")}</Button>
     </div>
   );
 }
@@ -107,12 +109,12 @@ export function PaidDialog({ entry, signedIn, onClose, onChanged }: { entry: Pai
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="market-detail" aria-describedby="paid-about">
         <div className="market-detail-scroll">
-          <DialogHeader className="text-left">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pr-8 text-xs text-muted-foreground [&>span]:whitespace-nowrap">
+          <DialogHeader className="text-left rtl:text-right">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pr-8 rtl:pr-0 rtl:pl-8 text-xs text-muted-foreground [&>span]:whitespace-nowrap">
               <span>Deck</span><span aria-hidden="true">·</span><span>by {entry.author}</span><span aria-hidden="true">·</span><span>v{entry.version}</span>
               <PriceMark entry={entry} />
             </div>
-            <DialogTitle className="pr-6 text-2xl leading-tight tracking-tight sm:text-3xl">{entry.name}</DialogTitle>
+            <DialogTitle className="pr-6 rtl:pr-0 rtl:pl-6 text-2xl leading-tight tracking-tight sm:text-3xl">{entry.name}</DialogTitle>
           </DialogHeader>
           <div className="market-facts">
             <div className="market-fact"><span>Includes</span><strong>{plural(s.items ?? 0, "card")}</strong></div>

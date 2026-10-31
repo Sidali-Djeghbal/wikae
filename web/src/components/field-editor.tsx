@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { MediaPasteProvider } from "@/components/media-paste";
 import { MediaTextInput, useMediaInput } from "@/components/media-input";
 import { OcclusionEditor, type OcclusionBox } from "@/components/occlusion-editor";
+import { t } from "@/lib/i18n";
 
 type Fields = Record<string, unknown>;
 
@@ -68,15 +69,15 @@ export function FieldEditor({ fields: specs, value, onChange, onMediaPendingChan
           </FieldRow>
         ),
       )}
-      <FieldRow spec={{ name: "generator", kind: "code", label: "Generator", description: "Optional. The body of a function that receives rng and returns field overrides, so each review shows a new variant." }}>
+      <FieldRow spec={{ name: "generator", kind: "code", label: t("Generator"), description: t("Optional. The body of a function that receives rng and returns field overrides, so each review shows a new variant.") }}>
         {generator || value.generator !== undefined ? (
           <div className="flex flex-col gap-2">
             <CodeEditor lang="js" value={String(value.generator ?? "")} onChange={(v) => set("generator", v)} minHeight={140} />
-            <Button variant="ghost" size="sm" className="self-start text-muted-foreground" onClick={() => set("generator", undefined)}>Remove generator</Button>
+            <Button variant="ghost" size="sm" className="self-start text-muted-foreground" onClick={() => set("generator", undefined)}>{t("Remove generator")}</Button>
           </div>
         ) : (
           <Button variant="outline" size="sm" className="self-start gap-1.5" onClick={() => set("generator", "// rng.int(a, b), rng.pick([...]), rng.float(a, b, digits)\nreturn {};\n")}>
-            <Plus className="size-4" /> Add generator
+            <Plus className="size-4" /> {t("Add generator")}
           </Button>
         )}
       </FieldRow>
@@ -88,15 +89,15 @@ function FieldRow({ spec, children }: { spec: FieldSpec; children: React.ReactNo
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline gap-2">
-        <label className="text-sm font-medium">{spec.label ?? spec.name}</label>
-        {spec.required && <span className="text-xs text-muted-foreground">required</span>}
+        <label className="text-sm font-medium">{t(spec.label ?? spec.name)}</label>
+        {spec.required && <span className="text-xs text-muted-foreground">{t("required")}</span>}
         {spec.private && (
-          <span className="flex items-center gap-1 text-xs text-muted-foreground" title="Hidden from the card until it's graded">
-            <EyeOff className="size-3" /> hidden until answered
+          <span className="flex items-center gap-1 text-xs text-muted-foreground" title={t("Hidden from the card until it's graded")}>
+            <EyeOff className="size-3" /> {t("hidden until answered")}
           </span>
         )}
       </div>
-      {spec.description && <p className="-mt-1 text-xs text-muted-foreground">{spec.description}</p>}
+      {spec.description && <p className="-mt-1 text-xs text-muted-foreground">{t(spec.description)}</p>}
       {children}
     </div>
   );
@@ -121,7 +122,7 @@ function FieldInput({ spec, value, onChange, language }: { spec: FieldSpec; valu
       return (
         <div className="flex items-center gap-2">
           <Switch checked={value === undefined ? !!spec.default : !!value} onCheckedChange={(v) => onChange(v)} />
-          {value === undefined && <span className="text-xs text-muted-foreground">default</span>}
+          {value === undefined && <span className="text-xs text-muted-foreground">{t("default")}</span>}
         </div>
       );
     case "list":
@@ -211,31 +212,31 @@ function Rows<T>({ items, onChange, render, empty, add }: { items: T[]; onChange
           <div className="min-w-0 flex-1">{render(it, (v) => onChange(items.map((x, k) => (k === i ? v : x))), i)}</div>
           {/* Desktop: inline icons. Phone: one menu button, so rows stay one line tall. */}
           <div className="hidden shrink-0 gap-0.5 pt-1 opacity-40 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 sm:flex">
-            <Button variant="ghost" size="icon" className="size-7" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up"><ArrowUp className="size-3.5" /></Button>
-            <Button variant="ghost" size="icon" className="size-7" onClick={() => move(i, 1)} disabled={i === items.length - 1} aria-label="Move down"><ArrowDown className="size-3.5" /></Button>
-            <Button variant="ghost" size="icon" className="size-7" onClick={() => remove(i)} aria-label="Remove"><Trash2 className="size-3.5" /></Button>
+            <Button variant="ghost" size="icon" className="size-7" onClick={() => move(i, -1)} disabled={i === 0} aria-label={t("Move up")}><ArrowUp className="size-3.5" /></Button>
+            <Button variant="ghost" size="icon" className="size-7" onClick={() => move(i, 1)} disabled={i === items.length - 1} aria-label={t("Move down")}><ArrowDown className="size-3.5" /></Button>
+            <Button variant="ghost" size="icon" className="size-7" onClick={() => remove(i)} aria-label={t("Remove")}><Trash2 className="size-3.5" /></Button>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-9 shrink-0 text-muted-foreground sm:hidden" aria-label="Row actions"><MoreVertical className="size-4" /></Button>
+              <Button variant="ghost" size="icon" className="size-9 shrink-0 text-muted-foreground sm:hidden" aria-label={t("Row actions")}><MoreVertical className="size-4" /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled={i === 0} onClick={() => move(i, -1)}><ArrowUp />Move up</DropdownMenuItem>
-              <DropdownMenuItem disabled={i === items.length - 1} onClick={() => move(i, 1)}><ArrowDown />Move down</DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" onClick={() => remove(i)}><Trash2 />Remove</DropdownMenuItem>
+              <DropdownMenuItem disabled={i === 0} onClick={() => move(i, -1)}><ArrowUp />{t("Move up")}</DropdownMenuItem>
+              <DropdownMenuItem disabled={i === items.length - 1} onClick={() => move(i, 1)}><ArrowDown />{t("Move down")}</DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onClick={() => remove(i)}><Trash2 />{t("Remove")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       ))}
       <Button variant="outline" size="sm" className="h-10 self-start gap-1.5 sm:h-8" onClick={() => onChange([...items, structuredClone(empty)])}>
-        <Plus className="size-4" /> {add}
+        <Plus className="size-4" /> {t(add)}
       </Button>
     </div>
   );
 }
 
 function ListEditor({ value, onChange }: { value: string[]; onChange(v: string[]): void }) {
-  return <Rows items={value} onChange={onChange} empty="" add="Add" render={(v, set, i) => <Input value={v} onChange={(e) => set(e.target.value)} placeholder={`#${i + 1}`} />} />;
+  return <Rows items={value} onChange={onChange} empty="" add={t("Add")} render={(v, set, i) => <Input value={v} onChange={(e) => set(e.target.value)} placeholder={`#${i + 1}`} />} />;
 }
 
 function ChoicesEditor({ value, onChange }: { value: { text: string; correct?: boolean; why?: string }[]; onChange(v: unknown): void }) {
@@ -244,7 +245,7 @@ function ChoicesEditor({ value, onChange }: { value: { text: string; correct?: b
       items={value}
       onChange={onChange}
       empty={{ text: "" }}
-      add="Add option"
+      add={t("Add option")}
       render={(o, set) => (
         <div className={cn("flex flex-col gap-1.5 rounded-md border p-2", o.correct && "border-good/50 bg-good/5")}>
           <div className="flex items-start gap-2">
@@ -252,13 +253,13 @@ function ChoicesEditor({ value, onChange }: { value: { text: string; correct?: b
               type="button"
               onClick={() => set({ ...o, correct: !o.correct || undefined })}
               className={cn("mt-1.5 flex size-5 shrink-0 items-center justify-center rounded border", o.correct ? "border-good bg-good text-background" : "border-input")}
-              title={o.correct ? "Correct" : "Mark as correct"}
+              title={o.correct ? t("Correct") : t("Mark as correct")}
             >
               {o.correct && <Check className="size-3.5" />}
             </button>
-            <LiveMarkdown className="min-w-0 flex-1 border-0 shadow-none focus-within:shadow-none" minLines={1} value={o.text} onChange={(t) => set({ ...o, text: t })} placeholder="Option text (markdown and $math$)" />
+            <LiveMarkdown className="min-w-0 flex-1 border-0 shadow-none focus-within:shadow-none" minLines={1} value={o.text} onChange={(t) => set({ ...o, text: t })} placeholder={t("Option text (markdown and $math$)")} />
           </div>
-          <Input className="h-8 border-dashed text-sm" value={o.why ?? ""} onChange={(e) => set({ ...o, why: e.target.value || undefined })} placeholder="Why (shown after answering, optional)" />
+          <Input className="h-8 border-dashed text-sm" value={o.why ?? ""} onChange={(e) => set({ ...o, why: e.target.value || undefined })} placeholder={t("Why (shown after answering, optional)")} />
         </div>
       )}
     />
@@ -271,11 +272,11 @@ function PairsEditor({ value, onChange }: { value: [string, string][]; onChange(
       items={value}
       onChange={onChange}
       empty={["", ""] as [string, string]}
-      add="Add pair"
+      add={t("Add pair")}
       render={(p, set) => (
         <div className="grid gap-1.5 rounded-md border p-1.5 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:border-0 sm:p-0">
-          <LiveMarkdown minLines={1} value={p[0]} onChange={(v) => set([v, p[1]])} placeholder="Left" />
-          <LiveMarkdown minLines={1} value={p[1]} onChange={(v) => set([p[0], v])} placeholder="Right" />
+          <LiveMarkdown minLines={1} value={p[0]} onChange={(v) => set([v, p[1]])} placeholder={t("Left")} />
+          <LiveMarkdown minLines={1} value={p[1]} onChange={(v) => set([p[0], v])} placeholder={t("Right")} />
         </div>
       )}
     />
@@ -286,7 +287,7 @@ function PartsEditor({ value, onChange }: { value: { label: string; answer: numb
   if (!value?.length)
     return (
       <Button variant="outline" size="sm" className="self-start gap-1.5" onClick={() => onChange([{ label: "", answer: 0 }])}>
-        <Plus className="size-4" /> Make it multi-part
+        <Plus className="size-4" /> {t("Make it multi-part")}
       </Button>
     );
   return (
@@ -294,13 +295,13 @@ function PartsEditor({ value, onChange }: { value: { label: string; answer: numb
       items={value}
       onChange={(v) => onChange(v.length ? v : undefined)}
       empty={{ label: "", answer: 0 }}
-      add="Add part"
+      add={t("Add part")}
       render={(p, set) => (
         <div className="grid grid-cols-3 gap-1.5 rounded-md border p-1.5 sm:grid-cols-[1fr_7rem_5rem_5rem] sm:gap-2 sm:border-0 sm:p-0">
-          <Input className="col-span-3 sm:col-span-1" value={p.label} onChange={(e) => set({ ...p, label: e.target.value })} placeholder="Label, e.g. Area" />
-          <NumberInput value={p.answer} onChange={(v) => set({ ...p, answer: v ?? 0 })} placeholder="Answer" />
-          <Input value={p.unit ?? ""} onChange={(e) => set({ ...p, unit: e.target.value || undefined })} placeholder="Unit" />
-          <NumberInput value={p.tolerance} onChange={(v) => set({ ...p, tolerance: v })} placeholder="Tolerance" />
+          <Input className="col-span-3 sm:col-span-1" value={p.label} onChange={(e) => set({ ...p, label: e.target.value })} placeholder={t("Label, e.g. Area")} />
+          <NumberInput value={p.answer} onChange={(v) => set({ ...p, answer: v ?? 0 })} placeholder={t("Answer")} />
+          <Input value={p.unit ?? ""} onChange={(e) => set({ ...p, unit: e.target.value || undefined })} placeholder={t("Unit")} />
+          <NumberInput value={p.tolerance} onChange={(v) => set({ ...p, tolerance: v })} placeholder={t("Tolerance")} />
         </div>
       )}
     />

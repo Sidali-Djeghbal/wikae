@@ -12,6 +12,7 @@ import { Markdown } from "@/components/markdown";
 import { api, type Grade, type Scope, type StudyCard, type WatchEntry } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { navigate } from "@/lib/router";
+import { t } from "@/lib/i18n";
 
 type Phase = "loading" | "answer" | "grading" | "result" | "done" | "empty";
 
@@ -157,8 +158,8 @@ export function WatchPage({ scope, title }: { scope: Scope; title: string }) {
     <div className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 pb-44 sm:px-8">
       <header className="sticky top-0 z-10 -mx-4 bg-background/90 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur sm:-mx-8 sm:px-8">
         <div className="flex items-center gap-2 py-3 sm:gap-3 sm:py-4">
-          <Button variant="ghost" size="icon" className="-ml-2" onClick={() => navigate("/")} aria-label="Back to decks">
-            <ArrowLeft />
+          <Button variant="ghost" size="icon" className="-ml-2 rtl:-mr-2 rtl:ml-0" onClick={() => navigate("/")} aria-label={t("Back to decks")}>
+            <ArrowLeft className="rtl-flip" />
           </Button>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium">{title}</div>
@@ -166,7 +167,7 @@ export function WatchPage({ scope, title }: { scope: Scope; title: string }) {
           </div>
           {total > 0 && phase !== "done" && (
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={prev} disabled={index === 0} aria-label="Previous card"><ChevronLeft /></Button>
+              <Button variant="ghost" size="icon" onClick={prev} disabled={index === 0} aria-label={t("Previous card")}><ChevronLeft className="rtl-flip" /></Button>
               <span className="tabular min-w-12 text-center text-sm text-muted-foreground">{index + 1} / {total}</span>
             </div>
           )}
@@ -180,19 +181,19 @@ export function WatchPage({ scope, title }: { scope: Scope; title: string }) {
 
       {phase === "empty" && (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 py-24 text-center">
-          <div className="text-2xl font-semibold tracking-tight">Nothing to watch</div>
-          <p className="max-w-sm text-muted-foreground">This deck has no cards yet.</p>
-          <Button variant="outline" className="mt-4" onClick={() => navigate("/")}>Back to decks</Button>
+          <div className="text-2xl font-semibold tracking-tight">{t("Nothing to watch")}</div>
+          <p className="max-w-sm text-muted-foreground">{t("This deck has no cards yet.")}</p>
+          <Button variant="outline" className="mt-4" onClick={() => navigate("/")}>{t("Back to decks")}</Button>
         </div>
       )}
 
       {phase === "done" && (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 py-24 text-center">
-          <div className="text-2xl font-semibold tracking-tight">That's the tour</div>
-          <p className="max-w-sm text-muted-foreground">{total} cards, one of each kind. Watching doesn't schedule anything; make a deck of your own, or import one, to study for real.</p>
+          <div className="text-2xl font-semibold tracking-tight">{t("That's the tour")}</div>
+          <p className="max-w-sm text-muted-foreground">{t("{total} cards, one of each kind. Watching doesn't schedule anything; make a deck of your own, or import one, to study for real.", { total })}</p>
           <div className="mt-4 flex gap-2">
-            <Button variant="outline" onClick={() => load(0)}><RotateCcw className="size-4" />Watch again</Button>
-            <Button onClick={() => navigate("/")}>Back to decks</Button>
+            <Button variant="outline" onClick={() => load(0)}><RotateCcw className="size-4" />{t("Watch again")}</Button>
+            <Button onClick={() => navigate("/")}>{t("Back to decks")}</Button>
           </div>
         </div>
       )}
@@ -201,12 +202,12 @@ export function WatchPage({ scope, title }: { scope: Scope; title: string }) {
         <main className="flex flex-1 flex-col gap-6 pt-6">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <Badge variant="outline" className="font-normal">{card.type}</Badge>
-            {ai && <Badge variant="outline" className="gap-1 font-normal">AI-graded</Badge>}
-            {card.generated && <Badge variant="outline" className="font-normal">new variant every time</Badge>}
+            {ai && <Badge variant="outline" className="gap-1 font-normal">{t("AI-graded")}</Badge>}
+            {card.generated && <Badge variant="outline" className="font-normal">{t("new variant every time")}</Badge>}
             {phase === "result" && verdict ? (
-              <span className={cn("ml-auto text-sm font-medium", verdict.cls)}>{by === "example" ? "Example: " : ""}{verdict.label}</span>
+              <span className={cn("ml-auto rtl:mr-auto rtl:ml-0 text-sm font-medium", verdict.cls)}>{by === "example" ? `${t("Example:")} ` : ""}{t(verdict.label)}</span>
             ) : (
-              <span className="ml-auto hidden sm:inline">Try it, or let it show you.</span>
+              <span className="ml-auto rtl:mr-auto rtl:ml-0 hidden sm:inline">{t("Try it, or let it show you.")}</span>
             )}
           </div>
 
@@ -222,29 +223,29 @@ export function WatchPage({ scope, title }: { scope: Scope; title: string }) {
               autoFocus={false}
               onSubmit={onSubmit}
               onKey={onKey}
-              onError={(m) => toast.error("Card error", { description: m })}
+              onError={(m) => toast.error(t("Card error"), { description: m })}
             />
           </div>
 
           {phase === "result" && result && (
             <section ref={resultRef} className="flex scroll-mb-36 flex-col gap-3 pt-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                {by === "example" && <span className="text-muted-foreground">Example answer:</span>}
+                {by === "example" && <span className="text-muted-foreground">{t("Example answer:")}</span>}
                 {verdict ? (
-                  <span className={cn("font-medium", verdict.cls)}>{verdict.label}</span>
+                  <span className={cn("font-medium", verdict.cls)}>{t(verdict.label)}</span>
                 ) : ai ? (
-                  <span className="text-muted-foreground">In a study session, AI grades this answer against the reference.</span>
+                  <span className="text-muted-foreground">{t("In a study session, AI grades this answer against the reference.")}</span>
                 ) : card.grader === "self" ? (
-                  <span className="text-muted-foreground">You'd rate yourself here: Again, Hard, Good or Easy.</span>
+                  <span className="text-muted-foreground">{t("You'd rate yourself here: Again, Hard, Good or Easy.")}</span>
                 ) : null}
                 {result.grade.score != null && result.grade.verdict === "partial" && <span className="tabular text-muted-foreground">{Math.round(result.grade.score * 100)}%</span>}
                 {result.grade.grader.example && result.grade.grader.model && (
-                  <span className="truncate text-xs text-muted-foreground">· a real grade by {result.grade.grader.model.split(" + ").map((m) => m.split("/").pop()).join(" + ")}</span>
+                  <span className="truncate text-xs text-muted-foreground">{t("· a real grade by {model}", { model: result.grade.grader.model.split(" + ").map((m) => m.split("/").pop()).join(" + ") })}</span>
                 )}
               </div>
               {result.grade.feedback && card?.showVerdict !== false && (
                 <div className="rounded-lg border bg-card/60 px-4 py-3">
-                  <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">Feedback</div>
+                  <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">{t("Feedback")}</div>
                   <Markdown className="text-[0.95rem]">{result.grade.feedback}</Markdown>
                 </div>
               )}
@@ -258,27 +259,27 @@ export function WatchPage({ scope, title }: { scope: Scope; title: string }) {
           <div className="mx-auto flex max-w-3xl items-center justify-center gap-2 px-3 py-3 sm:px-8 sm:py-4">
             {phase === "result" ? (
               <>
-                <Button variant="outline" size="lg" className="h-12 gap-2 sm:h-10" onClick={again} aria-label="Show this card again">
-                  <RotateCcw className="size-4" /><span className="hidden sm:inline">{card.generated ? "Another variant" : "Again"}</span>
+                <Button variant="outline" size="lg" className="h-12 gap-2 sm:h-10" onClick={again} aria-label={t("Show this card again")}>
+                  <RotateCcw className="size-4" /><span className="hidden sm:inline">{card.generated ? t("Another variant") : t("Again")}</span>
                 </Button>
                 <Button size="lg" className="h-12 flex-1 gap-2 sm:h-10 sm:min-w-48 sm:flex-none" onClick={next}>
-                  {last ? "Finish" : "Next card"} <ArrowRight className="size-4" />
+                  {last ? t("Finish") : t("Next card")} <ArrowRight className="size-4 rtl:rotate-180" />
                   <kbd className="hidden text-xs opacity-60 sm:inline">Space</kbd>
                 </Button>
               </>
             ) : (
               <>
                 <Button variant="outline" size="lg" className="h-12 gap-2 sm:h-10" onClick={next} disabled={phase === "grading"}>
-                  {last ? "Finish" : "Skip"}
+                  {last ? t("Finish") : t("Skip")}
                 </Button>
                 <Button size="lg" className="h-12 flex-1 gap-2 sm:h-10 sm:min-w-48 sm:flex-none" onClick={showExample} disabled={phase === "grading"}>
-                  {phase === "grading" ? <><Loader2 className="size-4 animate-spin" />Answering…</> : <>Show an answer</>}
+                  {phase === "grading" ? <><Loader2 className="size-4 animate-spin" />{t("Answering…")}</> : <>{t("Show an answer")}</>}
                 </Button>
               </>
             )}
           </div>
           <div className="hidden pb-3 text-center text-xs text-muted-foreground sm:block">
-            <kbd>←</kbd> <kbd>→</kbd> to move between cards · nothing here is scheduled
+            <kbd>←</kbd> <kbd>→</kbd> {t("to move between cards · nothing here is scheduled")}
           </div>
         </footer>
       )}

@@ -43,6 +43,7 @@ import { canShowPurchases } from "@/lib/platform";
 import { etudeFetch } from "@/lib/transport";
 import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /** Settings → About → Run setup again. */
 export const ONBOARDING_EVENT = "etude:onboarding";
@@ -62,7 +63,7 @@ const LEVELS: { id: OnboardingLevel; icon: typeof Coffee; title: string; hint: s
   { id: "standard", icon: Settings, title: "I know my way around", hint: "Show the useful settings, explain the new ones." },
   { id: "tinker", icon: Terminal, title: "I like to tinker", hint: "Everything: custom card types, schedulers, API keys, the CLI." },
 ];
-const levelTitle = (l: OnboardingLevel) => LEVELS.find((x) => x.id === l)!.title;
+const levelTitle = (l: OnboardingLevel) => t(LEVELS.find((x) => x.id === l)!.title);
 
 const PRESET_LABEL: Record<PresetId, string> = { chatgpt: "ChatGPT", openrouter: "OpenRouter", openai: "OpenAI", local: "Local server" };
 const KEY_ENV: Record<"openrouter" | "openai", string> = { openrouter: "OPENROUTER_API_KEY", openai: "OPENAI_API_KEY" };
@@ -164,7 +165,7 @@ export function Onboarding({ onFinish }: { onFinish(): void }) {
               onBack={step === "done" ? undefined : back}
               total={steps.length}
               filled={step === "done" ? steps.length : at + 1}
-              skipLabel={step === "done" ? undefined : step === "setup" ? "Later" : "Skip"}
+              skipLabel={step === "done" ? undefined : step === "setup" ? t("Later") : t("Skip")}
               onSkip={() => {
                 if (step === "level") go("ai");
                 else if (step === "ai") {
@@ -205,12 +206,12 @@ function TopBar({ onBack, total, filled, skipLabel, onSkip }: { onBack?: () => v
     <div className="mb-6 flex h-9 items-center justify-between">
       <div className="w-14">
         {onBack && (
-          <button onClick={onBack} aria-label="Back" className="-ml-2 flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground">
-            <ChevronLeft className="size-5" />
+          <button onClick={onBack} aria-label={t("Back")} className="-ml-2 flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground">
+            <ChevronLeft className="size-5 rtl-flip" />
           </button>
         )}
       </div>
-      <div className="flex gap-[5px]" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={filled} aria-label={`Step ${Math.min(filled, total)} of ${total}`}>
+      <div className="flex gap-[5px]" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={filled} aria-label={t("Step {step} of {total}", { step: Math.min(filled, total), total })}>
         {Array.from({ length: total }, (_, i) => (
           <i key={i} className={cn("block h-[3px] w-5 rounded-full transition-colors", i < filled ? "bg-highlight" : "bg-muted")} />
         ))}
@@ -281,7 +282,7 @@ function Option({ icon: Icon, title, hint, selected, onClick, kind, disabled, ch
         disabled={disabled}
         role={kind === "check" ? "checkbox" : kind === "radio" ? "radio" : undefined}
         aria-checked={kind ? !!selected : undefined}
-        className={cn("flex w-full items-start gap-3 px-3.5 py-3 text-left", !disabled && !selected && "hover:bg-accent/40", "rounded-[14px] disabled:cursor-not-allowed")}
+        className={cn("flex w-full items-start gap-3 px-3.5 py-3 text-left rtl:text-right", !disabled && !selected && "hover:bg-accent/40", "rounded-[14px] disabled:cursor-not-allowed")}
       >
         <span className={cn("grid size-8 shrink-0 place-items-center rounded-[9px] bg-muted text-foreground", selected && "bg-highlight/[0.18] text-highlight")}>
           <Icon className="size-4" />
@@ -343,19 +344,19 @@ function Welcome({ onStart, onSignIn, onSkip }: { onStart(): void; onSignIn(): v
     <>
       <div className="flex h-9 justify-end">
         <button onClick={onSkip} className="-mr-2 h-9 rounded-full px-2 text-[13.5px] text-muted-foreground transition-colors hover:text-foreground">
-          Skip
+          {t("Skip")}
         </button>
       </div>
       <div className="mt-12 flex flex-col items-center text-center md:mt-10">
         <Logo className="size-28" />
         <div className="mt-3 text-[32px] font-semibold tracking-[-0.02em]">Etude</div>
         <p className="mt-2.5 max-w-[22rem] px-2 text-[15px] leading-normal text-muted-foreground">
-          Flashcards that check your answers, schedule your reviews and adapt to what you actually know.
+          {t("Flashcards that check your answers, schedule your reviews and adapt to what you actually know.")}
         </p>
       </div>
       <Spacer />
-      <Primary onClick={onStart}>Get started</Primary>
-      <Ghost onClick={onSignIn}>I already use Etude · Sign in to Sync</Ghost>
+      <Primary onClick={onStart}>{t("Get started")}</Primary>
+      <Ghost onClick={onSignIn}>{t("I already use Etude · Sign in to Sync")}</Ghost>
     </>
   );
 }
@@ -363,14 +364,14 @@ function Welcome({ onStart, onSignIn, onSkip }: { onStart(): void; onSignIn(): v
 function LevelStep({ level, onChange, onNext }: { level: OnboardingLevel; onChange(l: OnboardingLevel): void; onNext(): void }) {
   return (
     <>
-      <Title lead="We'll show more or fewer options. You can switch anytime.">How do you like your apps?</Title>
+      <Title lead={t("We'll show more or fewer options. You can switch anytime.")}>{t("How do you like your apps?")}</Title>
       <Options role="radiogroup">
         {LEVELS.map((l) => (
-          <Option key={l.id} kind="radio" icon={l.icon} title={l.title} hint={l.hint} selected={level === l.id} onClick={() => onChange(l.id)} />
+          <Option key={l.id} kind="radio" icon={l.icon} title={t(l.title)} hint={t(l.hint)} selected={level === l.id} onClick={() => onChange(l.id)} />
         ))}
       </Options>
       <Spacer />
-      <Primary onClick={onNext}>Continue</Primary>
+      <Primary onClick={onNext}>{t("Continue")}</Primary>
     </>
   );
 }
@@ -378,16 +379,16 @@ function LevelStep({ level, onChange, onNext }: { level: OnboardingLevel; onChan
 function AiStep({ value, onChange, onNext }: { value: boolean | null; onChange(v: boolean): void; onNext(): void }) {
   return (
     <>
-      <Title lead="It reads what you wrote, says if it's right and tells you what you missed. It needs an account with an AI service.">Want AI to grade your typed answers?</Title>
+      <Title lead={t("It reads what you wrote, says if it's right and tells you what you missed. It needs an account with an AI service.")}>{t("Want AI to grade your typed answers?")}</Title>
       <Options role="radiogroup">
-        <Option kind="radio" icon={CircleCheck} title="Yes, use AI" hint="Grading and feedback on open answers and drawings." selected={value === true} onClick={() => onChange(true)} />
-        <Option kind="radio" icon={NotebookText} title="No AI" hint="Classic flashcards: you flip and rate yourself. Nothing leaves your device." selected={value === false} onClick={() => onChange(false)} />
+        <Option kind="radio" icon={CircleCheck} title={t("Yes, use AI")} hint={t("Grading and feedback on open answers and drawings.")} selected={value === true} onClick={() => onChange(true)} />
+        <Option kind="radio" icon={NotebookText} title={t("No AI")} hint={t("Classic flashcards: you flip and rate yourself. Nothing leaves your device.")} selected={value === false} onClick={() => onChange(false)} />
       </Options>
       <Note>
-        <b>Either way</b> you get spaced repetition, the Market, Anki import and Sync. AI can be turned on later in Settings.
+        {t("Either way you get spaced repetition, the Market, Anki import and Sync. AI can be turned on later in Settings.")}
       </Note>
       <Spacer />
-      <Primary onClick={onNext} disabled={value === null}>Continue</Primary>
+      <Primary onClick={onNext} disabled={value === null}>{t("Continue")}</Primary>
     </>
   );
 }
@@ -406,22 +407,22 @@ function AccountsStep({ level, ticked, onChange, onNext }: { level: OnboardingLe
   };
   const rows: { id: Account; icon: typeof Key; title: string; hint: string }[] = [
     // ChatGPT sign-in needs the loopback callback of a desktop server.
-    ...(serverless() ? [] : [{ id: "chatgpt" as const, icon: MessageCircle, title: "ChatGPT Plus or Pro", hint: "Sign in, no key. Uses your plan's limits." }]),
-    { id: "openrouter", icon: ArrowLeftRight, title: "OpenRouter", hint: "Paste a key. Pay per use, fractions of a cent." },
-    { id: "openai", icon: Key, title: "OpenAI API key", hint: "Not the same as ChatGPT. Pay per use." },
-    ...(level === "tinker" ? [{ id: "local" as const, icon: Server, title: "Local server", hint: "llama.cpp, Ollama or vLLM on this machine. No key." }] : []),
-    { id: "none", icon: CircleHelp, title: "None of these", hint: "We'll walk you through the easiest one." },
+    ...(serverless() ? [] : [{ id: "chatgpt" as const, icon: MessageCircle, title: t("ChatGPT Plus or Pro"), hint: t("Sign in, no key. Uses your plan's limits.") }]),
+    { id: "openrouter", icon: ArrowLeftRight, title: "OpenRouter", hint: t("Paste a key. Pay per use, fractions of a cent.") },
+    { id: "openai", icon: Key, title: t("OpenAI API key"), hint: t("Not the same as ChatGPT. Pay per use.") },
+    ...(level === "tinker" ? [{ id: "local" as const, icon: Server, title: t("Local server"), hint: t("llama.cpp, Ollama or vLLM on this machine. No key.") }] : []),
+    { id: "none", icon: CircleHelp, title: t("None of these"), hint: t("We'll walk you through the easiest one.") },
   ];
   return (
     <>
-      <Title lead="Pick all that apply.">Do you have any of these?</Title>
+      <Title lead={t("Pick all that apply.")}>{t("Do you have any of these?")}</Title>
       <Options className="mt-4 gap-2">
         {rows.map((r) => (
           <Option key={r.id} kind="check" icon={r.icon} title={r.title} hint={r.hint} selected={ticked.has(r.id)} onClick={() => toggle(r.id)} />
         ))}
       </Options>
       <Spacer />
-      <Primary onClick={onNext} disabled={ticked.size === 0}>Continue</Primary>
+      <Primary onClick={onNext} disabled={ticked.size === 0}>{t("Continue")}</Primary>
     </>
   );
 }
@@ -469,7 +470,7 @@ function Verdict({ result }: { result: { ok: true; ms: number } | { ok: false; e
     return (
       <p className="mt-2.5 flex items-center gap-1.5 text-[13px] text-success" data-test-result="ok">
         <span className="size-2 rounded-full bg-success" />
-        Works · sample answer graded in {fmtSec(result.ms)}
+        {t("Works · sample answer graded in {sec}", { sec: fmtSec(result.ms) })}
       </p>
     );
   return <Problem>{result.error}</Problem>;
@@ -495,34 +496,34 @@ function ChatGptSetup({ apply, onDone }: { apply: Apply; onDone(o: AiOutcome): v
 
   return (
     <>
-      <Title lead="A browser window opens, you sign in, and come back here. Etude never sees your password.">Connect ChatGPT</Title>
-      <Steps items={[<>Tap <b>Sign in with ChatGPT</b></>, <>Approve Etude on the OpenAI page</>, <>We grade a sample answer to make sure it works</>]} />
-      <Note>Grading counts toward your ChatGPT usage, like any chat. Free ChatGPT accounts don't work.</Note>
+      <Title lead={t("A browser window opens, you sign in, and come back here. Etude never sees your password.")}>{t("Connect ChatGPT")}</Title>
+      <Steps items={[<>{t("Tap {btn}", { btn: t("Sign in with ChatGPT") })}</>, <>{t("Approve Etude on the OpenAI page")}</>, <>{t("We grade a sample answer to make sure it works")}</>]} />
+      <Note>{t("Grading counts toward your ChatGPT usage, like any chat. Free ChatGPT accounts don't work.")}</Note>
       {signedIn && status && (
         <p className="mt-3 flex items-center gap-1.5 text-[13px] text-foreground/90">
           <CircleCheck className="size-4 text-success" />
-          Signed in{status.email ? ` as ${status.email}` : ""}
-          {testing && <span className="text-muted-foreground"> · testing…</span>}
+          {status.email ? t("Signed in as {email}", { email: status.email }) : t("Signed in")}
+          {testing && <span className="text-muted-foreground"> · {t("testing…")}</span>}
         </p>
       )}
       <Verdict result={result} />
       {remote && (
         <div className="mt-3 flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning/[0.04] px-3.5 py-3">
           <p className="text-[13px] leading-relaxed">{remote.message}</p>
-          <CopyValue label="Run on the machine that runs Etude" value={remote.cli} />
+          <CopyValue label={t("Run on the machine that runs Etude")} value={remote.cli} />
         </div>
       )}
       {failure && <Problem>{failure}</Problem>}
       {waitingUrl && !signedIn && (
         <a href={waitingUrl} target="_blank" rel="noreferrer" className="mt-3 text-center text-[12.5px] text-muted-foreground underline underline-offset-4 hover:text-foreground">
-          Waiting for the browser · open the sign-in page
+          {t("Waiting for the browser · open the sign-in page")}
         </a>
       )}
       <Spacer />
       {signedIn ? (
-        <Primary onClick={() => onDone({ preset: "chatgpt", tested: !!result?.ok })} busy={testing}>Continue</Primary>
+        <Primary onClick={() => onDone({ preset: "chatgpt", tested: !!result?.ok })} busy={testing}>{t("Continue")}</Primary>
       ) : (
-        <Primary onClick={start} busy={busy === "login" || !!waitingUrl}>Sign in with ChatGPT</Primary>
+        <Primary onClick={start} busy={busy === "login" || !!waitingUrl}>{t("Sign in with ChatGPT")}</Primary>
       )}
     </>
   );
@@ -559,7 +560,7 @@ function KeySetup({ provider, newcomer, apply, onDone }: { provider: "openrouter
     try {
       setKey((await navigator.clipboard.readText()).trim());
     } catch {
-      toast.error("Couldn't read the clipboard", { description: "Paste into the box instead." });
+      toast.error(t("Couldn't read the clipboard"), { description: t("Paste into the box instead.") });
     }
   };
 
@@ -567,18 +568,16 @@ function KeySetup({ provider, newcomer, apply, onDone }: { provider: "openrouter
     <>
       <Title
         lead={
-          provider === "openrouter" ? (
-            <>openrouter.ai → Keys → Create key. It starts with <span className="whitespace-nowrap"><span className="font-mono text-foreground">{prefix}</span>.</span></>
-          ) : (
-            <>platform.openai.com → API keys → Create new secret key. It starts with <span className="whitespace-nowrap"><span className="font-mono text-foreground">{prefix}</span>.</span></>
-          )
+          provider === "openrouter"
+            ? t("openrouter.ai → Keys → Create key. It starts with {prefix}.", { prefix })
+            : t("platform.openai.com → API keys → Create new secret key. It starts with {prefix}.", { prefix })
         }
       >
-        Paste your {name}&nbsp;key
+        {t("Paste your {name} key", { name })}
       </Title>
       {newcomer && (
         <button onClick={() => setHelp((h) => !h)} aria-expanded={help} className="mt-2 self-start text-[13px] text-highlight underline-offset-4 hover:underline">
-          {help ? "Hide the steps" : "How do I get one?"}
+          {help ? t("Hide the steps") : t("How do I get one?")}
         </button>
       )}
       {help && <OpenRouterHowTo />}
@@ -589,7 +588,7 @@ function KeySetup({ provider, newcomer, apply, onDone }: { provider: "openrouter
           void test();
         }}
       >
-        <label htmlFor="ob-key" className="text-[12.5px] text-muted-foreground">API key</label>
+        <label htmlFor="ob-key" className="text-[12.5px] text-muted-foreground">{t("API key")}</label>
         <div className="relative mt-1.5">
           <Input
             id="ob-key"
@@ -601,32 +600,30 @@ function KeySetup({ provider, newcomer, apply, onDone }: { provider: "openrouter
               setKey(e.target.value);
               setResult(null);
             }}
-            placeholder={result?.ok ? "Saved. Paste another to replace it" : `${prefix}…`}
+            placeholder={result?.ok ? t("Saved. Paste another to replace it") : `${prefix}…`}
             className="h-11 rounded-xl bg-card pr-16 font-mono text-[13px]"
           />
           {!key && "clipboard" in navigator && (
             <button type="button" onClick={paste} className="absolute top-1/2 right-2 h-8 -translate-y-1/2 rounded-lg px-2.5 text-[13px] text-muted-foreground hover:text-foreground">
-              Paste
+              {t("Paste")}
             </button>
           )}
         </div>
         <Verdict result={result} />
       </form>
       <Note>
-        {provider === "openrouter" ? (
-          <><b>About the cost:</b> a graded answer costs a fraction of a cent, so a few dollars of credit goes a long way.</>
-        ) : (
-          <><b>About the cost:</b> OpenAI bills the API separately from ChatGPT. A graded answer costs a fraction of a cent.</>
-        )}
+        {provider === "openrouter"
+          ? t("About the cost: a graded answer costs a fraction of a cent, so a few dollars of credit goes a long way.")
+          : t("About the cost: OpenAI bills the API separately from ChatGPT. A graded answer costs a fraction of a cent.")}
       </Note>
       <p className="mt-3 text-[12px] leading-normal text-muted-foreground">
-        {serverless() ? "Kept only on this device, in the app's private storage." : <>Saved to <span className="font-mono">~/.etude/.env</span> as <span className="font-mono">{env}</span>, readable only by you.</>}
+        {serverless() ? t("Kept only on this device, in the app's private storage.") : t("Saved to {file} as {env}, readable only by you.", { file: "~/.etude/.env", env })}
       </p>
       <Spacer />
       {result?.ok ? (
-        <Primary onClick={() => onDone({ preset: provider, tested: true })}>Continue</Primary>
+        <Primary onClick={() => onDone({ preset: provider, tested: true })}>{t("Continue")}</Primary>
       ) : (
-        <Primary onClick={test} busy={busy} disabled={!key.trim()}>{result ? "Test again" : "Save and test"}</Primary>
+        <Primary onClick={test} busy={busy} disabled={!key.trim()}>{result ? t("Test again") : t("Save and test")}</Primary>
       )}
       {!result?.ok && (
         <a
@@ -635,7 +632,7 @@ function KeySetup({ provider, newcomer, apply, onDone }: { provider: "openrouter
           rel="noreferrer"
           className="mt-1.5 flex h-10 items-center justify-center text-[14px] font-medium text-muted-foreground hover:text-foreground"
         >
-          Open {provider === "openrouter" ? "openrouter.ai" : "platform.openai.com"}
+          {provider === "openrouter" ? t("Open openrouter.ai") : t("Open platform.openai.com")}
         </a>
       )}
     </>
@@ -646,10 +643,10 @@ function OpenRouterHowTo() {
   return (
     <Steps
       items={[
-        <><b>Create an account</b> at openrouter.ai (Google login works)</>,
-        <><b>Add US$5 of credit</b>. It isn't a subscription; it only goes down when you study.</>,
-        <><b>Create a key</b> and copy it</>,
-        <>Come back and <b>paste it</b>. We'll test it for you.</>,
+        <>{t("Create an account at openrouter.ai (Google login works)")}</>,
+        <>{t("Add US$5 of credit. It isn't a subscription; it only goes down when you study.")}</>,
+        <>{t("Create a key and copy it")}</>,
+        <>{t("Come back and paste it. We'll test it for you.")}</>,
       ]}
     />
   );
@@ -658,7 +655,7 @@ function OpenRouterHowTo() {
 function GuidedOpenRouter({ onOpened, onSkip }: { onOpened(): void; onSkip(): void }) {
   return (
     <>
-      <Title lead="A site that sells access to AI models by the cent. About 3 minutes.">The easiest way: OpenRouter</Title>
+      <Title lead={t("A site that sells access to AI models by the cent. About 3 minutes.")}>{t("The easiest way: OpenRouter")}</Title>
       <OpenRouterHowTo />
       <Spacer />
       <Primary
@@ -667,9 +664,9 @@ function GuidedOpenRouter({ onOpened, onSkip }: { onOpened(): void; onSkip(): vo
           onOpened();
         }}
       >
-        Open openrouter.ai
+        {t("Open openrouter.ai")}
       </Primary>
-      <Ghost onClick={onSkip}>Skip for now, study without AI</Ghost>
+      <Ghost onClick={onSkip}>{t("Skip for now, study without AI")}</Ghost>
     </>
   );
 }
@@ -693,23 +690,23 @@ function LocalSetup({ apply, onDone }: { apply: Apply; onDone(o: AiOutcome): voi
   };
   return (
     <>
-      <Title lead="Any OpenAI-compatible chat endpoint: llama.cpp, Ollama, vLLM. No key is sent.">Use a local server</Title>
+      <Title lead={t("Any OpenAI-compatible chat endpoint: llama.cpp, Ollama, vLLM. No key is sent.")}>{t("Use a local server")}</Title>
       <div className="mt-4 flex flex-col gap-3">
         <label className="text-[12.5px] text-muted-foreground">
-          URL
+          {t("URL")}
           <Input value={url} onChange={(e) => setUrl(e.target.value)} spellCheck={false} className="mt-1.5 h-11 rounded-xl bg-card font-mono text-[13px] text-foreground" />
         </label>
         <label className="text-[12.5px] text-muted-foreground">
-          Model
-          <Input value={model} onChange={(e) => setModel(e.target.value)} spellCheck={false} placeholder="the name your server reports" className="mt-1.5 h-11 rounded-xl bg-card font-mono text-[13px] text-foreground" />
+          {t("Model")}
+          <Input value={model} onChange={(e) => setModel(e.target.value)} spellCheck={false} placeholder={t("the name your server reports")} className="mt-1.5 h-11 rounded-xl bg-card font-mono text-[13px] text-foreground" />
         </label>
       </div>
       <Verdict result={result} />
       <Spacer />
       {result?.ok ? (
-        <Primary onClick={() => onDone({ preset: "local", tested: true })}>Continue</Primary>
+        <Primary onClick={() => onDone({ preset: "local", tested: true })}>{t("Continue")}</Primary>
       ) : (
-        <Primary onClick={test} busy={busy} disabled={!url.trim() || !model.trim()}>{result ? "Test again" : "Save and test"}</Primary>
+        <Primary onClick={test} busy={busy} disabled={!url.trim() || !model.trim()}>{result ? t("Test again") : t("Save and test")}</Primary>
       )}
     </>
   );
@@ -733,14 +730,14 @@ function SyncStep({ level, onDone }: { level: OnboardingLevel; onDone(o: SyncOut
     try {
       let body: Record<string, string>;
       if (choice === "folder") {
-        if (!folder.trim()) throw new Error("Enter the folder to sync through.");
+        if (!folder.trim()) throw new Error(t("Enter the folder to sync through."));
         body = { folder: folder.trim() };
       } else if (choice === "server") {
         const u = server.trim();
         try {
           if (!/^https?:$/.test(new URL(u).protocol)) throw new Error();
         } catch {
-          throw new Error("Enter a full http or https address.");
+          throw new Error(t("Enter a full http or https address."));
         }
         body = { server: u };
       } else {
@@ -763,46 +760,46 @@ function SyncStep({ level, onDone }: { level: OnboardingLevel; onDone(o: SyncOut
 
   return (
     <>
-      <Title lead="Your cards and reviews stay the same on the phone and the computer.">Use Etude on more than one device?</Title>
+      <Title lead={t("Your cards and reviews stay the same on the phone and the computer.")}>{t("Use Etude on more than one device?")}</Title>
       <Options role="radiogroup">
         <Option
           kind="radio"
           icon={CloudLock}
-          title="Etude Sync"
-          hint={canShowPurchases() ? "Encrypted, works everywhere. US$5/month or US$40/year." : "Encrypted, works everywhere."}
+          title={t("Etude Sync")}
+          hint={canShowPurchases() ? t("Encrypted, works everywhere. US$5/month or US$40/year.") : t("Encrypted, works everywhere.")}
           selected={choice === "cloud"}
           onClick={() => setChoice("cloud")}
         />
         <Option
           kind="radio"
           icon={FolderSync}
-          title="My own folder"
-          hint={noFolder ? "Desktop app only. Free: point it at Dropbox, iCloud Drive or Syncthing." : "Free: point it at Dropbox, iCloud Drive or Syncthing."}
+          title={t("My own folder")}
+          hint={noFolder ? t("Desktop app only. Free: point it at Dropbox, iCloud Drive or Syncthing.") : t("Free: point it at Dropbox, iCloud Drive or Syncthing.")}
           selected={choice === "folder"}
           disabled={noFolder}
           onClick={() => setChoice("folder")}
         >
           {choice === "folder" && (
             <div className="flex gap-2 px-3.5 pb-3">
-              <Input autoFocus value={folder} onChange={(e) => setFolder(e.target.value)} placeholder="/home/you/Dropbox/Etude" spellCheck={false} aria-label="Folder" className="h-10 min-w-0 flex-1 rounded-xl bg-background font-mono text-[13px]" />
+              <Input autoFocus value={folder} onChange={(e) => setFolder(e.target.value)} placeholder="/home/you/Dropbox/Etude" spellCheck={false} aria-label={t("Folder")} className="h-10 min-w-0 flex-1 rounded-xl bg-background font-mono text-[13px]" />
               <ChooseFolder onPick={setFolder} className="rounded-xl md:h-10" />
             </div>
           )}
         </Option>
         {level === "tinker" && (
-          <Option kind="radio" icon={Server} title="My own server" hint="An Etude Sync server you run yourself." selected={choice === "server"} onClick={() => setChoice("server")}>
+          <Option kind="radio" icon={Server} title={t("My own server")} hint={t("An Etude Sync server you run yourself.")} selected={choice === "server"} onClick={() => setChoice("server")}>
             {choice === "server" && (
               <div className="px-3.5 pb-3">
-                <Input autoFocus value={server} onChange={(e) => setServer(e.target.value)} placeholder="https://sync.example.com" spellCheck={false} aria-label="Server address" className="h-10 rounded-xl bg-background font-mono text-[13px]" />
+                <Input autoFocus value={server} onChange={(e) => setServer(e.target.value)} placeholder="https://sync.example.com" spellCheck={false} aria-label={t("Server address")} className="h-10 rounded-xl bg-background font-mono text-[13px]" />
               </div>
             )}
           </Option>
         )}
-        <Option kind="radio" icon={Smartphone} title="Just this device" hint="No sync. You can turn it on later." selected={choice === "device"} onClick={() => setChoice("device")} />
+        <Option kind="radio" icon={Smartphone} title={t("Just this device")} hint={t("No sync. You can turn it on later.")} selected={choice === "device"} onClick={() => setChoice("device")} />
       </Options>
       {error && <Problem>{error}</Problem>}
       <Spacer />
-      <Primary onClick={next} disabled={!choice} busy={busy}>Continue</Primary>
+      <Primary onClick={next} disabled={!choice} busy={busy}>{t("Continue")}</Primary>
     </>
   );
 }
@@ -854,16 +851,16 @@ function CloudSignup({ stage, onStage, onDone }: { stage: CloudStage; onStage(s:
   if (stage === "email")
     return (
       <>
-        <Title lead="We'll email you a code. No password to remember.">Sign in to Etude Sync</Title>
+        <Title lead={t("We'll email you a code. No password to remember.")}>{t("Sign in to Etude Sync")}</Title>
         <form className="mt-5" onSubmit={(e) => (e.preventDefault(), void run(async () => {
-          if (!email.trim()) throw new Error("Enter your email address.");
+          if (!email.trim()) throw new Error(t("Enter your email address."));
           await postJson("/api/sync/signin", { email: email.trim() });
           onStage("code");
         }))}>
-          <Input autoFocus type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" aria-label="Email" className="h-12 rounded-xl bg-card text-[15px]" />
+          <Input autoFocus type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" aria-label={t("Email")} className="h-12 rounded-xl bg-card text-[15px]" />
           {error && <Problem>{error}</Problem>}
           <Spacer />
-          <Primary busy={busy} disabled={!email.trim()} onClick={() => {}}>Send code</Primary>
+          <Primary busy={busy} disabled={!email.trim()} onClick={() => {}}>{t("Send code")}</Primary>
         </form>
       </>
     );
@@ -871,54 +868,54 @@ function CloudSignup({ stage, onStage, onDone }: { stage: CloudStage; onStage(s:
   if (stage === "code")
     return (
       <>
-        <Title lead={<>Sent to <span className="text-foreground">{email.trim()}</span>. It works for 15 minutes.</>}>Enter the code</Title>
+        <Title lead={t("Sent to {email}. It works for 15 minutes.", { email: email.trim() })}>{t("Enter the code")}</Title>
         <form className="mt-5" onSubmit={(e) => (e.preventDefault(), void run(async () => {
-          if (!code.trim()) throw new Error("Enter the code from the email.");
+          if (!code.trim()) throw new Error(t("Enter the code from the email."));
           await postJson("/api/sync/verify", { code: code.trim() });
           await afterSignIn();
         }))}>
-          <Input autoFocus inputMode="numeric" autoComplete="one-time-code" spellCheck={false} value={code} onChange={(e) => setCode(e.target.value)} placeholder="6-digit code" aria-label="Sign-in code" className="h-12 rounded-xl bg-card font-mono text-[15px] tracking-widest" />
+          <Input autoFocus inputMode="numeric" autoComplete="one-time-code" spellCheck={false} value={code} onChange={(e) => setCode(e.target.value)} placeholder={t("6-digit code")} aria-label={t("Sign-in code")} className="h-12 rounded-xl bg-card font-mono text-[15px] tracking-widest" />
           {error && <Problem>{error}</Problem>}
           <Spacer />
-          <Primary busy={busy} disabled={!code.trim()} onClick={() => {}}>Verify</Primary>
+          <Primary busy={busy} disabled={!code.trim()} onClick={() => {}}>{t("Verify")}</Primary>
         </form>
-        <Ghost onClick={() => void run(async () => void (await postJson("/api/sync/signin", { email: email.trim() })))}>Send again</Ghost>
+        <Ghost onClick={() => void run(async () => void (await postJson("/api/sync/signin", { email: email.trim() })))}>{t("Send again")}</Ghost>
       </>
     );
 
   if (stage === "plan")
     return (
       <>
-        <Title lead="1 GB, end-to-end encrypted: only your devices can read it. Cancel anytime.">Pick a plan</Title>
+        <Title lead={t("1 GB, end-to-end encrypted: only your devices can read it. Cancel anytime.")}>{t("Pick a plan")}</Title>
         <Options role="radiogroup">
-          <Option kind="radio" icon={CalendarDays} title="Yearly · US$40" hint="Works out to US$3.33 a month." selected={plan === "yearly"} onClick={() => setPlan("yearly")} />
-          <Option kind="radio" icon={CalendarClock} title="Monthly · US$5" hint="Billed every month." selected={plan === "monthly"} onClick={() => setPlan("monthly")} />
+          <Option kind="radio" icon={CalendarDays} title={t("Yearly · US$40")} hint={t("Works out to US$3.33 a month.")} selected={plan === "yearly"} onClick={() => setPlan("yearly")} />
+          <Option kind="radio" icon={CalendarClock} title={t("Monthly · US$5")} hint={t("Billed every month.")} selected={plan === "monthly"} onClick={() => setPlan("monthly")} />
         </Options>
-        <Note>Payment opens on etude.study, handled by Polar. Come back here when it's done.</Note>
+        <Note>{t("Payment opens on etude.study, handled by Polar. Come back here when it's done.")}</Note>
         {error && <Problem>{error}</Problem>}
         <Spacer />
         <Primary busy={busy} onClick={() => void run(async () => {
           openOutside((await account.checkout(plan)).url);
           onStage("waiting");
-        })}>Subscribe</Primary>
-        <Ghost onClick={() => onDone("subscribe later")}>Later</Ghost>
+        })}>{t("Subscribe")}</Primary>
+        <Ghost onClick={() => onDone("subscribe later")}>{t("Later")}</Ghost>
       </>
     );
 
   return (
     <>
-      <Title lead="Finish the payment in the browser. This page moves on by itself once Sync is active.">Waiting for the payment</Title>
+      <Title lead={t("Finish the payment in the browser. This page moves on by itself once Sync is active.")}>{t("Waiting for the payment")}</Title>
       <div className="mt-8 flex items-center gap-3 text-[14px] text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" /> Checking every few seconds…
+        <Loader2 className="size-4 animate-spin" /> {t("Checking every few seconds…")}
       </div>
       <Spacer />
       <Primary onClick={() => void run(async () => {
         const a = await account.status();
         if (a.me?.sync.active) onDone("password next");
-        else throw new Error("Sync isn't active yet. If you paid, give it a few seconds.");
-      })} busy={busy}>I've paid</Primary>
+        else throw new Error(t("Sync isn't active yet. If you paid, give it a few seconds."));
+      })} busy={busy}>{t("I've paid")}</Primary>
       {error && <Problem>{error}</Problem>}
-      <Ghost onClick={() => onStage("plan")}>Back to plans</Ghost>
+      <Ghost onClick={() => onStage("plan")}>{t("Back to plans")}</Ghost>
     </>
   );
 }
@@ -928,14 +925,14 @@ function DoneStep({ level, ai, sync, onFinish }: { level: OnboardingLevel; ai: A
   const pickFile = useImportPicker(() => announceDataChange());
 
   const aiRow = useMemo(() => {
-    if (!ai || ai === "off") return { value: "Off", pill: null };
-    if (ai === "later" || !ai.preset) return { value: "Not set up", pill: "later" };
-    return { value: PRESET_LABEL[ai.preset], pill: ai.tested ? "tested" : "not tested" };
+    if (!ai || ai === "off") return { value: t("Off"), pill: null };
+    if (ai === "later" || !ai.preset) return { value: t("Not set up"), pill: t("later") };
+    return { value: PRESET_LABEL[ai.preset], pill: ai.tested ? t("tested") : t("not tested") };
   }, [ai]);
   const syncRow = useMemo(() => {
-    if (!sync || sync === "skipped") return { value: "Not set up", pill: null };
-    const label = { cloud: "Etude Sync", folder: "My own folder", server: "My own server", device: "Just this device" }[sync.choice];
-    return { value: label, pill: sync.next };
+    if (!sync || sync === "skipped") return { value: t("Not set up"), pill: null };
+    const label: Record<SyncChoice, string> = { cloud: t("Etude Sync"), folder: t("My own folder"), server: t("My own server"), device: t("Just this device") };
+    return { value: label[sync.choice], pill: sync.next ? t(sync.next) : null };
   }, [sync]);
 
   const showcase = async () => {
@@ -946,26 +943,26 @@ function DoneStep({ level, ai, sync, onFinish }: { level: OnboardingLevel; ai: A
       await onFinish(() => navigate(`/deck?name=${encodeURIComponent(pack.decks?.[0]?.name ?? "Etude Showcase")}`));
     } catch (e) {
       setImporting(false);
-      toast.error("Couldn't add the Showcase deck", { description: (e as Error).message.slice(0, 300) });
+      toast.error(t("Couldn't add the Showcase deck"), { description: (e as Error).message.slice(0, 300) });
     }
   };
 
   return (
     <>
-      <Title>You're set</Title>
+      <Title>{t("You're set")}</Title>
       <div className="mt-5 divide-y rounded-[14px] border bg-card text-[13.5px]">
-        <Row label="Setup level" value={levelTitle(level)} />
-        <Row label="AI grading" value={aiRow.value} pill={aiRow.pill} onClick={ai && ai !== "off" && !(typeof ai === "object" && ai.tested) ? () => void onFinish(() => navigate("/settings#ai")) : undefined} />
-        <Row label="Sync" value={syncRow.value} pill={syncRow.pill} onClick={syncRow.pill ? () => void onFinish(() => navigate("/settings#sync")) : undefined} />
+        <Row label={t("Setup level")} value={levelTitle(level)} />
+        <Row label={t("AI grading")} value={aiRow.value} pill={aiRow.pill} onClick={ai && ai !== "off" && !(typeof ai === "object" && ai.tested) ? () => void onFinish(() => navigate("/settings#ai")) : undefined} />
+        <Row label={t("Sync")} value={syncRow.value} pill={syncRow.pill} onClick={syncRow.pill ? () => void onFinish(() => navigate("/settings#sync")) : undefined} />
       </div>
-      <p className="mt-6 text-[14.5px] font-medium">Start with something</p>
+      <p className="mt-6 text-[14.5px] font-medium">{t("Start with something")}</p>
       <Options className="mt-2.5">
-        <Option icon={importing ? Spinner : Star} title="Try the Showcase deck" hint="Every card type in 5 minutes." onClick={importing ? undefined : showcase} />
-        <Option icon={Download} title="Browse the Market" hint="Countries, periodic table, Morse…" onClick={() => void onFinish(() => navigate("/market"))} />
+        <Option icon={importing ? Spinner : Star} title={t("Try the Showcase deck")} hint={t("Every card type in 5 minutes.")} onClick={importing ? undefined : showcase} />
+        <Option icon={Download} title={t("Browse the Market")} hint={t("Countries, periodic table, Morse…")} onClick={() => void onFinish(() => navigate("/market"))} />
         <Option
           icon={FileInput}
-          title="Import from Anki"
-          hint="Bring your .apkg with history."
+          title={t("Import from Anki")}
+          hint={t("Bring your .apkg with history.")}
           onClick={() => {
             // The file picker has to open inside the click.
             pickFile();
@@ -974,7 +971,7 @@ function DoneStep({ level, ai, sync, onFinish }: { level: OnboardingLevel; ai: A
         />
       </Options>
       <Spacer />
-      <Primary onClick={() => void onFinish(() => navigate("/"))}>Go to my decks</Primary>
+      <Primary onClick={() => void onFinish(() => navigate("/"))}>{t("Go to my decks")}</Primary>
     </>
   );
 }
@@ -986,12 +983,12 @@ function Row({ label, value, pill, onClick }: { label: string; value: string; pi
       <span className="flex min-w-0 items-center gap-1.5 text-right">
         <span className="truncate">{value}</span>
         {pill && <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">{pill}</span>}
-        {onClick && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />}
+        {onClick && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground rtl-flip" />}
       </span>
     </>
   );
   return onClick ? (
-    <button onClick={onClick} className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left first:rounded-t-[14px] last:rounded-b-[14px] hover:bg-accent/40">
+    <button onClick={onClick} className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left rtl:text-right first:rounded-t-[14px] last:rounded-b-[14px] hover:bg-accent/40">
       {inner}
     </button>
   ) : (

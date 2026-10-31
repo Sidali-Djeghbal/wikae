@@ -17,10 +17,10 @@ export type Crumb = { label: string; onClick(): void };
 
 export function Breadcrumb({ items, className }: { items: Crumb[]; className?: string }) {
   return (
-    <nav aria-label="Breadcrumb" className={cn("-ml-1.5 mb-1 flex min-w-0 flex-wrap items-center text-sm text-muted-foreground", className)}>
+    <nav aria-label="Breadcrumb" className={cn("-ml-1.5 rtl:-mr-1.5 rtl:ml-0 mb-1 flex min-w-0 flex-wrap items-center text-sm text-muted-foreground", className)}>
       {items.map((c, i) => (
         <span key={i} className="flex min-w-0 items-center">
-          {i > 0 && <ChevronRight className="size-3.5 shrink-0 opacity-60" />}
+          {i > 0 && <ChevronRight className="size-3.5 shrink-0 opacity-60 rtl-flip" />}
           <button className="min-h-9 truncate rounded-md px-1.5 transition-colors hover:text-foreground" onClick={c.onClick}>{c.label}</button>
         </span>
       ))}
@@ -121,13 +121,13 @@ export function Block({ title, description, aside, stackAside, children, classNa
 /** A tappable row inside a section card: icon, title, description, trailing chevron. */
 export function LinkRow({ icon: Icon, title, description, onClick }: { icon?: React.ComponentType<{ className?: string }>; title: React.ReactNode; description?: React.ReactNode; onClick(): void }) {
   return (
-    <button onClick={onClick} className="flex min-h-14 w-full items-center gap-3 border-b px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-accent/40 sm:px-5">
+    <button onClick={onClick} className="flex min-h-14 w-full items-center gap-3 border-b px-4 py-3 text-left rtl:text-right transition-colors last:border-b-0 hover:bg-accent/40 sm:px-5">
       {Icon && <Icon className="size-4 shrink-0 text-muted-foreground" />}
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium">{title}</div>
         {description && <div className="text-[13px] text-muted-foreground">{description}</div>}
       </div>
-      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+      <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl-flip" />
     </button>
   );
 }

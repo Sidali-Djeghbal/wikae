@@ -13,5 +13,11 @@
     root.dataset.theme = t.id;
     document.querySelector('meta[name="color-scheme"]').content = t.scheme === "light" ? "light" : "dark";
     if (t.bg) document.querySelector('meta[name="theme-color"]').content = t.bg;
+    var lang = localStorage.getItem("etude.language");
+    if (lang === "ar") {
+      root.lang = "ar";
+      root.dir = "rtl";
+      root.classList.add("rtl");
+    }
   } catch (e) {}
 })();

@@ -4,6 +4,7 @@ import { CircleAlert, CircleCheck, Download, Loader2, Upload } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { Block, CopyValue, Section } from "@/components/settings-ui";
+import { t } from "@/lib/i18n";
 
 type Counts = { created: number; updated: number; unchanged: number };
 interface ImportReport {
@@ -54,21 +55,21 @@ export function DataSection({ dbPath, mediaDir }: { dbPath: string; mediaDir: st
   const stamp = new Date().toISOString().slice(0, 10);
 
   return (
-    <Section id="data" title="Data" description="The collection lives in a SQLite file. Pasted images, audio, video, imported media and drawings are copied into Etude's own media folder next to it.">
+    <Section id="data" title={t("Data")} description={t("The collection lives in a SQLite file. Pasted images, audio, video, imported media and drawings are copied into Etude's own media folder next to it.")}>
       <Block>
         <div className="grid gap-4">
-          <CopyValue label="Database" value={dbPath} />
-          <CopyValue label="Media folder" value={mediaDir} />
-          <p className="text-sm text-muted-foreground">Paste media files or local file paths into a card field to copy them here. Cards keep working when the originals are moved or deleted. Back up this folder together with the database.</p>
+          <CopyValue label={t("Database")} value={dbPath} />
+          <CopyValue label={t("Media folder")} value={mediaDir} />
+          <p className="text-sm text-muted-foreground">{t("Paste media files or local file paths into a card field to copy them here. Cards keep working when the originals are moved or deleted. Back up this folder together with the database.")}</p>
         </div>
       </Block>
       <Block
-        title="Import packs"
-        description="Add or update decks, types and items from pack files. Items are matched by id, so importing an edited pack again updates it and keeps review history."
+        title={t("Import packs")}
+        description={t("Add or update decks, types and items from pack files. Items are matched by id, so importing an edited pack again updates it and keeps review history.")}
         stackAside
         aside={
           <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" onClick={pick} disabled={busy}>
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}Choose files
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}{t("Choose files")}
           </Button>
         }
       >
@@ -81,13 +82,13 @@ export function DataSection({ dbPath, mediaDir }: { dbPath: string; mediaDir: st
                   <div className="break-all font-medium">{r.file}</div>
                   {r.ok && r.items ? (
                     <div className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                      Items: <span className="tabular text-foreground/90">{r.items.created}</span> new, <span className="tabular text-foreground/90">{r.items.updated}</span> updated,{" "}
-                      <span className="tabular text-foreground/90">{r.items.unchanged}</span> unchanged
+                      {t("Items")}: <span className="tabular text-foreground/90">{r.items.created}</span> {t("new")}, <span className="tabular text-foreground/90">{r.items.updated}</span> {t("updated")},{" "}
+                      <span className="tabular text-foreground/90">{r.items.unchanged}</span> {t("unchanged")}
                       {r.types && r.types.created + r.types.updated > 0 && (
-                        <> · Types: {r.types.created} new, {r.types.updated} updated</>
+                        <> · {t("Types")}: {r.types.created} {t("new")}, {r.types.updated} {t("updated")}</>
                       )}
-                      {!!r.decks && <> · {r.decks} {r.decks === 1 ? "deck" : "decks"}</>}
-                      {!!r.presets && <> · {r.presets} {r.presets === 1 ? "preset" : "presets"}</>}
+                      {!!r.decks && <> · {r.decks} {r.decks === 1 ? t("deck") : t("decks")}</>}
+                      {!!r.presets && <> · {r.presets} {r.presets === 1 ? t("preset") : t("presets")}</>}
                     </div>
                   ) : (
                     <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-words font-mono text-xs text-destructive">{r.error}</pre>
@@ -99,13 +100,13 @@ export function DataSection({ dbPath, mediaDir }: { dbPath: string; mediaDir: st
         )}
       </Block>
       <Block
-        title="Export"
-        description="One pack with every item, plus the decks, presets, custom card types and tag notes they use. Review history and scheduling are not in packs; back up the database file to keep them."
+        title={t("Export")}
+        description={t("One pack with every item, plus the decks, presets, custom card types and tag notes they use. Review history and scheduling are not in packs; back up the database file to keep them.")}
         stackAside
         aside={
           <Button asChild variant="outline" size="sm" className="h-10 gap-1.5 md:h-8">
             <a href={api.exportUrl({})} download={`etude-${stamp}.pack.json`}>
-              <Download className="size-4" />Export pack
+              <Download className="size-4" />{t("Export pack")}
             </a>
           </Button>
         }

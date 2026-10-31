@@ -1,6 +1,8 @@
 import { autoSync } from "@/lib/sync";
-import { Archive, BarChart3, Blocks, Layers, Library, Settings, Store } from "lucide-react";
+import { Archive, BarChart3, Blocks, Globe, Layers, Library, Settings, Store } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Direction } from "radix-ui";
+import { useLocale } from "@/lib/useLocale";
 import { Toaster } from "@/components/ui/sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarIcon } from "@/components/sidebar-icon";
@@ -73,7 +75,34 @@ function useSidebarCollapsed() {
   return [collapsed, setCollapsed] as const;
 }
 
+function LanguageToggle({ collapsed }: { collapsed: boolean }) {
+  const { locale, toggle } = useLocale();
+  const nextLang = locale === "ar" ? "English" : "العربية";
+  const btn = (
+    <button
+      onClick={toggle}
+      aria-label={`Switch to ${nextLang}`}
+      className={cn(
+        "flex h-8 items-center gap-2.5 rounded-md text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
+        collapsed ? "justify-center px-0" : "px-2",
+      )}
+    >
+      <Globe className="size-4 shrink-0" />
+      {!collapsed && <span className="whitespace-nowrap">{locale === "ar" ? "English" : "العربية"}</span>}
+    </button>
+  );
+  return collapsed ? (
+    <Tooltip>
+      <TooltipTrigger asChild>{btn}</TooltipTrigger>
+      <TooltipContent side="right">{nextLang}</TooltipContent>
+    </Tooltip>
+  ) : (
+    btn
+  );
+}
+
 export function App() {
+  const { t, locale } = useLocale();
   const { path, params } = useLocation();
   const [collapsed, setCollapsed] = useSidebarCollapsed();
   const studying = path === "/study" || path === "/watch";
@@ -95,9 +124,11 @@ export function App() {
     const card = params.get("card") ? Number(params.get("card")) : undefined;
     const title = params.get("title") ?? (deck ? deck.split("::").pop()! : q ? q : "Etude");
     return (
-      <TooltipProvider delayDuration={300}>
-        <EmbedStudy scope={{ deck, q }} limit={Math.max(1, Number(params.get("n") ?? 10))} cardId={card} title={title} />
-      </TooltipProvider>
+      <Direction.DirectionProvider dir={locale === "ar" ? "rtl" : "ltr"}>
+        <TooltipProvider delayDuration={300}>
+          <EmbedStudy scope={{ deck, q }} limit={Math.max(1, Number(params.get("n") ?? 10))} cardId={card} title={title} />
+        </TooltipProvider>
+      </Direction.DirectionProvider>
     );
   }
   let page: React.ReactNode;
@@ -122,8 +153,9 @@ export function App() {
   else page = <DecksPage key={path} archived={path === "/archive"} />;
 
   return (
-    <TooltipProvider delayDuration={300}>
-      {studying ? (
+    <Direction.DirectionProvider dir={locale === "ar" ? "rtl" : "ltr"}>
+      <TooltipProvider delayDuration={300}>
+        {studying ? (
         page
       ) : (
         <div
@@ -137,9 +169,9 @@ export function App() {
               collapsed ? "w-14 px-2" : "w-52 px-3",
             )}
           >
-            <div className={cn("mb-6 flex h-8 items-center", collapsed ? "justify-center" : "justify-between pl-2")}>
+            <div className={cn("mb-6 flex h-8 items-center", collapsed ? "justify-center" : "justify-between pl-2 rtl:pl-0 rtl:pr-2")}>
               {!collapsed && (
-                <button onClick={() => navigate("/")} className="text-left">
+                <button onClick={() => navigate("/")} className="text-left rtl:text-right">
                   <Wordmark className="text-[1.45rem] leading-none" />
                 </button>
               )}
@@ -147,24 +179,25 @@ export function App() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setCollapsed((c) => !c)}
-                    aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    aria-label={collapsed ? t("Expand sidebar") : t("Collapse sidebar")}
                     aria-expanded={!collapsed}
                     className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                   >
-                    <SidebarIcon className="size-[18px]" />
+                    <SidebarIcon className="size-[18px] rtl-flip" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right">
-                  {collapsed ? "Expand" : "Collapse"} <span className="opacity-60">{toggleKey}</span>
+                <TooltipContent side={locale === "ar" ? "left" : "right"}>
+                  {collapsed ? t("Expand") : t("Collapse")} <span className="opacity-60">{toggleKey}</span>
                 </TooltipContent>
               </Tooltip>
             </div>
             {NAV.map((n) => {
+              const label = t(n.label);
               const btn = (
                 <button
                   key={n.to}
                   onClick={() => navigate(n.to)}
-                  aria-label={n.label}
+                  aria-label={label}
                   aria-current={n.match(path) ? "page" : undefined}
                   className={cn(
                     "flex h-8 items-center gap-2.5 rounded-md text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
@@ -173,19 +206,20 @@ export function App() {
                   )}
                 >
                   <n.icon className={cn("size-4 shrink-0", n.match(path) && "text-highlight")} />
-                  {!collapsed && <span className="whitespace-nowrap">{n.label}</span>}
+                  {!collapsed && <span className="whitespace-nowrap">{label}</span>}
                 </button>
               );
               return collapsed ? (
                 <Tooltip key={n.to}>
                   <TooltipTrigger asChild>{btn}</TooltipTrigger>
-                  <TooltipContent side="right">{n.label}</TooltipContent>
+                  <TooltipContent side={locale === "ar" ? "left" : "right"}>{label}</TooltipContent>
                 </Tooltip>
               ) : (
                 btn
               );
             })}
-            <div className="mt-auto pt-4">
+            <div className="mt-auto flex flex-col gap-1 pt-4">
+              <LanguageToggle collapsed={collapsed} />
               <SidebarUpdate collapsed={collapsed} />
             </div>
           </aside>
@@ -217,5 +251,6 @@ export function App() {
       )}
       <Toaster position={phone ? "bottom-center" : "top-center"} mobileOffset={phone ? { bottom: studying ? 104 : 92, left: 12, right: 12 } : undefined} />
     </TooltipProvider>
+  </Direction.DirectionProvider>
   );
 }

@@ -76,7 +76,12 @@ function theme() {
     if (val) vars[v] = val;
   }
   vars["--danger"] ||= cs.getPropertyValue("--destructive").trim();
-  return { scheme: pageScheme(), vars };
+  return {
+    scheme: pageScheme(),
+    vars,
+    lang: document.documentElement.lang || "en",
+    dir: document.documentElement.dir || "ltr",
+  };
 }
 
 export const CardFrame = forwardRef<CardFrameHandle, Props>(function CardFrame(props, ref) {

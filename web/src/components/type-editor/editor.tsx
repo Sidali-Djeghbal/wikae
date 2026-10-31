@@ -19,6 +19,7 @@ import { AutoTextarea, FieldEditor } from "@/components/field-editor";
 import { api, ApiError, type CardType, type FieldSpec, type LeftoverReport, type SchedulerSummary, type TypeSummary } from "@/lib/api";
 import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 import { FieldsSchema } from "./fields-schema";
 import { TemplateReference } from "./reference";
 import { NewTypeDialog } from "./dialogs";
@@ -342,8 +343,8 @@ export function TypeEditor({ id }: { id: string }) {
   if (missing)
     return (
       <div className="mx-auto flex max-w-xl flex-col items-center gap-4 px-6 py-24 text-center">
-        <p className="text-muted-foreground">There's no card type called <code className="font-mono text-foreground">{id}</code>.</p>
-        <Button variant="outline" onClick={() => navigate("/types")}><ArrowLeft className="size-4" />All card types</Button>
+        <p className="text-muted-foreground">{t("There's no card type called")} <code className="font-mono text-foreground">{id}</code>.</p>
+        <Button variant="outline" onClick={() => navigate("/types")}><ArrowLeft className="size-4 rtl:rotate-180" />{t("All card types")}</Button>
       </div>
     );
   if (!draft) return <div className="flex h-[60dvh] items-center justify-center text-muted-foreground"><Loader2 className="animate-spin" /></div>;
@@ -357,36 +358,36 @@ export function TypeEditor({ id }: { id: string }) {
     <div className="mx-auto w-full max-w-[1600px]">
       {/* header */}
       <div className="flex items-start gap-2 px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8">
-        <Button variant="ghost" size="icon" className="-ml-2 size-10 shrink-0" onClick={back} aria-label="All card types"><ArrowLeft className="size-4" /></Button>
+        <Button variant="ghost" size="icon" className="-ml-2 size-10 shrink-0 rtl:-mr-2 rtl:ml-0" onClick={back} aria-label={t("All card types")}><ArrowLeft className="size-4 rtl:rotate-180" /></Button>
         <div className="min-w-0 flex-1 pt-1">
-          <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">{draft.name || <span className="text-muted-foreground">Untitled type</span>}</h1>
+          <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">{draft.name || <span className="text-muted-foreground">{t("Untitled type")}</span>}</h1>
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <code className="font-mono">{draft.id}</code>
-            {isNew ? <Badge variant="outline" className="font-normal text-highlight">new, not saved</Badge> : <Kind summary={summary} />}
+            {isNew ? <Badge variant="outline" className="font-normal text-highlight">{t("new, not saved")}</Badge> : <Kind summary={summary} />}
             {!isNew && <span className="tabular">{items} item{items === 1 ? "" : "s"}</span>}
             {!isNew && archived > 0 && <span className="tabular" title={`Archived items still use this type. Find them in Browse with type:${draft.id} is:archived.`}>· {archived} archived</span>}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="size-10" aria-label="More actions"><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="size-10" aria-label={t("More actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setDupOpen(true)}><Copy />Duplicate…</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => download(`${draft.id}.type.json`, exportShape(draft))}><Download />Export JSON</DropdownMenuItem>
-              {!isNew && items > 0 && <DropdownMenuItem onClick={() => navigate(`/browse?q=${encodeURIComponent(`type:${id}`)}`)}><Plus />Items of this type</DropdownMenuItem>}
+              <DropdownMenuItem onClick={() => setDupOpen(true)}><Copy />{t("Duplicate…")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => download(`${draft.id}.type.json`, exportShape(draft))}><Download />{t("Export JSON")}</DropdownMenuItem>
+              {!isNew && items > 0 && <DropdownMenuItem onClick={() => navigate(`/browse?q=${encodeURIComponent(`type:${id}`)}`)}><Plus />{t("Items of this type")}</DropdownMenuItem>}
               {(summary?.edited || (!isNew && summary?.shipped && !saved?.builtin)) && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setConfirmReset(true)}><RotateCcw />Reset to shipped version…</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setConfirmReset(true)}><RotateCcw />{t("Reset to shipped version…")}</DropdownMenuItem>
                 </>
               )}
               {!summary?.shipped && (
                 <>
                   <DropdownMenuSeparator />
                   {isNew ? (
-                    <DropdownMenuItem variant="destructive" onClick={() => { clearPending(id); navigate("/types"); }}><X />Discard new type</DropdownMenuItem>
+                    <DropdownMenuItem variant="destructive" onClick={() => { clearPending(id); navigate("/types"); }}><X />{t("Discard new type")}</DropdownMenuItem>
                   ) : (
-                    <DropdownMenuItem variant="destructive" onClick={askDelete}><Trash2 />Delete…</DropdownMenuItem>
+                    <DropdownMenuItem variant="destructive" onClick={askDelete}><Trash2 />{t("Delete…")}</DropdownMenuItem>
                   )}
                 </>
               )}
@@ -412,9 +413,9 @@ export function TypeEditor({ id }: { id: string }) {
       {/* phone and tablet: editor or preview */}
       <div className="px-4 pt-4 sm:px-6 lg:hidden">
         <ToggleGroup type="single" variant="outline" value={view} onValueChange={(v) => v && setView(v as "edit" | "preview")} className="w-full">
-          <ToggleGroupItem value="edit" className="h-10 flex-1">Edit</ToggleGroupItem>
+          <ToggleGroupItem value="edit" className="h-10 flex-1">{t("Edit")}</ToggleGroupItem>
           <ToggleGroupItem value="preview" className="h-10 flex-1 gap-1.5">
-            Preview{problemCount > 0 && <span className="size-1.5 rounded-full bg-destructive" aria-label="has problems" />}
+            {t("Preview")}{problemCount > 0 && <span className="size-1.5 rounded-full bg-destructive" aria-label={t("has problems")} />}
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
@@ -426,14 +427,14 @@ export function TypeEditor({ id }: { id: string }) {
             <TabsList className="grid w-full grid-cols-3 gap-1 group-data-[orientation=horizontal]/tabs:h-auto sm:flex sm:w-fit lg:grid lg:w-full xl:flex xl:w-fit">
               {[
                 ["info", "Info"],
-                ["fields", `Fields`],
+                ["fields", "Fields"],
                 ["template", "Template"],
                 ["prepare", "Prepare"],
                 ["grader", "Grader"],
                 ["sample", "Sample"],
               ].map(([v, l]) => (
                 <TabsTrigger key={v} value={v} className="h-9 px-3">
-                  {l}
+                  {t(l)}
                   {v === "fields" && <span className="tabular text-muted-foreground">{draft.fields.length}</span>}
                 </TabsTrigger>
               ))}
@@ -653,11 +654,11 @@ export function TypeEditor({ id }: { id: string }) {
           dirty ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       >
-        <span className="text-sm text-muted-foreground">{isNew ? "Not created yet" : "Unsaved changes"}</span>
+        <span className="text-sm text-muted-foreground">{isNew ? t("Not created yet") : t("Unsaved changes")}</span>
         <div className="flex-1" />
-        {!isNew && <Button variant="ghost" size="sm" className="h-9" onClick={() => { setDraft(saved); setSaveErrors([]); }}>Discard</Button>}
+        {!isNew && <Button variant="ghost" size="sm" className="h-9" onClick={() => { setDraft(saved); setSaveErrors([]); }}>{t("Discard")}</Button>}
         <Button size="sm" className="h-9 gap-1.5" onClick={save} disabled={saving}>
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{isNew ? "Create type" : "Save"}
+          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{isNew ? t("Create type") : t("Save")}
           <kbd className="hidden text-[10px] opacity-60 sm:inline">Ctrl S</kbd>
         </Button>
       </div>

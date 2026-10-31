@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Eraser, Pencil, Undo2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 type Pt = { x: number; y: number };
 type Stroke = { pts: Pt[]; w: number };
@@ -143,11 +144,11 @@ export function SketchBar({ sk }: { sk: Sketch }) {
   const tb = (active: boolean) => cn("flex h-[2.6rem] items-center justify-center gap-2 rounded-full text-[14px] font-semibold transition-all", active ? "bg-highlight px-4 text-black" : "min-w-[2.6rem] flex-1 text-muted-foreground active:bg-accent");
   return (
     <>
-      <button onClick={sk.exit} aria-label="Sair do rascunho" className="flex size-[3.25rem] shrink-0 items-center justify-center rounded-full border bg-card text-foreground active:bg-accent"><X className="size-5" /></button>
+      <button onClick={sk.exit} aria-label={t("Exit sketchpad")} className="flex size-[3.25rem] shrink-0 items-center justify-center rounded-full border bg-card text-foreground active:bg-accent"><X className="size-5" /></button>
       <div className="flex h-[3.25rem] flex-1 items-center justify-between rounded-full border bg-card px-1">
-        <button className={tb(sk.tool === "pen")} onClick={() => sk.setTool("pen")} aria-label="Caneta"><Pencil className="size-5" />{sk.tool === "pen" && "Caneta"}</button>
-        <button className={tb(sk.tool === "eraser")} onClick={() => sk.setTool("eraser")} aria-label="Borracha"><Eraser className="size-5" />{sk.tool === "eraser" && "Borracha"}</button>
-        <button className={tb(false)} onClick={sk.undo} disabled={!sk.canUndo} aria-label="Desfazer traço"><Undo2 className={cn("size-5", !sk.canUndo && "opacity-40")} /></button>
+        <button className={tb(sk.tool === "pen")} onClick={() => sk.setTool("pen")} aria-label={t("Pen")}><Pencil className="size-5" />{sk.tool === "pen" && t("Pen")}</button>
+        <button className={tb(sk.tool === "eraser")} onClick={() => sk.setTool("eraser")} aria-label={t("Eraser")}><Eraser className="size-5" />{sk.tool === "eraser" && t("Eraser")}</button>
+        <button className={tb(false)} onClick={sk.undo} disabled={!sk.canUndo} aria-label={t("Undo stroke")}><Undo2 className={cn("size-5", !sk.canUndo && "opacity-40")} /></button>
       </div>
     </>
   );

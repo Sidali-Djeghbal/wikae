@@ -7,8 +7,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { api, type CleanupReport } from "@/lib/api";
 import { navigate } from "@/lib/router";
 import { Block, Section } from "@/components/settings-ui";
+import { t } from "@/lib/i18n";
 
-const count = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString()} ${n === 1 ? one : many}`;
+const count = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString()} ${n === 1 ? t(one) : t(many)}`;
 const size = (n: number) => (n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${(n / 1024).toFixed(0)} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
 
 /** Leftover cards to delete: every one, or one type's face. */
@@ -34,10 +35,10 @@ export function CleanupSection() {
     try {
       if ("cards" in what) {
         const r = await api.deleteLeftoverCards({ type: what.cards.type, face: what.cards.face });
-        toast.success(`Deleted ${count(r.cards, "card")}`);
+        toast.success(t("Deleted {n} cards", { n: r.cards }));
       } else {
         const r = await api.deleteUnusedMedia();
-        toast.success(`Deleted ${count(r.files, "file")} (${size(r.bytes)})`);
+        toast.success(t("Deleted {n} files ({size})", { n: r.files, size: size(r.bytes) }));
       }
       load();
     } catch (e) {
@@ -50,24 +51,24 @@ export function CleanupSection() {
   const left = report?.leftover;
   const media = report?.media;
   const target = confirm && "cards" in confirm ? confirm.cards : null;
-  const checking = !asked ? <p className="text-sm text-muted-foreground">Not checked yet.</p> : !report && !error && <span className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Checking…</span>;
+  const checking = !asked ? <p className="text-sm text-muted-foreground">{t("Not checked yet.")}</p> : !report && !error && <span className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />{t("Checking…")}</span>;
   const deleteButton = (label: string, n: number | undefined, onClick: () => void) => (
     <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" disabled={!n || busy} onClick={onClick}>
-      {busy ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}{label}
+      {busy ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}{t(label)}
     </Button>
   );
 
   return (
-    <Section id="cleanup" title="Clean up" description="Things Etude keeps until you decide to delete them. Deleting can't be undone, so back up the database and media folder first if you're unsure.">
+    <Section id="cleanup" title={t("Clean up")} description={t("Things Etude keeps until you decide to delete them. Deleting can't be undone, so back up the database and media folder first if you're unsure.")}>
       <Block
-        title="Leftover cards"
-        description="Cards your card types no longer create, for example after removing a face from a type: the cards that face made for existing items stay. Saving a type never deletes cards, so review history isn't lost by accident. Until deleted they still come up in study unless suspended. View shows them in Browse."
+        title={t("Leftover cards")}
+        description={t("Cards your card types no longer create, for example after removing a face from a type: the cards that face made for existing items stay. Saving a type never deletes cards, so review history isn't lost by accident. Until deleted they still come up in study unless suspended. View shows them in Browse.")}
         stackAside
         aside={
           !asked ? (
             <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" onClick={load}>
               <Search className="size-4" />
-              Check now
+              {t("Check now")}
             </Button>
           ) : (
             left && deleteButton(left.faces.length > 1 ? "Delete all" : "Delete", left.cards, () => setConfirm({ cards: left }))
@@ -86,19 +87,19 @@ export function CleanupSection() {
                   <span className="tabular text-muted-foreground">· {count(f.cards, "card")}{f.reviews ? `, ${count(f.reviews, "review")}` : ""}</span>
                 </div>
                 <div className="flex gap-1.5">
-                  <Button variant="ghost" size="sm" className="h-8" onClick={() => navigate(`/browse?q=${encodeURIComponent(`is:leftover type:${f.type} face:${f.face}`)}`)}>View</Button>
+                  <Button variant="ghost" size="sm" className="h-8" onClick={() => navigate(`/browse?q=${encodeURIComponent(`is:leftover type:${f.type} face:${f.face}`)}`)}>{t("View")}</Button>
                   {left.faces.length > 1 && (
-                    <Button variant="ghost" size="sm" className="h-8" disabled={busy} onClick={() => setConfirm({ cards: { type: f.type, face: f.face, label: `${f.typeName}, ${f.face}`, cards: f.cards, reviews: f.reviews } })}>Delete</Button>
+                    <Button variant="ghost" size="sm" className="h-8" disabled={busy} onClick={() => setConfirm({ cards: { type: f.type, face: f.face, label: `${f.typeName}, ${f.face}`, cards: f.cards, reviews: f.reviews } })}>{t("Delete")}</Button>
                   )}
                 </div>
               </li>
             ))}
           </ul>
-        ) : <p className="text-sm text-muted-foreground">None.</p>)}
+        ) : <p className="text-sm text-muted-foreground">{t("None.")}</p>)}
       </Block>
       <Block
-        title="Unused media"
-        description="Files in the media folder that no card, type, deck, tag, setting or past answer names. Files added in the last hour and names starting with _ (which templates may load themselves) are kept."
+        title={t("Unused media")}
+        description={t("Files in the media folder that no card, type, deck, tag, setting or past answer names. Files added in the last hour and names starting with _ (which templates may load themselves) are kept.")}
         stackAside
         aside={media && deleteButton("Delete", media.count, () => setConfirm({ media: true }))}
       >
@@ -113,32 +114,32 @@ export function CleanupSection() {
                   <span className="tabular shrink-0 text-xs text-muted-foreground">{size(f.bytes)}</span>
                 </li>
               ))}
-              {media.count > media.files.length && <li className="text-xs text-muted-foreground">and {count(media.count - media.files.length, "more file")}</li>}
+              {media.count > media.files.length && <li className="text-xs text-muted-foreground">{t("and {n} more", { n: media.count - media.files.length })}</li>}
             </ul>
           </details>
-        ) : <p className="text-sm text-muted-foreground">None.</p>)}
+        ) : <p className="text-sm text-muted-foreground">{t("None.")}</p>)}
       </Block>
 
       <AlertDialog open={!!confirm} onOpenChange={(open) => !open && setConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {target ? `Delete ${count(target.cards, "leftover card")}${target.label ? ` (${target.label})` : ""}?` : `Delete ${count(media?.count ?? 0, "unused file")}?`}
+              {target ? t("Delete {n} leftover cards{label}?", { n: target.cards, label: target.label ? ` (${target.label})` : "" }) : t("Delete {n} unused files?", { n: media?.count ?? 0 })}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {target
                 ? !target.reviews
-                  ? target.cards === 1 ? "It has no review history." : "None of them has review history."
+                  ? target.cards === 1 ? t("It has no review history.") : t("None of them has review history.")
                   : target.cards === 1
-                    ? `Its review history (${count(target.reviews, "review")}) is deleted with it.`
-                    : `Their review history (${count(target.reviews, "review")}) is deleted with them.`
-                : "They're removed from the media folder, and database backups don't include media."}{" "}
-              This can't be undone.
+                    ? t("Its review history ({reviews}) is deleted with it.", { reviews: count(target.reviews, "review") })
+                    : t("Their review history ({reviews}) is deleted with them.", { reviews: count(target.reviews, "review") })
+                : t("They're removed from the media folder, and database backups don't include media.")}{" "}
+              {t("This can't be undone.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={() => confirm && remove(confirm)}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={() => confirm && remove(confirm)}>{t("Delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

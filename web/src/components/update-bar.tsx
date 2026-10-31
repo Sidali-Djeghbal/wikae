@@ -11,6 +11,7 @@ import { api, relative, type UpdateStatus } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { serverless } from "@/lib/native";
 import { desktopApp } from "@/lib/platform";
+import { t } from "@/lib/i18n";
 
 type Phase = "idle" | "checking" | "updating" | "restarting";
 
@@ -22,7 +23,13 @@ const DOWNLOAD = "https://etude.study/download";
 
 /** The news in a few words: "3 updates available", "Etude 2.5.1 is out", "Etude 2.5.1 is ready". */
 const headline = (st: UpdateStatus) =>
-  st.kind === "git" ? (st.behind === 1 ? "1 update available" : `${st.behind} updates available`) : st.kind === "desktop" && st.ready ? `Etude ${st.latest} is ready` : `Etude ${st.latest} is out`;
+  st.kind === "git"
+    ? st.behind === 1
+      ? t("1 update available")
+      : t("{n} updates available", { n: st.behind })
+    : st.kind === "desktop" && st.ready
+      ? t("Etude {version} is ready", { version: st.latest ?? "" })
+      : t("Etude {version} is out", { version: st.latest ?? "" });
 
 /** In the desktop app: its own updater, or (link, system) the engine's check worded for how this copy updates. */
 async function fetchStatus(force: boolean): Promise<UpdateStatus> {
@@ -47,7 +54,7 @@ async function check(force = false) {
   try {
     set({ st: await fetchStatus(force) });
   } catch (e) {
-    if (force) toast.error("Couldn't check for updates", { description: (e as Error).message });
+    if (force) toast.error(t("Couldn't check for updates"), { description: (e as Error).message });
   } finally {
     if (state.phase === "checking") set({ phase: "idle" });
   }
@@ -58,14 +65,14 @@ async function update(onDone?: () => void) {
   try {
     const r = await api.applyUpdate();
     if (r.result === "current") {
-      toast.success("Already up to date");
+      toast.success(t("Already up to date"));
       onDone?.();
       set({ phase: "idle" });
       await check();
       return;
     }
     if (!r.restarting) {
-      toast.success(`Updated to ${r.to}`, { description: "Restart Etude to run the new version." });
+      toast.success(t("Updated to {to}", { to: r.to }), { description: t("Restart Etude to run the new version.") });
       onDone?.();
       set({ phase: "idle" });
       await check();
@@ -83,10 +90,10 @@ async function update(onDone?: () => void) {
         }
       } catch {}
     }
-    toast.error("Etude hasn't come back yet", { description: "The update finished; reload the page in a moment." });
+    toast.error(t("Etude hasn't come back yet"), { description: t("The update finished; reload the page in a moment.") });
     set({ phase: "idle" });
   } catch (e) {
-    toast.error("Update failed", { description: (e as Error).message.slice(0, 400) });
+    toast.error(t("Update failed"), { description: (e as Error).message.slice(0, 400) });
     set({ phase: "idle" });
     check();
   }
@@ -117,22 +124,22 @@ export function useUpdater() {
 function DesktopDetails({ st }: { st: Extract<UpdateStatus, { kind: "desktop" }> }) {
   const text =
     st.mode === "self"
-      ? "Restart Etude to finish. Or keep going: it installs the next time you quit."
+      ? t("Restart Etude to finish. Or keep going: it installs the next time you quit.")
       : st.mode === "system"
-        ? "It comes with your system's updates (on Arch: yay -Syu)."
-        : "Download it and install it over this one. Your collection stays as it is.";
+        ? t("It comes with your system's updates (on Arch: yay -Syu).")
+        : t("Download it and install it over this one. Your collection stays as it is.");
   return (
     <div className="px-4 py-3 text-sm">
       <div className="font-medium">{headline(st)}</div>
       <div className="mt-1 text-xs text-muted-foreground">{text}</div>
       {st.mode === "self" ? (
         <Button size="sm" className="mt-3" onClick={() => void desktopApp()?.updates.restart()}>
-          Restart now
+          {t("Restart now")}
         </Button>
       ) : st.mode === "link" ? (
         <Button size="sm" className="mt-3" asChild>
           <a href={st.url} target="_blank" rel="noreferrer">
-            Download
+            {t("Download")}
           </a>
         </Button>
       ) : null}
@@ -146,11 +153,11 @@ function UpdateDetails({ st, onUpdate }: { st: UpdateStatus; onUpdate(): void })
   if (st.kind !== "git")
     return (
       <div className="px-4 py-3 text-sm">
-        <div className="font-medium">Etude {st.latest} is out</div>
-        <div className="mt-1 text-xs text-muted-foreground">This copy wasn't installed from git, so it can't update itself. Download the new version from GitHub.</div>
+        <div className="font-medium">{t("Etude {version} is out", { version: st.latest ?? "" })}</div>
+        <div className="mt-1 text-xs text-muted-foreground">{t("This copy wasn't installed from git, so it can't update itself. Download the new version from GitHub.")}</div>
         <Button size="sm" className="mt-3" asChild>
           <a href={st.url} target="_blank" rel="noreferrer">
-            Open releases
+            {t("Open releases")}
           </a>
         </Button>
       </div>
@@ -159,10 +166,14 @@ function UpdateDetails({ st, onUpdate }: { st: UpdateStatus; onUpdate(): void })
     <>
       <div className="border-b px-4 py-3">
         <div className="text-sm font-medium">
-          {st.behind} new commit{st.behind === 1 ? "" : "s"} on {st.upstream}
+          {st.behind === 1
+            ? t("1 new commit on {upstream}", { upstream: st.upstream ?? "" })
+            : t("{n} new commits on {upstream}", { n: st.behind, upstream: st.upstream ?? "" })}
         </div>
         <div className="mt-0.5 text-xs text-muted-foreground">
-          You're on {version}. Pulls {st.behind === 1 ? "it" : "them"}, rebuilds the app and restarts it. Your decks aren't touched.
+          {st.behind === 1
+            ? t("You're on {version}. Pulls it, rebuilds the app and restarts it. Your decks aren't touched.", { version })
+            : t("You're on {version}. Pulls them, rebuilds the app and restarts it. Your decks aren't touched.", { version })}
         </div>
       </div>
       <ul className="max-h-56 overflow-y-auto px-4 py-2 text-xs">
@@ -172,12 +183,12 @@ function UpdateDetails({ st, onUpdate }: { st: UpdateStatus; onUpdate(): void })
             <span className="min-w-0 flex-1">{c.subject}</span>
           </li>
         ))}
-        {st.behind > st.incoming.length && <li className="py-1 text-muted-foreground">and {st.behind - st.incoming.length} more</li>}
+        {st.behind > st.incoming.length && <li className="py-1 text-muted-foreground">{t("and {n} more", { n: st.behind - st.incoming.length })}</li>}
       </ul>
       <div className="flex items-center justify-between gap-3 border-t px-4 py-3">
-        <span className="text-xs text-muted-foreground">{st.blocked ?? (st.canRestart ? "Takes about a minute." : "Restart Etude afterwards.")}</span>
+        <span className="text-xs text-muted-foreground">{st.blocked ?? (st.canRestart ? t("Takes about a minute.") : t("Restart Etude afterwards."))}</span>
         <Button size="sm" className="shrink-0" disabled={!!st.blocked} onClick={onUpdate}>
-          Update
+          {t("Update")}
         </Button>
       </div>
     </>
@@ -193,8 +204,8 @@ export function SidebarUpdate({ collapsed }: { collapsed: boolean }) {
   const [open, setOpen] = useState(false);
   if (!st || (!behind && !busy)) return null;
   const count = st.kind === "git" ? String(st.behind) : null;
-  const label = busy ? (phase === "updating" ? "Updating…" : "Restarting…") : st.kind === "git" ? "Update Etude" : headline(st);
-  const aria = busy ? label : st.kind === "git" ? `Update available: ${st.behind} new commit${st.behind === 1 ? "" : "s"}` : label;
+  const label = busy ? (phase === "updating" ? t("Updating…") : t("Restarting…")) : st.kind === "git" ? t("Update Etude") : headline(st);
+  const aria = busy ? label : st.kind === "git" ? (st.behind === 1 ? t("Update available: 1 new commit") : t("Update available: {n} new commits", { n: st.behind })) : label;
   const button = (
     <button
       type="button"
@@ -236,7 +247,7 @@ export function SidebarUpdate({ collapsed }: { collapsed: boolean }) {
           </TooltipTrigger>
           <TooltipContent side="right">
             {label}
-            {count && <span className="opacity-60"> · {count} new</span>}
+            {count && <span className="opacity-60"> · {t("{n} new", { n: count })}</span>}
           </TooltipContent>
         </Tooltip>
       ) : (
@@ -264,11 +275,11 @@ export function UpdateSettingsRow() {
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" data-update-settings>
       <span className="flex min-w-0 items-center gap-1.5">
         {!st ? (
-          <span className="text-muted-foreground">Checking…</span>
+          <span className="text-muted-foreground">{t("Checking…")}</span>
         ) : busy ? (
           <>
             <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
-            {phase === "updating" ? "Updating…" : "Restarting…"}
+            {phase === "updating" ? t("Updating…") : t("Restarting…")}
           </>
         ) : behind ? (
           <>
@@ -278,15 +289,15 @@ export function UpdateSettingsRow() {
         ) : st.kind === "desktop" && st.mode === "self" && st.latest ? (
           <>
             <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
-            Downloading Etude {st.latest}… {st.percent ?? 0}%
+            {t("Downloading Etude {version}… {percent}%", { version: st.latest, percent: st.percent ?? 0 })}
           </>
         ) : st.checkError ? (
-          <span className="text-muted-foreground">Couldn't check: {st.checkError}</span>
+          <span className="text-muted-foreground">{t("Couldn't check: {error}", { error: st.checkError })}</span>
         ) : (
           <>
             <Check className="size-3.5 text-muted-foreground" />
-            Up to date
-            {st.checked && <span className="text-muted-foreground">· checked {relative(st.checked)}</span>}
+            {t("Up to date")}
+            {st.checked && <span className="text-muted-foreground">· {t("checked {time}", { time: relative(st.checked) })}</span>}
           </>
         )}
       </span>
@@ -296,7 +307,7 @@ export function UpdateSettingsRow() {
           <PopoverTrigger asChild>
             <Button size="sm" variant="outline">
               <ArrowDownToLine />
-              {st.kind === "git" && st.behind > 1 ? "Review updates" : "Review update"}
+              {st.kind === "git" && st.behind > 1 ? t("Review updates") : t("Review update")}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-[22rem] max-w-[calc(100vw-2rem)] p-0 shadow-lg">
@@ -306,7 +317,7 @@ export function UpdateSettingsRow() {
       ) : (
         <Button size="sm" variant="outline" disabled={phase !== "idle"} onClick={() => check(true)}>
           {phase === "checking" ? <Loader2 className="animate-spin" /> : <RefreshCw />}
-          Check for updates
+          {t("Check for updates")}
         </Button>
       )}
     </div>

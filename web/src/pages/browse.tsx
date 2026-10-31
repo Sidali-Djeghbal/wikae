@@ -6,11 +6,13 @@ import { BulkBar, CheckBox, groupItems, ItemEditor, ItemRow, NewItemDialog, Orde
 import { api, type SearchRow, type TypeSummary } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { EmptyState, PHONE_H1 } from "@/components/page";
+import { useLocale } from "@/lib/useLocale";
 import { X } from "lucide-react";
 
 const PAGE = 200;
 
 export function BrowsePage({ initialQuery, openItem }: { initialQuery: string; openItem: string | null }) {
+  const { t } = useLocale();
   const [query, setQuery] = useState(initialQuery);
   const [order, setOrder] = useState("relevance");
   const [rows, setRows] = useState<SearchRow[]>([]);
@@ -76,22 +78,22 @@ export function BrowsePage({ initialQuery, openItem }: { initialQuery: string; o
       <section className={cn("min-w-0 flex-col border-r md:flex md:w-[20rem] md:shrink-0 lg:w-[24rem] xl:w-[28rem]", selected ? "hidden" : "flex w-full")}>
         <div className="flex flex-col gap-3 border-b px-4 pt-6 pb-3 max-md:px-5 max-md:pt-[calc(1.25rem+env(safe-area-inset-top))] sm:pt-8 md:px-4 md:pt-6">
           <div className="flex items-center justify-between gap-3">
-            <h1 className={cn("text-2xl font-semibold tracking-tight", PHONE_H1)}>Browse</h1>
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />Add</Button>
+            <h1 className={cn("text-2xl font-semibold tracking-tight", PHONE_H1)}>{t("Browse")}</h1>
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />{t("Add")}</Button>
           </div>
           <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input ref={searchRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search cards" aria-label="Search cards" className={cn("h-10 pl-9", query && "pr-10 font-mono text-[13px]")} />
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground rtl:left-auto rtl:right-3" />
+            <Input ref={searchRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search cards")} aria-label={t("Search cards")} className={cn("h-10 pl-9 rtl:pl-3 rtl:pr-9", query && "pr-10 rtl:pr-3 rtl:pl-10 font-mono text-[13px]")} />
             {query && (
-              <button className="absolute top-1 right-1 flex size-8 items-center justify-center rounded text-muted-foreground hover:text-foreground" onClick={() => setQuery("")} aria-label="Clear search">
+              <button className="absolute top-1 right-1 rtl:right-auto rtl:left-1 flex size-8 items-center justify-center rounded text-muted-foreground hover:text-foreground" onClick={() => setQuery("")} aria-label={t("Clear search")}>
                 <X className="size-4" />
               </button>
             )}
           </div>
           <SearchHints onPick={(s) => setQuery((q) => (q ? `${q} ${s}` : s))} />
           <div className="-mb-1 flex min-h-9 items-center gap-2.5 text-xs text-muted-foreground">
-            <span className={cn(!checked.size && "max-md:hidden")}><CheckBox checked={allChecked} label="Select all" onClick={() => setChecked(allChecked ? new Set() : new Set(items.map((r) => r.itemId)))} /></span>
-            <span className="tabular min-w-0 truncate">{error ? <span className="text-destructive">{error}</span> : `${total} card${total === 1 ? "" : "s"}${total > PAGE ? `, showing ${PAGE}` : ""}`}</span>
+            <span className={cn(!checked.size && "max-md:hidden")}><CheckBox checked={allChecked} label={t("Select all")} onClick={() => setChecked(allChecked ? new Set() : new Set(items.map((r) => r.itemId)))} /></span>
+            <span className="tabular min-w-0 truncate">{error ? <span className="text-destructive">{error}</span> : `${total} ${t(total === 1 ? "card" : "cards")}${total > PAGE ? `, showing ${PAGE}` : ""}`}</span>
             <div className="flex-1" />
             <OrderSelect value={order} onChange={setOrder} />
           </div>
@@ -125,8 +127,8 @@ export function BrowsePage({ initialQuery, openItem }: { initialQuery: string; o
             />
           ))}
           {!items.length && !error && (
-            <EmptyState inset title={query ? "No matches" : "No cards yet"} action={query ? <Button variant="outline" size="sm" onClick={() => setQuery("")}>Clear search</Button> : <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />Add a card</Button>}>
-              {query ? "No cards match that search." : "Add a card here, or import a pack from the Decks page."}
+            <EmptyState inset title={query ? t("No matches") : t("No cards yet")} action={query ? <Button variant="outline" size="sm" onClick={() => setQuery("")}>{t("Clear search")}</Button> : <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />{t("Add a card")}</Button>}>
+              {query ? t("No cards match that search.") : t("Add a card here, or import a pack from the Decks page.")}
             </EmptyState>
           )}
         </div>
@@ -146,8 +148,8 @@ export function BrowsePage({ initialQuery, openItem }: { initialQuery: string; o
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 p-10 text-center text-sm text-muted-foreground">
-            <span>Pick a card to inspect and edit it.</span>
-            <span className="hidden text-xs pointer-fine:inline"><kbd>Ctrl K</kbd> to search</span>
+            <span>{t("Pick a card to inspect and edit it.")}</span>
+            <span className="hidden text-xs pointer-fine:inline"><kbd>{t("Ctrl K")}</kbd> {t("to search")}</span>
           </div>
         )}
       </section>

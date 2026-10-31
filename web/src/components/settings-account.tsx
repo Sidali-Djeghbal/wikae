@@ -13,6 +13,7 @@ import { Block, Field, Section } from "@/components/settings-ui";
 import { download } from "@/components/type-editor/starter";
 import { account, AccountApiError, createPasskey, getPasskey, passkeysHere, type AccountStatus, type Device, type Passkey } from "@/lib/account";
 import { relative } from "@/lib/api";
+import { t } from "@/lib/i18n";
 import { isNativeApp } from "@/lib/platform";
 import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
@@ -129,26 +130,26 @@ function SignIn({ st, onDone }: { st: AccountStatus; onDone(): Promise<void> }) 
   const passkeyOk = passkeysHere(st.offering?.passkeys.rpId);
   return (
     <Block
-      title={sent ? "Enter the code" : "Sign in or create an account"}
-      description={sent ? <>Sent to <span className="text-foreground/90">{email.trim()}</span>. It works for 15 minutes.</> : "No password. We email you a one-time code; a new address gets a new account."}
+      title={sent ? t("Enter the code") : t("Sign in or create an account")}
+      description={sent ? <>{t("Sent to {email}. It works for 15 minutes.", { email: email.trim() })}</> : t("No password. We email you a one-time code; a new address gets a new account.")}
     >
-      {st.offline && <Notice>Can't reach {st.server}: {st.offline}</Notice>}
+      {st.offline && <Notice>{t("Can't reach {server}: {err}", { server: st.server, err: st.offline })}</Notice>}
       {!sent ? (
         <form className="flex flex-col gap-4" onSubmit={(e) => (e.preventDefault(), void run("send", async () => (await account.signin(email), setSent(true))))}>
-          <TextInput label="Email" type="email" value={email} onChange={setEmail} autoComplete="email" placeholder="you@example.com" />
+          <TextInput label={t("Email")} type="email" value={email} onChange={setEmail} autoComplete="email" placeholder="you@example.com" />
           {error && <Notice>{error}</Notice>}
           <div className="flex flex-wrap items-center gap-2">
             <Button type="submit" size="sm" className="h-10 gap-1.5 md:h-8" disabled={!!busy || !email.trim()}>
-              {busy === "send" ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />} Email me a code
+              {busy === "send" ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />} {t("Email me a code")}
             </Button>
             {passkeyOk && (
               <Button type="button" variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" disabled={!!busy} onClick={() => void run("passkey", async () => {
                 const o = await account.passkeyLoginOptions();
                 await account.passkeyLoginVerify({ challengeId: o.challengeId, response: await getPasskey(o.options) });
-                toast.success("Signed in");
+                toast.success(t("Signed in"));
                 await onDone();
               })}>
-                {busy === "passkey" ? <Loader2 className="size-4 animate-spin" /> : <Fingerprint className="size-4" />} Use a passkey
+                {busy === "passkey" ? <Loader2 className="size-4 animate-spin" /> : <Fingerprint className="size-4" />} {t("Use a passkey")}
               </Button>
             )}
           </div>
@@ -157,26 +158,26 @@ function SignIn({ st, onDone }: { st: AccountStatus; onDone(): Promise<void> }) 
         <form className="flex flex-col gap-4" onSubmit={(e) => (e.preventDefault(), void run("verify", async () => {
           const r = await account.verify(code, email.trim());
           setCode("");
-          toast.success("Signed in", { description: r.email });
+          toast.success(t("Signed in"), { description: r.email });
           await onDone();
         }))}>
-          <TextInput label="Code" value={code} onChange={setCode} autoComplete="one-time-code" inputMode="numeric" mono placeholder="6-digit code" />
+          <TextInput label={t("Code")} value={code} onChange={setCode} autoComplete="one-time-code" inputMode="numeric" mono placeholder={t("6-digit code")} />
           {error && <Notice>{error}</Notice>}
           <div className="flex flex-wrap items-center gap-2">
             <Button type="submit" size="sm" className="h-10 gap-1.5 md:h-8" disabled={!!busy || !code.trim()}>
-              {busy === "verify" && <Loader2 className="size-4 animate-spin" />} Sign in
+              {busy === "verify" && <Loader2 className="size-4 animate-spin" />} {t("Sign in")}
             </Button>
-            <Button type="button" variant="ghost" size="sm" className="h-10 md:h-8" disabled={!!busy} onClick={() => void run("send", async () => void (await account.signin(email)))}>Send again</Button>
-            <Button type="button" variant="ghost" size="sm" className="h-10 md:h-8" disabled={!!busy} onClick={() => (setSent(false), setCode(""), setError(null))}>Use another email</Button>
+            <Button type="button" variant="ghost" size="sm" className="h-10 md:h-8" disabled={!!busy} onClick={() => void run("send", async () => void (await account.signin(email)))}>{t("Send again")}</Button>
+            <Button type="button" variant="ghost" size="sm" className="h-10 md:h-8" disabled={!!busy} onClick={() => (setSent(false), setCode(""), setError(null))}>{t("Use another email")}</Button>
           </div>
         </form>
       )}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t pt-3 text-xs text-muted-foreground">
         {!editServer ? (
           <>
-            <span>Server</span>
+            <span>{t("Server")}</span>
             <span className="font-mono text-[12px] text-foreground/80 [overflow-wrap:anywhere]" data-account-server>{st.server}</span>
-            <button className="underline underline-offset-2 hover:text-foreground" onClick={() => setEditServer(true)}>Change</button>
+            <button className="underline underline-offset-2 hover:text-foreground" onClick={() => setEditServer(true)}>{t("Change")}</button>
           </>
         ) : (
           <form className="flex w-full flex-col gap-2 sm:flex-row sm:items-end" onSubmit={(e) => (e.preventDefault(), void run("server", async () => {

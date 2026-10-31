@@ -14,6 +14,7 @@ import { api, type TypeSummary } from "@/lib/api";
 import { navigate, useLocation } from "@/lib/router";
 import { cn } from "@/lib/utils";
 import { PHONE_H1 } from "@/components/page";
+import { t as tr } from "@/lib/i18n";
 
 export function TypesPage({ id }: { id: string | null }) {
   if (id) return <TypeEditor key={id} id={id} />;
@@ -200,7 +201,7 @@ function TypeLibrary() {
   const subfolders = inBuiltIn ? [] : childFolders(here);
   const listed = inBuiltIn ? builtins : typesIn(here);
   const crumbs = here && !inBuiltIn ? ancestors(here) : [];
-  const title = inBuiltIn ? "Built in" : here ? leaf(here) : "Card types";
+  const title = inBuiltIn ? tr("Built in") : here ? leaf(here) : tr("Card types");
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10">
@@ -208,7 +209,7 @@ function TypeLibrary() {
       <header className="mb-6 sm:mb-8">
         {here && (
           <nav aria-label="Folder" className="-ml-1.5 mb-1 flex min-w-0 flex-wrap items-center text-sm text-muted-foreground">
-            <Crumb label="Card types" onClick={() => open("")} drop={drop("")} active={dropAt === ""} />
+            <Crumb label={tr("Card types")} onClick={() => open("")} drop={drop("")} active={dropAt === ""} />
             {crumbs.slice(0, -1).map((c) => (
               <span key={c} className="flex min-w-0 items-center">
                 <ChevronRight className="size-3.5 shrink-0 opacity-50" />
@@ -226,15 +227,15 @@ function TypeLibrary() {
             </div>
             <p className="mt-1 max-w-xl text-sm text-pretty text-muted-foreground">
               {inBuiltIn
-                ? "These ship with Etude. Open one to see how it's made, or duplicate it to start your own."
+                ? tr("These ship with Etude. Open one to see how it's made, or duplicate it to start your own.")
                 : here
                   ? [plural(listed.length, "type"), subfolders.length ? plural(subfolders.length, "folder") : ""].filter(Boolean).join(" · ")
-                  : "Fields, an HTML/CSS/JS template and a grader. Built\u2011in types are written the same way, so any of them can be copied or changed."}
+                  : tr("Fields, an HTML/CSS/JS template and a grader. Built\u2011in types are written the same way, so any of them can be copied or changed.")}
             </p>
           </div>
           <div className="flex shrink-0 gap-2">
-            <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => setImporting(true)}><Upload className="size-4" />Import</Button>
-            <Button size="sm" className="h-9 gap-1.5" onClick={() => setCreating(here && !inBuiltIn ? { folder: here } : {})}><Plus className="size-4" />New type</Button>
+            <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => setImporting(true)}><Upload className="size-4" />{tr("Import")}</Button>
+            <Button size="sm" className="h-9 gap-1.5" onClick={() => setCreating(here && !inBuiltIn ? { folder: here } : {})}><Plus className="size-4" />{tr("New type")}</Button>
           </div>
         </div>
       </header>
@@ -250,37 +251,37 @@ function TypeLibrary() {
           {/* the folder rail */}
           <aside className="hidden lg:block">
             <div className="sticky top-6 flex flex-col gap-0.5 text-sm">
-              <RailItem icon={Inbox} label="Not in a folder" count={typesIn("").length} active={!here && !q} onClick={() => { setQuery(""); open(""); }} drop={drop("")} dropping={dropAt === ""} />
+              <RailItem icon={Inbox} label={tr("Not in a folder")} count={typesIn("").length} active={!here && !q} onClick={() => { setQuery(""); open(""); }} drop={drop("")} dropping={dropAt === ""} />
               <div className="mt-5 mb-1 flex items-center justify-between pr-1 pl-[1.625rem]">
-                <span className="text-xs font-medium text-muted-foreground">Folders</span>
-                <button className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" onClick={() => setFolderDialog({ mode: "create", parent: here && !inBuiltIn ? here : "" })} aria-label="New folder" title="New folder">
+                <span className="text-xs font-medium text-muted-foreground">{tr("Folders")}</span>
+                <button className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" onClick={() => setFolderDialog({ mode: "create", parent: here && !inBuiltIn ? here : "" })} aria-label={tr("New folder")} title={tr("New folder")}>
                   <FolderPlus className="size-4" />
                 </button>
               </div>
               {folders.length ? (
                 <RailTree parent="" depth={0} childFolders={childFolders} count={(f) => typesIn(f).length} here={q ? null : here} collapsed={collapsed} toggle={toggle} drag={drag} drop={drop} dropAt={dropAt} onOpen={(f) => { setQuery(""); open(f); }} />
               ) : (
-                <p className="py-1 pr-2.5 pl-[1.625rem] text-[13px] leading-relaxed text-pretty text-muted-foreground/80">No folders yet. Make one, then drag types onto it.</p>
+                <p className="py-1 pr-2.5 pl-[1.625rem] text-[13px] leading-relaxed text-pretty text-muted-foreground/80">{tr("No folders yet. Make one, then drag types onto it.")}</p>
               )}
               <div className="my-3 h-px bg-border" />
-              <RailItem icon={Package} label="Built in" count={builtins.length} active={inBuiltIn && !q} onClick={() => { setQuery(""); open(BUILT_IN); }} />
+              <RailItem icon={Package} label={tr("Built in")} count={builtins.length} active={inBuiltIn && !q} onClick={() => { setQuery(""); open(BUILT_IN); }} />
             </div>
           </aside>
 
           <main className="min-w-0">
             <div className="mb-6 flex gap-2">
               <div className="relative flex-1">
-                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Escape" && setQuery("")} placeholder="Search types" aria-label="Find a type" className="h-10 pr-10 pl-9" />
+                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground rtl:left-auto rtl:right-3" />
+                <Input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Escape" && setQuery("")} placeholder={tr("Search types")} aria-label={tr("Find a type")} className="h-10 pr-10 pl-9 rtl:pr-9 rtl:pl-10" />
                 {query && (
-                  <button className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground" onClick={() => setQuery("")} aria-label="Clear search">
+                  <button className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground rtl:right-auto rtl:left-1" onClick={() => setQuery("")} aria-label={tr("Clear search")}>
                     <X className="size-4" />
                   </button>
                 )}
               </div>
               {!inBuiltIn && (
-                <Button variant="outline" className="h-10 gap-1.5 lg:hidden" onClick={() => setFolderDialog({ mode: "create", parent: here })} aria-label="New folder">
-                  <FolderPlus className="size-4" /><span className="hidden sm:inline">New folder</span>
+                <Button variant="outline" className="h-10 gap-1.5 lg:hidden" onClick={() => setFolderDialog({ mode: "create", parent: here })} aria-label={tr("New folder")}>
+                  <FolderPlus className="size-4" /><span className="hidden sm:inline">{tr("New folder")}</span>
                 </Button>
               )}
             </div>
@@ -316,7 +317,7 @@ function TypeLibrary() {
                   </div>
                 )}
 
-                <Group label={inBuiltIn ? undefined : here ? (subfolders.length ? "Types" : undefined) : "Not in a folder"}>
+                <Group label={inBuiltIn ? undefined : here ? (subfolders.length ? tr("Types") : undefined) : tr("Not in a folder")}>
                   {listed.length ? (
                     <List drop={inBuiltIn ? undefined : drop(here)} dropping={!inBuiltIn && dropAt === here}>
                       {listed.map((t) => <TypeRow key={t.id} {...rowProps(t)} />)}
@@ -324,17 +325,17 @@ function TypeLibrary() {
                   ) : here ? (
                     <div {...drop(here)} className={cn("flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-10 text-center transition-colors", dropAt === here && "border-highlight/70 bg-highlight/5")}>
                       <FolderOpen className="size-6 text-muted-foreground/70" />
-                      <p className="max-w-xs text-sm text-pretty text-muted-foreground">Nothing here yet. Drag types onto this folder, use Move to folder in a type's menu, or start a new one here.</p>
-                      <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => setCreating({ folder: here })}><Plus className="size-4" />New type here</Button>
+                      <p className="max-w-xs text-sm text-pretty text-muted-foreground">{tr("Nothing here yet. Drag types onto this folder, use Move to folder in a type's menu, or start a new one here.")}</p>
+                      <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => setCreating({ folder: here })}><Plus className="size-4" />{tr("New type here")}</Button>
                     </div>
                   ) : custom.length ? (
                     <div {...drop("")} className={cn("rounded-xl border border-dashed px-6 py-6 text-center text-sm text-muted-foreground transition-colors", dropAt === "" && "border-highlight/70 bg-highlight/5")}>
-                      Every custom type is in a folder.
+                      {tr("Every custom type is in a folder.")}
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-10 text-center">
-                      <p className="max-w-sm text-sm text-muted-foreground">No custom types yet. Start from a blank template, or copy a built-in one and make it yours.</p>
-                      <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => setCreating({})}><Plus className="size-4" />New type</Button>
+                      <p className="max-w-sm text-sm text-muted-foreground">{tr("No custom types yet. Start from a blank template, or copy a built-in one and make it yours.")}</p>
+                      <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => setCreating({})}><Plus className="size-4" />{tr("New type")}</Button>
                     </div>
                   )}
                 </Group>
@@ -438,7 +439,7 @@ function RailItem({ icon: Icon, label, count, active, onClick, drop, dropping }:
   return (
     <button
       className={cn(
-        "flex h-9 items-center gap-2 rounded-lg pr-2.5 pl-[1.625rem] text-left transition-colors hover:bg-accent/60",
+        "flex h-9 items-center gap-2 rounded-lg pr-2.5 pl-[1.625rem] rtl:pr-[1.625rem] rtl:pl-2.5 text-left rtl:text-right transition-colors hover:bg-accent/60",
         active ? "bg-accent font-medium text-foreground" : "text-foreground/80",
         dropping && "bg-highlight/10 text-highlight",
       )}
@@ -447,7 +448,7 @@ function RailItem({ icon: Icon, label, count, active, onClick, drop, dropping }:
     >
       <Icon className={cn("size-4 shrink-0", active ? "text-foreground/80" : "text-muted-foreground")} />
       <span className="min-w-0 flex-1 truncate">{label}</span>
-      <span className="tabular w-6 text-right text-xs text-muted-foreground">{count}</span>
+      <span className="tabular w-6 text-right rtl:text-left text-xs text-muted-foreground">{count}</span>
     </button>
   );
 }
@@ -491,12 +492,12 @@ function RailTree(p: {
                 aria-expanded={expanded}
                 tabIndex={kids ? 0 : -1}
               >
-                <ChevronRight className={cn("size-3.5 transition-transform", expanded && "rotate-90")} />
+                <ChevronRight className={cn("size-3.5 transition-transform", expanded ? "rotate-90" : "rtl-flip")} />
               </button>
-              <button className="flex h-full min-w-0 flex-1 items-center gap-2 text-left" onClick={() => p.onOpen(f)}>
+              <button className="flex h-full min-w-0 flex-1 items-center gap-2 text-left rtl:text-right" onClick={() => p.onOpen(f)}>
                 {p.dropAt === f ? <FolderOpen className="size-4 shrink-0 text-highlight" /> : active ? <FolderOpen className="size-4 shrink-0 text-foreground/80" /> : <Folder className="size-4 shrink-0 text-muted-foreground" />}
                 <span className="min-w-0 flex-1 truncate">{leaf(f)}</span>
-                <span className="tabular w-6 text-right text-xs text-muted-foreground">{p.count(f)}</span>
+                <span className="tabular w-6 text-right rtl:text-left text-xs text-muted-foreground">{p.count(f)}</span>
               </button>
             </div>
             {expanded && <RailTree {...p} parent={f} depth={p.depth + 1} />}
@@ -516,13 +517,13 @@ function FolderMenu(p: { name: string; onNewType(): void; onNewFolder(): void; o
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenuItem onClick={p.onNewType}><Plus />New type here…</DropdownMenuItem>
-        <DropdownMenuItem onClick={p.onNewFolder}><FolderPlus />New folder inside…</DropdownMenuItem>
+        <DropdownMenuItem onClick={p.onNewType}><Plus />{tr("New type here…")}</DropdownMenuItem>
+        <DropdownMenuItem onClick={p.onNewFolder}><FolderPlus />{tr("New folder inside…")}</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={p.onRename}><Pencil />Rename…</DropdownMenuItem>
-        <DropdownMenuItem onClick={p.onMove}><FolderInput />Move to…</DropdownMenuItem>
+        <DropdownMenuItem onClick={p.onRename}><Pencil />{tr("Rename…")}</DropdownMenuItem>
+        <DropdownMenuItem onClick={p.onMove}><FolderInput />{tr("Move to…")}</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onClick={p.onDelete}><Trash2 />Delete folder…</DropdownMenuItem>
+        <DropdownMenuItem variant="destructive" onClick={p.onDelete}><Trash2 />{tr("Delete folder…")}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -559,7 +560,7 @@ function FolderCard(p: {
       {p.dropping ? <FolderOpen className="size-5 shrink-0 text-highlight" /> : <Folder className="size-5 shrink-0 text-muted-foreground" />}
       <div className="min-w-0 flex-1">
         <div className="truncate text-[0.95rem] font-medium">{name}</div>
-        <div className="truncate text-xs text-muted-foreground">{p.count || p.folders ? [p.count ? plural(p.count, "type") : "", p.folders ? plural(p.folders, "folder") : ""].filter(Boolean).join(" · ") : "Empty"}</div>
+        <div className="truncate text-xs text-muted-foreground">{p.count || p.folders ? [p.count ? plural(p.count, "type") : "", p.folders ? plural(p.folders, "folder") : ""].filter(Boolean).join(" · ") : tr("Empty")}</div>
       </div>
       <FolderMenu name={name} {...p} className="size-9" />
     </div>
@@ -568,13 +569,13 @@ function FolderCard(p: {
 
 function BuiltInCard({ count }: { count: number }) {
   return (
-    <button className="flex min-h-14 w-full items-center gap-3 py-2 pr-2.5 pl-4 text-left transition-colors hover:bg-accent/40" onClick={() => open(BUILT_IN)}>
+    <button className="flex min-h-14 w-full items-center gap-3 py-2 pr-2.5 pl-4 rtl:pr-4 rtl:pl-2.5 text-left rtl:text-right transition-colors hover:bg-accent/40" onClick={() => open(BUILT_IN)}>
       <Package className="size-5 shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[0.95rem] font-medium">Built in</span>
-        <span className="block truncate text-xs text-muted-foreground">{plural(count, "type")} that ship with Etude</span>
+        <span className="block truncate text-[0.95rem] font-medium">{tr("Built in")}</span>
+        <span className="block truncate text-xs text-muted-foreground">{count === 1 ? tr("1 type that ships with Etude") : tr("{n} types that ship with Etude", { n: count })}</span>
       </span>
-      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+      <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl-flip" />
     </button>
   );
 }
@@ -588,18 +589,18 @@ function TypeRow({ t, onExport, onDuplicate, onMove, drag, showPlace }: {
   /** In search results: say which folder the type lives in. */
   showPlace?: boolean;
 }) {
-  const place = t.folder ? t.folder.split("::").join(" › ") : t.shipped ? "Built in" : "Not in a folder";
+  const place = t.folder ? t.folder.split("::").join(" › ") : t.shipped ? tr("Built in") : tr("Not in a folder");
   // Most types are script-graded; only say so when it's something else.
   const grader = t.grader !== "script" ? GRADER_LABEL[t.grader] ?? t.grader : null;
   return (
-    <div data-type={t.id} className="group flex min-h-16 items-center gap-3 pr-1.5 pl-4 transition-colors hover:bg-accent/40" {...drag}>
-      <button className="flex min-w-0 flex-1 flex-col gap-0.5 py-2.5 text-left" onClick={() => navigate(`/types/${encodeURIComponent(t.id)}`)}>
+    <div data-type={t.id} className="group flex min-h-16 items-center gap-3 pr-1.5 pl-4 rtl:pr-4 rtl:pl-1.5 transition-colors hover:bg-accent/40" {...drag}>
+      <button className="flex min-w-0 flex-1 flex-col gap-0.5 py-2.5 text-left rtl:text-right" onClick={() => navigate(`/types/${encodeURIComponent(t.id)}`)}>
         <div className="flex min-w-0 items-baseline gap-2">
-          <span className="truncate text-[0.95rem] font-medium">{t.name}</span>
+          <span className="truncate text-[0.95rem] font-medium">{tr(t.name)}</span>
           <code className="hidden shrink-0 font-mono text-xs text-muted-foreground/70 sm:inline">{t.id}</code>
           {t.edited && <Kind summary={t} />}
         </div>
-        {t.description && <p className="line-clamp-2 max-w-[68ch] text-[13px] leading-snug text-muted-foreground sm:line-clamp-1">{t.description.replace(/\.$/, "")}</p>}
+        {t.description && <p className="line-clamp-2 max-w-[68ch] text-[13px] leading-snug text-muted-foreground sm:line-clamp-1">{tr(t.description.replace(/\.$/, ""))}</p>}
         {showPlace && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground/80">
             {t.folder ? <Folder className="size-3 shrink-0" /> : t.shipped ? <Package className="size-3 shrink-0" /> : <Inbox className="size-3 shrink-0" />}
@@ -609,22 +610,22 @@ function TypeRow({ t, onExport, onDuplicate, onMove, drag, showPlace }: {
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground sm:hidden">
           <code className="font-mono">{t.id}</code>
           <span aria-hidden>·</span>
-          <span className="tabular">{plural(t.items, "item")}</span>
-          {grader && <><span aria-hidden>·</span><span>{grader}</span></>}
+          <span className="tabular">{t.items === 1 ? tr("1 item") : tr("{n} items", { n: t.items })}</span>
+          {grader && <><span aria-hidden>·</span><span>{tr(grader)}</span></>}
         </div>
       </button>
       <div className="hidden shrink-0 items-center gap-3 text-xs text-muted-foreground sm:flex">
-        {grader && <span className="rounded-md border px-1.5 py-0.5 text-[11px]">{grader}</span>}
-        <span className="tabular w-8 text-right" title={plural(t.items, "item")}>{t.items}</span>
+        {grader && <span className="rounded-md border px-1.5 py-0.5 text-[11px]">{tr(grader)}</span>}
+        <span className="tabular w-8 text-right rtl:text-left" title={t.items === 1 ? tr("1 item") : tr("{n} items", { n: t.items })}>{t.items}</span>
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="size-9 shrink-0 text-muted-foreground transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 sm:data-[state=open]:opacity-100" aria-label={`Actions for ${t.name}`}><MoreHorizontal className="size-4" /></Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onMove}><FolderInput />Move to folder…</DropdownMenuItem>
-          <DropdownMenuItem onClick={onDuplicate}><Copy />Duplicate…</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onExport(t)}><Download />Export JSON</DropdownMenuItem>
+          <DropdownMenuItem onClick={onMove}><FolderInput />{tr("Move to folder…")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={onDuplicate}><Copy />{tr("Duplicate…")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onExport(t)}><Download />{tr("Export JSON")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
@@ -670,9 +671,9 @@ function MoveDialog({ target, folders, onOpenChange, onMoveType, onMoveFolder }:
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>Folders only organize the Types page. The type and its cards don't change.</DialogDescription>
+          <DialogDescription>{tr("Folders only organize the Types page. The type and its cards don't change.")}</DialogDescription>
         </DialogHeader>
-        <div className="flex max-h-72 flex-col gap-0.5 overflow-y-auto rounded-xl border bg-card/40 p-1.5" role="listbox" aria-label="Folders">
+        <div className="flex max-h-72 flex-col gap-0.5 overflow-y-auto rounded-xl border bg-card/40 p-1.5" role="listbox" aria-label={tr("Folders")}>
           {["", ...options].map((f) => {
             const chosen = pick === f;
             return (
@@ -685,21 +686,21 @@ function MoveDialog({ target, folders, onOpenChange, onMoveType, onMoveFolder }:
                 onClick={() => setPick(f)}
               >
                 {f ? (chosen ? <FolderOpen className="size-4 shrink-0 text-highlight" /> : <Folder className="size-4 shrink-0 text-muted-foreground" />) : <Inbox className={cn("size-4 shrink-0", chosen ? "text-highlight" : "text-muted-foreground")} />}
-                <span className="min-w-0 flex-1 truncate">{f ? leaf(f) : target.kind === "type" ? "No folder" : "Top level"}</span>
-                {f === current && <span className="shrink-0 text-xs font-normal text-muted-foreground">here now</span>}
+                <span className="min-w-0 flex-1 truncate">{f ? leaf(f) : target.kind === "type" ? tr("No folder") : tr("Top level")}</span>
+                {f === current && <span className="shrink-0 text-xs font-normal text-muted-foreground">{tr("here now")}</span>}
                 <Check className={cn("size-4 shrink-0 text-highlight", !chosen && "invisible")} />
               </button>
             );
           })}
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[13px] text-muted-foreground">or make a new folder {pick ? <>inside <span className="text-foreground">{leaf(pick)}</span></> : "at the top level"}</span>
-          <Input value={fresh} onChange={(e) => setFresh(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder="New folder name" className="h-10" />
+          <span className="text-[13px] text-muted-foreground">{pick ? <>{tr("or make a new folder inside")} <span className="text-foreground">{leaf(pick)}</span></> : tr("or make a new folder at the top level")}</span>
+          <Input value={fresh} onChange={(e) => setFresh(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder={tr("New folder name")} className="h-10" />
         </div>
         <DialogFooter>
           <Button onClick={go} disabled={dest === current} className="h-10 gap-1.5 sm:h-9">
             <FolderInput className="size-4" />
-            {freshName ? `Move to new “${freshName}”` : dest ? `Move to ${leaf(dest)}` : target.kind === "type" ? "Take out of folder" : "Move to top level"}
+            {freshName ? `${tr("Move to new folder")} “${freshName}”` : dest ? `${tr("Move to")} ${leaf(dest)}` : target.kind === "type" ? tr("Take out of folder") : tr("Move to top level")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -742,15 +743,15 @@ function FolderNameDialog({ state, folders, onOpenChange, onDone }: { state: Fol
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>{state.mode === "create" ? "New folder" : "Rename folder"}</DialogTitle>
-          <DialogDescription>{state.mode === "create" ? (parent ? `Inside ${parent.split("::").join(" › ")}.` : "At the top level.") : "Everything inside stays inside."}</DialogDescription>
+          <DialogTitle>{state.mode === "create" ? tr("New folder") : tr("Rename folder")}</DialogTitle>
+          <DialogDescription>{state.mode === "create" ? (parent ? `${tr("Inside")} ${parent.split("::").join(" › ")}.` : tr("At the top level.")) : tr("Everything inside stays inside.")}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1.5">
           <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && save()} placeholder="Networks" className={cn("h-10", taken && "border-destructive")} />
-          {taken && <span className="text-xs text-destructive">There's already a folder called “{clean}” here.</span>}
+          {taken && <span className="text-xs text-destructive">{tr("There's already a folder called “{clean}” here.", { clean })}</span>}
         </div>
         <DialogFooter>
-          <Button onClick={save} disabled={!ok} className="h-10 sm:h-9">{state.mode === "create" ? "Create folder" : "Rename"}</Button>
+          <Button onClick={save} disabled={!ok} className="h-10 sm:h-9">{state.mode === "create" ? tr("Create folder") : tr("Rename")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

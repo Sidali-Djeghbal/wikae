@@ -21,6 +21,7 @@ import { DesktopSection } from "@/components/settings-desktop";
 import { desktopApp } from "@/lib/platform";
 import { Block, NumberField, Section } from "@/components/settings-ui";
 import { draftOf, normalize, validate, type SettingsDraft, type SettingsResponse } from "@/components/settings-model";
+import { useLocale } from "@/lib/useLocale";
 
 const NAV = [
   { id: "about", label: "About" },
@@ -51,6 +52,7 @@ const ABOUT_LINKS = [
 ];
 
 export function SettingsPage() {
+  const { t } = useLocale();
   const [saved, setSaved] = useState<SettingsResponse | null>(null);
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
   const [saving, setSaving] = useState(false);
@@ -79,7 +81,7 @@ export function SettingsPage() {
   const save = useCallback(async () => {
     if (!draft || !dirty) return;
     if (invalid) {
-      toast.error("Fix the highlighted fields first");
+      toast.error(t("Fix the highlighted fields first"));
       return;
     }
     setSaving(true);
@@ -89,13 +91,13 @@ export function SettingsPage() {
       const s = (await api.settings()) as SettingsResponse;
       setSaved(s);
       setDraft(draftOf(s));
-      toast.success("Settings saved");
+      toast.success(t("Settings saved"));
     } catch (e) {
-      toast.error("Couldn't save", { description: (e as Error).message });
+      toast.error(t("Couldn't save"), { description: (e as Error).message });
     } finally {
       setSaving(false);
     }
-  }, [draft, dirty, invalid]);
+  }, [draft, dirty, invalid, t]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -161,14 +163,14 @@ export function SettingsPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-5 py-10 max-md:pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-8">
       <div className="mb-6">
-        <h1 className={cn("text-2xl font-semibold tracking-tight", PHONE_H1)}>Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">For the whole collection. Scheduling options live on each deck.</p>
+        <h1 className={cn("text-2xl font-semibold tracking-tight", PHONE_H1)}>{t("Settings")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("For the whole collection. Scheduling options live on each deck.")}</p>
       </div>
 
       {loadError && (
         <div className="rounded-xl border border-destructive/40 p-6 text-sm">
-          <p className="text-destructive">Couldn't load settings: {loadError}</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={load}>Try again</Button>
+          <p className="text-destructive">{t("Couldn't load settings: {error}", { error: loadError })}</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={load}>{t("Try again")}</Button>
         </div>
       )}
 
@@ -202,20 +204,20 @@ export function SettingsPage() {
                   active === n.id && "border-border bg-accent text-foreground",
                 )}
               >
-                {n.label}
+                {t(n.label)}
               </a>
             ))}
           </nav>
 
           <div className="flex flex-col gap-12">
-            <Section id="about" title="About">
+            <Section id="about" title={t("About")}>
               <Block>
                 <div className="flex items-center gap-3.5">
                   <Logo tile className="size-11 shrink-0 rounded-[10px]" />
                   <div className="min-w-0 flex-1">
                     <Wordmark className="text-[1.35rem] leading-none" />
                     <div className="mt-1 text-xs text-muted-foreground">
-                      Version <span className="font-mono text-[12px] text-foreground/90">{saved.version ?? "unknown"}</span> · FSRS-6 · AGPL-3.0
+                      {t("Version")} <span className="font-mono text-[12px] text-foreground/90">{saved.version ?? "unknown"}</span> · FSRS-6 · AGPL-3.0
                     </div>
                   </div>
                 </div>
@@ -224,22 +226,22 @@ export function SettingsPage() {
                   {ABOUT_LINKS.map((l) => (
                     <a key={l.href} href={l.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground">
                       <l.icon className="size-3.5" />
-                      {l.label}
+                      {t(l.label)}
                     </a>
                   ))}
                 </div>
                 {!serverless() && <p className="text-xs text-muted-foreground">
-                  From a terminal: <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11.5px] text-foreground/85">etude update --check</code>
+                  {t("From a terminal: {cmd}", { cmd: "etude update --check" })}
                 </p>}
               </Block>
               <Block
-                title="First-run setup"
-                description="The questions Etude asks on a new install: AI grading, Sync, and something to start with. Your decks stay as they are."
+                title={t("First-run setup")}
+                description={t("The questions Etude asks on a new install: AI grading, Sync, and something to start with. Your decks stay as they are.")}
                 stackAside
                 aside={
                   <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" onClick={() => window.dispatchEvent(new Event(ONBOARDING_EVENT))}>
                     <RotateCcw className="size-4" />
-                    Run setup again
+                    {t("Run setup again")}
                   </Button>
                 }
               />
@@ -249,23 +251,23 @@ export function SettingsPage() {
 
             <AppearanceSection />
 
-            <Section id="study" title="Study">
+            <Section id="study" title={t("Study")}>
               <Block>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <NumberField
-                    label="Next day starts at"
+                    label={t("Next day starts at")}
                     suffix="h"
                     value={draft.dayStartHour}
                     error={shown.dayStartHour}
-                    hint="Hour, 0–23. Reviews before this count toward the previous day."
+                    hint={t("Hour, 0–23. Reviews before this count toward the previous day.")}
                     onChange={(v) => setDraft({ ...draft, dayStartHour: v })}
                   />
                   <NumberField
-                    label="Learn-ahead limit"
+                    label={t("Learn-ahead limit")}
                     suffix="min"
                     value={draft.learnAheadMinutes}
                     error={shown.learnAheadMinutes}
-                    hint="When nothing else is due, learning cards due this soon are shown early."
+                    hint={t("When nothing else is due, learning cards due this soon are shown early.")}
                     onChange={(v) => setDraft({ ...draft, learnAheadMinutes: v })}
                   />
                 </div>
@@ -290,13 +292,13 @@ export function SettingsPage() {
             )}
             aria-hidden={!dirty}
           >
-            <span className="min-w-0 truncate text-sm">{invalid ? <span className="text-destructive">Some fields need fixing</span> : <span className="text-muted-foreground">Unsaved changes</span>}</span>
+            <span className="min-w-0 truncate text-sm">{invalid ? <span className="text-destructive">{t("Some fields need fixing")}</span> : <span className="text-muted-foreground">{t("Unsaved changes")}</span>}</span>
             <div className="flex-1" />
             <Button variant="ghost" size="sm" className="h-10 gap-1.5 md:h-8" onClick={() => setDraft(draftOf(saved))} tabIndex={dirty ? 0 : -1}>
-              <RotateCcw className="size-4" />Discard
+              <RotateCcw className="size-4" />{t("Cancel")}
             </Button>
             <Button size="sm" className="h-10 gap-1.5 md:h-8" onClick={save} disabled={saving || invalid} tabIndex={dirty ? 0 : -1}>
-              {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}Save <kbd className="hidden text-[10px] opacity-60 sm:inline">Ctrl S</kbd>
+              {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{t("Save")} <kbd className="hidden text-[10px] opacity-60 sm:inline">Ctrl S</kbd>
             </Button>
           </div>
         </>

@@ -1,6 +1,7 @@
 // The richer Stats visuals: recall ring, sparklines, forgetting curve, memory ladder, study clock, donuts.
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { locale, t } from "@/lib/i18n";
 
 /** Computer Modern for the big numerals, matching the wordmark. */
 export const SERIF = { fontFamily: "KaTeX_Main, 'Latin Modern Roman', 'CMU Serif', Georgia, serif" } as const;
@@ -103,7 +104,16 @@ export function Sparkline({ values, color = "var(--highlight)", height = 34, dom
 
 // -------------------------------------------------------- forgetting curve
 
-const fmtSpan = (d: number) => (d === 0 ? "today" : d < 7 ? `${d} day${d === 1 ? "" : "s"}` : d < 30 ? `${Math.round(d / 7)} wk` : `${Math.round(d / 30)} mo`);
+const fmtSpan = (d: number) => {
+  if (d === 0) return t("today");
+  if (d < 7) return d === 1 ? t("1 day") : t("{n} days", { n: d });
+  if (d < 30) {
+    const w = Math.round(d / 7);
+    return w === 1 ? t("1 week") : t("{n} weeks", { n: w });
+  }
+  const m = Math.round(d / 30);
+  return m === 1 ? t("1 month") : t("{n} months", { n: m });
+};
 
 /**
  * Mean predicted recall of the studied cards if nothing were reviewed from now on.
@@ -157,19 +167,22 @@ export function ForgettingCurve({ curve, target, height = 220 }: { curve: { days
       <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
         {cross == null ? (
           <p className="text-sm text-pretty">
-            Even with <span className="text-foreground">no reviews for {fmtSpan(maxD)}</span>, your average recall stays above {Math.round(target * 100)}%.
+            {t("Even with no reviews for {span}, your average recall stays above {target}%.", { span: fmtSpan(maxD), target: Math.round(target * 100) })}
           </p>
         ) : cross === 0 ? (
-          <p className="text-sm text-pretty">Your average recall is already under your {Math.round(target * 100)}% target. Reviewing what's due brings it back.</p>
+          <p className="text-sm text-pretty">{t("Your average recall is already under your {target}% target. Reviewing what's due brings it back.", { target: Math.round(target * 100) })}</p>
         ) : (
           <p className="text-sm text-pretty text-muted-foreground">
-            Stop reviewing today and your average recall drops under <span className="text-foreground">{Math.round(target * 100)}%</span> in about{" "}
-            <span className="tabular text-highlight">{cross < 1.5 ? "a day" : `${Math.round(cross)} days`}</span>, and to{" "}
-            <span className="tabular text-foreground">{Math.round(curve[curve.length - 1].recall * 100)}%</span> in {fmtSpan(maxD)}.
+            {t("Stop reviewing today and your average recall drops under {target}% in about {days}, and to {recall}% in {span}.", {
+              target: `${Math.round(target * 100)}%`,
+              days: cross < 1.5 ? t("a day") : t("{n} days", { n: Math.round(cross) }),
+              recall: `${Math.round(curve[curve.length - 1].recall * 100)}%`,
+              span: fmtSpan(maxD),
+            })}
           </p>
         )}
       </div>
-      <svg width={W} height={H} className="block max-w-full touch-none" role="img" aria-label={`Forgetting curve: average recall falls from ${Math.round(curve[0].recall * 100)}% today to ${Math.round(curve[curve.length - 1].recall * 100)}% in ${maxD} days without reviews`} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
+      <svg width={W} height={H} className="block max-w-full touch-none" role="img" aria-label={t("Forgetting curve: average recall falls from {from}% today to {to}% in {days} days without reviews", { from: Math.round(curve[0].recall * 100), to: Math.round(curve[curve.length - 1].recall * 100), days: maxD })} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
         <defs>
           <clipPath id={`${id}c`}>
             <rect x={0} y={0} width={clipW} height={H} className="viz-anim" style={{ transition: "width 1.3s cubic-bezier(.3,.7,.2,1)" }} />
@@ -181,12 +194,17 @@ export function ForgettingCurve({ curve, target, height = 220 }: { curve: { days
             <text x={L - 7} y={fy(v) + 4} textAnchor="end" fontSize={11} className="tabular fill-muted-foreground">{Math.round(v * 100)}%</text>
           </g>
         ))}
-        {xTicks.map((t) => (
-          <g key={t}><line x1={fx(t)} x2={fx(t)} y1={H - B} y2={H - B + 4} stroke="var(--border)" /><text x={fx(t)} y={H - 7} textAnchor={t === 0 ? "start" : t === maxD ? "end" : "middle"} fontSize={11} className="fill-muted-foreground">{t === 0 ? "now" : t < 7 ? `${t}d` : t < 30 ? `${t / 7}w` : `${t / 30}mo`}</text></g>
+        {xTicks.map((tVal) => (
+          <g key={tVal}>
+            <line x1={fx(tVal)} x2={fx(tVal)} y1={H - B} y2={H - B + 4} stroke="var(--border)" />
+            <text x={fx(tVal)} y={H - 7} textAnchor={tVal === 0 ? "start" : tVal === maxD ? "end" : "middle"} fontSize={11} className="fill-muted-foreground">
+              {tVal === 0 ? t("Now") : tVal === 1 ? t("1d") : tVal === 3 ? t("3d") : tVal === 7 ? t("1w") : tVal === 14 ? t("2w") : tVal === 30 ? t("1mo") : tVal === 60 ? t("2mo") : tVal === 90 ? t("3mo") : tVal < 7 ? `${tVal}${t("d")}` : tVal < 30 ? `${tVal / 7}${t("w")}` : `${tVal / 30}${t("mo")}`}
+            </text>
+          </g>
         ))}
         {/* Target line. */}
         <line x1={L} x2={W - R} y1={fy(target)} y2={fy(target)} stroke="var(--foreground)" strokeOpacity={0.45} strokeDasharray="4 4" />
-        <text x={W - R} y={fy(target) - 6} textAnchor="end" fontSize={11} className="fill-muted-foreground">target {Math.round(target * 100)}%</text>
+        <text x={W - R} y={fy(target) - 6} textAnchor="end" fontSize={11} className="fill-muted-foreground">{t("target {target}%", { target: Math.round(target * 100) })}</text>
         <g clipPath={`url(#${id}c)`}>
           <path d={area} fill="var(--highlight)" fillOpacity={0.1} />
           <path d={d} fill="none" stroke="var(--highlight)" strokeWidth={2.25} strokeLinecap="round" />
@@ -194,7 +212,7 @@ export function ForgettingCurve({ curve, target, height = 220 }: { curve: { days
             <g>
               <line x1={fx(cross)} x2={fx(cross)} y1={fy(target)} y2={H - B} stroke="var(--highlight)" strokeOpacity={0.6} strokeDasharray="2 3" />
               <circle cx={fx(cross)} cy={fy(target)} r={4.5} fill="var(--background)" stroke="var(--highlight)" strokeWidth={2} />
-              <text x={fx(cross) - 8} y={fy(target) + 17} textAnchor="end" fontSize={11} className="tabular fill-highlight">{Math.round(cross)} days</text>
+              <text x={fx(cross) - 8} y={fy(target) + 17} textAnchor="end" fontSize={11} className="tabular fill-highlight">{t("{n} days", { n: Math.round(cross) })}</text>
             </g>
           )}
         </g>
@@ -207,11 +225,19 @@ export function ForgettingCurve({ curve, target, height = 220 }: { curve: { days
       </svg>
       {hp && (
         <div
-          className="pointer-events-none absolute z-10 rounded-md border bg-popover px-2.5 py-1.5 text-xs shadow-md"
+          className="pointer-events-none absolute z-10 rounded-md border bg-popover px-2.5 py-1.5 text-xs shadow-md text-left rtl:text-right"
           style={{ left: Math.max(4, Math.min(W - 150, fx(hp.days) - 70)), top: fy(hp.recall) + 30 }}
         >
-          <div className="font-medium">{hp.days === 0 ? "Now" : `In ${hp.days} day${hp.days === 1 ? "" : "s"}`}</div>
-          <div className="tabular text-muted-foreground">{(hp.recall * 100).toFixed(1)}% average recall</div>
+          <div className="font-medium">
+            {hp.days === 0
+              ? t("Now")
+              : hp.days === 1
+              ? t("In 1 day")
+              : hp.days === 2
+              ? t("In 2 days")
+              : t("In {n} days", { n: hp.days })}
+          </div>
+          <div className="tabular text-muted-foreground">{t("{recall}% average recall", { recall: (hp.recall * 100).toFixed(1) })}</div>
         </div>
       )}
     </div>
@@ -300,14 +326,14 @@ export function StudyClock({ hours, target, size = 232 }: { hours: { hour: numbe
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
       <div className="relative shrink-0" style={{ width: S, height: S }}>
-        <svg width={S} height={S} role="img" aria-label={`Reviews by hour of day; busiest ${hh(busiest.hour)}`} onMouseLeave={() => setHover(null)}>
+        <svg width={S} height={S} role="img" aria-label={t("Reviews by hour of day; busiest {hour}", { hour: hh(busiest.hour) })} onMouseLeave={() => setHover(null)}>
           {[0.33, 0.66, 1].map((k) => (
             <circle key={k} cx={c} cy={c} r={r0 + (r1 - r0) * k} fill="none" stroke="var(--border)" />
           ))}
           {[0, 6, 12, 18].map((h) => {
             const a = ((h / 24) * 2 - 0.5) * Math.PI;
             return (
-              <text key={h} x={c + Math.cos(a) * (r1 + 17)} y={c + Math.sin(a) * (r1 + 17) + 4} textAnchor="middle" fontSize={11} className="tabular fill-muted-foreground">{h}h</text>
+              <text key={h} x={c + Math.cos(a) * (r1 + 17)} y={c + Math.sin(a) * (r1 + 17) + 4} textAnchor="middle" fontSize={11} className="tabular fill-muted-foreground">{h}{t("h")}</text>
             );
           })}
           <g className="viz-anim" style={{ transform: `scale(${shown ? 1 : 0.15})`, transformOrigin: `${c}px ${c}px`, opacity: shown ? 1 : 0, transition: "transform 1s cubic-bezier(.2,.8,.2,1), opacity .5s" }}>
@@ -335,25 +361,34 @@ export function StudyClock({ hours, target, size = 232 }: { hours: { hour: numbe
           {hv ? (
             <>
               <div className="tabular text-lg leading-none" style={SERIF}>{hh(hv.hour)}</div>
-              <div className="tabular mt-1 text-[11px] text-muted-foreground">{hv.reviews}{ratedOf(hv) ? ` · ${Math.round((hv.passed / ratedOf(hv)) * 100)}%` : ""}</div>
+              <div className="tabular mt-1 text-[11px] text-muted-foreground">
+                {hv.reviews === 0
+                  ? t("0 answers")
+                  : hv.reviews === 1
+                  ? t("1 answer")
+                  : hv.reviews === 2
+                  ? t("2 answers")
+                  : t("{n} answers", { n: hv.reviews })}
+                {ratedOf(hv) ? ` · ${Math.round((hv.passed / ratedOf(hv)) * 100)}%` : ""}
+              </div>
             </>
           ) : (
-            <div className="text-[11px] text-muted-foreground">24 h</div>
+            <div className="text-[11px] text-muted-foreground">{t("24 h")}</div>
           )}
         </div>
       </div>
       <dl className="grid w-full grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-1">
         <div>
-          <dt className="text-xs text-muted-foreground">Busiest hour</dt>
+          <dt className="text-xs text-muted-foreground">{t("Busiest hour")}</dt>
           <dd className="tabular mt-0.5 text-lg" style={SERIF}>{hh(busiest.hour)}</dd>
-          <dd className="tabular text-xs text-muted-foreground">{busiest.reviews} answer{busiest.reviews === 1 ? "" : "s"}</dd>
+          <dd className="tabular text-xs text-muted-foreground">{busiest.reviews === 1 ? t("1 answer") : t("{n} answers", { n: busiest.reviews })}</dd>
         </div>
         {totalRated > 0 && <div>
-          <dt className="text-xs text-muted-foreground">Sharpest hour</dt>
+          <dt className="text-xs text-muted-foreground">{t("Sharpest hour")}</dt>
           <dd className="tabular mt-0.5 text-lg" style={SERIF}>{best ? hh(best.hour) : "—"}</dd>
-          <dd className="tabular text-xs text-muted-foreground">{best ? `${Math.round((best.passed / ratedOf(best)) * 100)}% not Again` : "Needs more rated answers"}</dd>
+          <dd className="tabular text-xs text-muted-foreground">{best ? t("{pct}% not Again", { pct: Math.round((best.passed / ratedOf(best)) * 100) }) : t("Needs more rated answers")}</dd>
         </div>}
-        <p className="col-span-2 text-xs text-pretty text-muted-foreground sm:col-span-1">{totalRated ? "Longer wedges, more answers. Color is how often you didn't press Again at that hour." : "Longer wedges, more runs at that hour."}</p>
+        <p className="col-span-2 text-xs text-pretty text-muted-foreground sm:col-span-1">{totalRated ? t("Longer wedges, more answers. Color is how often you didn't press Again at that hour.") : t("Longer wedges, more runs at that hour.")}</p>
       </dl>
     </div>
   );
@@ -463,14 +498,14 @@ export function ProgressChart({ points, better, unit, digits, height = 168 }: { 
   const bestAt = vals.lastIndexOf(best);
   const line = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join("");
   const ticks = [lo + pad, (lo + hi) / 2, hi - pad];
-  const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const day = (iso: string) => new Date(iso).toLocaleDateString(locale() === "ar" ? "ar-u-nu-latn" : undefined, { month: "short", day: "numeric" });
   const labels = n > 1 ? [0, n - 1] : [0];
   // Runs on the same day read better as session numbers than as one repeated date.
   const sameDay = n > 1 && day(points[0].at) === day(points[n - 1].at);
   const xLabel = (i: number) => (sameDay ? `#${i + 1}` : day(points[i].at));
   return (
     <div ref={ref} className="w-full">
-      <svg width={W} height={height} className="block max-w-full" role="img" aria-label={`${n} sessions, best ${fmt(best)}`}>
+      <svg width={W} height={height} className="block max-w-full" role="img" aria-label={n === 1 ? t("1 session, best {best}", { best: fmt(best) }) : t("{n} sessions, best {best}", { n, best: fmt(best) })}>
         {ticks.map((t, i) => (
           <g key={i}>
             <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeDasharray={i === 1 ? "2 4" : undefined} />
@@ -480,7 +515,7 @@ export function ProgressChart({ points, better, unit, digits, height = 168 }: { 
         {n > 1 && <path d={line} fill="none" stroke="var(--highlight)" strokeWidth={1.8} strokeLinejoin="round" strokeLinecap="round" />}
         {points.map((p, i) => (
           <circle key={i} cx={x(i)} cy={y(p.value)} r={n > 40 ? 1.8 : 3} fill={i === bestAt ? "var(--good)" : "var(--highlight)"}>
-            <title>{`${day(p.at)} ${new Date(p.at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} · ${fmt(p.value)}`}</title>
+            <title>{`${day(p.at)} ${new Date(p.at).toLocaleTimeString(locale() === "ar" ? "ar-u-nu-latn" : undefined, { hour: "numeric", minute: "2-digit" })} · ${fmt(p.value)}`}</title>
           </circle>
         ))}
         <circle cx={x(bestAt)} cy={y(best)} r={7} fill="none" stroke="var(--good)" strokeWidth={1.4} />

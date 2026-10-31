@@ -113,14 +113,14 @@ export function NumberField({ label, hint, error, value, onChange, suffix, step,
           min={min}
           max={max}
           aria-invalid={!!error}
-          className={cn("tabular h-10 md:h-9", suffix && "pr-14")}
+          className={cn("tabular h-10 md:h-9", suffix && "pr-14 rtl:pr-3 rtl:pl-14")}
           onChange={(e) => {
             setText(e.target.value);
             const t = e.target.value.trim();
             onChange(t === "" ? NaN : Number(t));
           }}
         />
-        {suffix && <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">{suffix}</span>}
+        {suffix && <span className="pointer-events-none absolute inset-y-0 right-3 rtl:right-auto rtl:left-3 flex items-center text-xs text-muted-foreground">{suffix}</span>}
       </div>
     </Field>
   );
@@ -142,7 +142,7 @@ export function CopyValue({ label, value }: { label: string; value: string }) {
       <div className="text-xs font-medium text-muted-foreground">{label}</div>
       <button
         onClick={copy}
-        className="group flex min-h-10 w-full items-center gap-3 rounded-md bg-background/70 px-3.5 py-2.5 text-left font-mono text-[13px] text-foreground/85 ring-1 ring-border transition-colors hover:bg-accent"
+        className="group flex min-h-10 w-full items-center gap-3 rounded-md bg-background/70 px-3.5 py-2.5 text-left rtl:text-right font-mono text-[13px] text-foreground/85 ring-1 ring-border transition-colors hover:bg-accent"
         title="Copy"
       >
         <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">

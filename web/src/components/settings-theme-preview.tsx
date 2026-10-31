@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { CardFrame, type CardResult } from "@/components/card-frame";
 import type { Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /** Inline styles that make every theme token resolve to this theme's values inside the element. */
 export function themeStyle(t: Theme): React.CSSProperties {
@@ -51,21 +52,6 @@ export function ThemeSwatches({ theme, className }: { theme: Theme; className?: 
   );
 }
 
-const SAMPLE_VIEW = {
-  prompt: "Which planet is closest to the Sun?",
-  multiple: false,
-  options: [
-    { id: "o0", text: "Venus" },
-    { id: "o1", text: "Mercury" },
-    { id: "o2", text: "Mars" },
-  ],
-};
-const SAMPLE_RESULT: CardResult = {
-  grade: { score: 0, verdict: "incorrect", suggested: 1, grader: { kind: "script" } },
-  key: { correct: ["o1"], why: { o1: "About 58 million km out, on average." }, explanation: "Venus is closer to *Earth*, not to the Sun." },
-  answer: ["o0"],
-};
-
 const RATINGS = [
   { label: "Again", cls: "text-again border-again/30 hover:bg-again/10" },
   { label: "Hard", cls: "text-hard border-hard/30 hover:bg-hard/10" },
@@ -75,35 +61,56 @@ const RATINGS = [
 
 /** What the editor shows beside the variables: a real card in a frame and the common controls. */
 export function ThemeSample() {
-  const view = useMemo(() => SAMPLE_VIEW, []);
+  const view = useMemo(
+    () => ({
+      prompt: t("Which planet is closest to the Sun?"),
+      multiple: false,
+      options: [
+        { id: "o0", text: t("Venus") },
+        { id: "o1", text: t("Mercury") },
+        { id: "o2", text: t("Mars") },
+      ],
+    }),
+    [],
+  );
+
+  const sampleResult: CardResult = useMemo(
+    () => ({
+      grade: { score: 0, verdict: "incorrect", suggested: 1, grader: { kind: "script" } },
+      key: { correct: ["o1"], why: { o1: t("About 58 million km out, on average.") }, explanation: t("Venus is closer to Earth, not to the Sun.") },
+      answer: ["o0"],
+    }),
+    [],
+  );
+
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-xl border bg-card px-4 py-4 text-card-foreground sm:px-5">
-        <CardFrame frameKey="theme-sample" src="/frame/mcq" view={view} mode="result" answer={SAMPLE_RESULT.answer} result={SAMPLE_RESULT} minHeight={180} autoFocus={false} />
+        <CardFrame frameKey="theme-sample" src="/frame/mcq" view={view} mode="result" answer={sampleResult.answer} result={sampleResult} minHeight={180} autoFocus={false} />
         <div className="mt-4 grid grid-cols-4 gap-1.5">
           {RATINGS.map((r) => (
             <button key={r.label} type="button" tabIndex={-1} className={cn("h-10 rounded-md border text-sm font-medium transition-colors", r.cls)}>
-              {r.label}
+              {t(r.label)}
             </button>
           ))}
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" tabIndex={-1}>Primary</Button>
-        <Button size="sm" variant="outline" tabIndex={-1}>Outline</Button>
-        <Button size="sm" variant="ghost" tabIndex={-1}>Ghost</Button>
-        <Button size="sm" variant="destructive" tabIndex={-1}>Delete</Button>
+        <Button size="sm" tabIndex={-1}>{t("Primary")}</Button>
+        <Button size="sm" variant="outline" tabIndex={-1}>{t("Outline")}</Button>
+        <Button size="sm" variant="ghost" tabIndex={-1}>{t("Ghost")}</Button>
+        <Button size="sm" variant="destructive" tabIndex={-1}>{t("Delete")}</Button>
       </div>
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <Badge variant="outline" className="border-new/40 text-new">12 new</Badge>
-        <Badge variant="outline" className="border-learn/40 text-learn">3 learning</Badge>
-        <Badge variant="outline" className="border-review/40 text-review">41 due</Badge>
-        <span className="text-highlight">accent</span>
-        <span className="text-success">success</span>
-        <span className="text-warning">warning</span>
-        <span className="text-danger">danger</span>
+        <Badge variant="outline" className="border-new/40 text-new">{t("12 new")}</Badge>
+        <Badge variant="outline" className="border-learn/40 text-learn">{t("3 learning")}</Badge>
+        <Badge variant="outline" className="border-review/40 text-review">{t("41 due")}</Badge>
+        <span className="text-highlight">{t("accent")}</span>
+        <span className="text-success">{t("success")}</span>
+        <span className="text-warning">{t("warning")}</span>
+        <span className="text-danger">{t("danger")}</span>
       </div>
-      <Input tabIndex={-1} placeholder="An input" className="h-10 md:h-9" />
+      <Input tabIndex={-1} placeholder={t("An input")} className="h-10 md:h-9" />
       <div className="flex gap-1.5" aria-hidden="true">
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="h-8 flex-1 rounded" style={{ background: `var(--chart-${i})` }} />

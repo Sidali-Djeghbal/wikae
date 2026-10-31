@@ -13,6 +13,8 @@ import { api, humanInterval, relative, RATING_LABEL, type Counts, type LearnerSu
 import { cn } from "@/lib/utils";
 import { navigate } from "@/lib/router";
 import { usePhone } from "@/lib/phone";
+import { useLocale } from "@/lib/useLocale";
+import { t } from "@/lib/i18n";
 import { ActionSheet, Tally } from "@/components/phone-shell";
 import { SketchBar, SketchLayer, sketchTransform, useSketch } from "@/components/sketch-pad";
 
@@ -38,6 +40,7 @@ const VERDICT_TEXT: Record<string, { label: string; cls: string }> = {
 };
 
 export function StudyPage({ scope, title, startCard }: { scope: Scope; title: string; startCard?: number }) {
+  const { t } = useLocale();
   const [card, setCard] = useState<StudyCard | null>(null);
   const [counts, setCounts] = useState<Counts | null>(null);
   const [phase, setPhase] = useState<Phase>("loading");
@@ -322,23 +325,23 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
       {bare ? null : phone ? (
         <header className="sticky top-0 z-10 -mx-4 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-end bg-background/92 px-1 pt-[env(safe-area-inset-top)] backdrop-blur">
           <div className="flex h-14 w-full items-center gap-1">
-            <button onClick={() => navigate("/")} className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-accent" aria-label="Back to decks"><ChevronLeft className="size-6" /></button>
+            <button onClick={() => navigate("/")} className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-accent" aria-label={t("Back to decks")}><ChevronLeft className="size-6 rtl-flip" /></button>
             <div className="min-w-0 flex-1">
               <div className="score-serif truncate text-[1.15rem] leading-tight">{title}</div>
               {counts && <Tally n={counts.new} l={counts.learning} r={counts.review} className="mt-0.5 text-[12px]" />}
             </div>
             {card && (phase === "answer" || phase === "result") && (
-              <button onClick={() => setFocus(true)} className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-accent" aria-label="Focus on the card"><Maximize2 className="size-5" /></button>
+              <button onClick={() => setFocus(true)} className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-accent" aria-label={t("Focus on the card")}><Maximize2 className="size-5" /></button>
             )}
             {card && (phase === "answer" || phase === "result") && (
-              <button onClick={() => setTools(true)} className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-accent" aria-label="Card actions"><MoreHorizontal className="size-5" /></button>
+              <button onClick={() => setTools(true)} className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-accent" aria-label={t("Card actions")}><MoreHorizontal className="size-5" /></button>
             )}
           </div>
         </header>
       ) : (
       <header className="sticky top-0 z-10 -mx-4 flex items-center gap-2 bg-background/90 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur sm:-mx-8 sm:gap-3 sm:px-8 sm:py-4">
-        <Button variant="ghost" size="icon" className="-ml-2" onClick={() => navigate("/")} aria-label="Back to decks">
-          <ArrowLeft />
+        <Button variant="ghost" size="icon" className="-ml-2 rtl:-mr-2 rtl:ml-0" onClick={() => navigate("/")} aria-label={t("Back to decks")}>
+          <ArrowLeft className="rtl-flip" />
         </Button>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium">{title}</div>
@@ -346,17 +349,17 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
         </div>
         {counts && (
           <div className="flex items-center gap-3 text-sm tabular">
-            <Tooltip><TooltipTrigger asChild><span className="text-new">{counts.new}</span></TooltipTrigger><TooltipContent>New</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><span className="text-learn">{counts.learning}</span></TooltipTrigger><TooltipContent>Learning</TooltipContent></Tooltip>
-            <Tooltip><TooltipTrigger asChild><span className="text-review">{counts.review}</span></TooltipTrigger><TooltipContent>Review</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger asChild><span className="text-new">{counts.new}</span></TooltipTrigger><TooltipContent>{t("New")}</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger asChild><span className="text-learn">{counts.learning}</span></TooltipTrigger><TooltipContent>{t("Learning")}</TooltipContent></Tooltip>
+            <Tooltip><TooltipTrigger asChild><span className="text-review">{counts.review}</span></TooltipTrigger><TooltipContent>{t("Review")}</TooltipContent></Tooltip>
           </div>
         )}
         {card && (phase === "answer" || phase === "result") && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={() => setAside("bury", true)} aria-label="Bury note until tomorrow" aria-keyshortcuts="="><EyeOff /></Button>
+              <Button variant="ghost" size="icon" onClick={() => setAside("bury", true)} aria-label={t("Bury note until tomorrow")} aria-keyshortcuts="="><EyeOff /></Button>
             </TooltipTrigger>
-            <TooltipContent>Bury until tomorrow: <kbd className="opacity-70">=</kbd> the note, <kbd className="opacity-70">-</kbd> just this card</TooltipContent>
+            <TooltipContent>{t("Bury until tomorrow: = the note, - just this card")}</TooltipContent>
           </Tooltip>
         )}
         {card && (phase === "answer" || phase === "result") && (
@@ -364,30 +367,30 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Suspend"><Pause /></Button>
+                  <Button variant="ghost" size="icon" aria-label={t("Suspend")}><Pause /></Button>
                 </DropdownMenuTrigger>
               </TooltipTrigger>
-              <TooltipContent>Suspend: <kbd className="opacity-70">@</kbd> just this card, <kbd className="opacity-70">!</kbd> the note</TooltipContent>
+              <TooltipContent>{t("Suspend: @ just this card, ! the note")}</TooltipContent>
             </Tooltip>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setAside("suspend", false)}>Suspend this card<kbd className="ml-auto pl-4 text-xs opacity-60">@</kbd></DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setAside("suspend", true)}>Suspend the whole note<kbd className="ml-auto pl-4 text-xs opacity-60">!</kbd></DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setAside("suspend", false)}>{t("Suspend this card")}<kbd className="ml-auto rtl:mr-auto rtl:ml-0 pl-4 rtl:pr-4 rtl:pl-0 text-xs opacity-60">@</kbd></DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setAside("suspend", true)}>{t("Suspend the whole note")}<kbd className="ml-auto rtl:mr-auto rtl:ml-0 pl-4 rtl:pr-4 rtl:pl-0 text-xs opacity-60">!</kbd></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
         {card && (phase === "answer" || phase === "result") && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={() => setFocus(true)} aria-label="Focus on the card"><Maximize2 /></Button>
+              <Button variant="ghost" size="icon" onClick={() => setFocus(true)} aria-label={t("Focus on the card")}><Maximize2 /></Button>
             </TooltipTrigger>
-            <TooltipContent>Focus: hide everything but the card. <kbd className="opacity-70">Esc</kbd> leaves</TooltipContent>
+            <TooltipContent>{t("Focus: hide everything but the card. Esc leaves")}</TooltipContent>
           </Tooltip>
         )}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={phase === "loading" || phase === "grading"} onClick={undo} aria-label="Undo"><Undo2 /></Button>
+            <Button variant="ghost" size="icon" disabled={phase === "loading" || phase === "grading"} onClick={undo} aria-label={t("Undo")}><Undo2 /></Button>
           </TooltipTrigger>
-          <TooltipContent>Undo last rating <kbd className="ml-1 opacity-70">Ctrl Z</kbd></TooltipContent>
+          <TooltipContent>{t("Undo last rating")} <kbd className="ml-1 rtl:mr-1 rtl:ml-0 opacity-70">Ctrl Z</kbd></TooltipContent>
         </Tooltip>
       </header>
       )}
@@ -414,10 +417,10 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
                 <TooltipContent>Your placement suggests you know this. Right on first sight sends it weeks away.</TooltipContent>
               </Tooltip>
             )}
-            {practice && <Badge variant="outline" className="border-highlight/40 font-normal text-highlight">practice, not scheduled</Badge>}
+            {practice && <Badge variant="outline" className="border-highlight/40 font-normal text-highlight">{t("practice, not scheduled")}</Badge>}
             <div className="flex-1" />
             <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-xs text-muted-foreground max-md:hidden" onClick={() => navigate(`/browse?item=${encodeURIComponent(card.itemId)}`)}>
-              <Pencil className="size-3.5" /> Edit
+              <Pencil className="size-3.5" /> {t("Edit")}
             </Button>
           </div>
 
@@ -439,36 +442,36 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
             <section ref={resultRef} className="flex scroll-mb-36 flex-col gap-3 pt-1">
               {verdict && (
                 <div className="flex items-center gap-2 text-sm">
-                  <span className={cn("font-medium", verdict.cls)}>{verdict.label}</span>
+                  <span className={cn("font-medium", verdict.cls)}>{t(verdict.label)}</span>
                   {result.grade.score != null && result.grade.verdict === "partial" && <span className="tabular text-muted-foreground">{Math.round(result.grade.score * 100)}%</span>}
                   {result.grade.grader.kind === "ai" && result.grade.grader.model && (
-                    <span className="truncate text-xs text-muted-foreground">· graded by {result.grade.grader.model.split("/").pop()}</span>
+                    <span className="truncate text-xs text-muted-foreground">· {t("graded by")} {result.grade.grader.model.split("/").pop()}</span>
                   )}
                 </div>
               )}
-              {result.grade.adaptive?.reason && <div className="text-xs text-muted-foreground">Picked for you: {result.grade.adaptive.reason}.</div>}
+              {result.grade.adaptive?.reason && <div className="text-xs text-muted-foreground">{t("Picked for you")}: {result.grade.adaptive.reason}.</div>}
               {feedback?.loading && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Writing feedback…</div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> {t("Writing feedback…")}</div>
               )}
               {feedback?.text && (
                 <div className="rounded-lg border bg-card/60 px-4 py-3">
-                  <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">Feedback</div>
+                  <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">{t("Feedback")}</div>
                   <Markdown className="text-[0.95rem]">{feedback.text}</Markdown>
                 </div>
               )}
-              {feedback?.error && <div className="text-sm text-destructive">Feedback failed: {feedback.error}</div>}
+              {feedback?.error && <div className="text-sm text-destructive">{t("Feedback failed")}: {feedback.error}</div>}
               <div className="flex flex-wrap items-center gap-2">
                 {!feedback && attemptId && card.showVerdict !== false && (
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => askFeedback(attemptId)}>
-                    <MessageSquareText className="size-4" /> Explain my answer
+                    <MessageSquareText className="size-4" /> {t("Explain my answer")}
                   </Button>
                 )}
                 {card.generated && (
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={anotherVariant}>
-                    <RotateCcw className="size-4" /> Try another variant
+                    <RotateCcw className="size-4" /> {t("Try another variant")}
                   </Button>
                 )}
-                {card.source && <span className="w-full text-xs text-muted-foreground sm:ml-auto sm:w-auto">Source: {card.source}</span>}
+                {card.source && <span className="w-full text-xs text-muted-foreground sm:ml-auto sm:w-auto">{t("Source")}: {card.source}</span>}
               </div>
             </section>
           )}
@@ -478,10 +481,10 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
       {bare && (
         <button
           onClick={() => setFocus(false)}
-          aria-label="Leave focus mode"
-          title="Leave focus mode (Esc)"
+          aria-label={t("Leave focus mode")}
+          title={t("Leave focus mode (Esc)")}
           className={cn(
-            "fixed right-[max(1rem,env(safe-area-inset-right))] z-30 flex size-10 items-center justify-center rounded-full border bg-background/80 text-muted-foreground shadow-sm backdrop-blur hover:text-foreground",
+            "fixed right-[max(1rem,env(safe-area-inset-right))] rtl:right-auto rtl:left-[max(1rem,env(safe-area-inset-left))] z-30 flex size-10 items-center justify-center rounded-full border bg-background/80 text-muted-foreground shadow-sm backdrop-blur hover:text-foreground",
             showBar ? "bottom-[calc(6.5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(7.5rem+env(safe-area-inset-bottom))]" : phone ? "bottom-[max(0.5rem,env(safe-area-inset-bottom))]" : "bottom-[max(1rem,env(safe-area-inset-bottom))]",
           )}
         >
@@ -497,12 +500,12 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
             {phone && phase !== "result" && (
               <div className="relative shrink-0">
                 {plus && (
-                  <div className="absolute bottom-[calc(100%+0.6rem)] left-0 z-20 w-60 rounded-[1.6rem] border bg-card p-1.5 shadow-2xl">
+                  <div className="absolute bottom-[calc(100%+0.6rem)] left-0 rtl:left-auto rtl:right-0 z-20 w-60 rounded-[1.6rem] border bg-card p-1.5 shadow-2xl">
                     {[
-                      { label: "Rascunho", icon: Pencil, hl: true, onClick: () => { setPlus(false); sk.setOn(true); } },
-                      { label: "Card anterior", icon: ArrowLeftToLine, onClick: () => { setPlus(false); undo(); } },
-                      { label: "Suspender", icon: Pause, onClick: () => { setPlus(false); setAside("suspend", false); } },
-                      { label: "Mais ações", icon: MoreHorizontal, onClick: () => { setPlus(false); setTools(true); } },
+                      { label: t("Sketchpad"), icon: Pencil, hl: true, onClick: () => { setPlus(false); sk.setOn(true); } },
+                      { label: t("Previous card"), icon: ArrowLeftToLine, onClick: () => { setPlus(false); undo(); } },
+                      { label: t("Suspend"), icon: Pause, onClick: () => { setPlus(false); setAside("suspend", false); } },
+                      { label: t("More actions"), icon: MoreHorizontal, onClick: () => { setPlus(false); setTools(true); } },
                     ].map((a) => (
                       <button key={a.label} onClick={a.onClick} className={cn("flex h-[2.9rem] w-full items-center gap-3 rounded-full px-4 text-[15px] active:bg-accent", a.hl ? "bg-highlight/10 text-highlight" : "text-foreground/85")}>
                         <a.icon className="size-5" />{a.label}
@@ -510,23 +513,23 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
                     ))}
                   </div>
                 )}
-                <button onClick={() => setPlus((v) => !v)} disabled={phase === "grading"} aria-label={plus ? "Fechar" : "Mais"} aria-expanded={plus} className="flex size-[3.25rem] items-center justify-center rounded-full border bg-card text-foreground active:bg-accent disabled:opacity-40">
+                <button onClick={() => setPlus((v) => !v)} disabled={phase === "grading"} aria-label={plus ? t("Close") : t("More")} aria-expanded={plus} className="flex size-[3.25rem] items-center justify-center rounded-full border bg-card text-foreground active:bg-accent disabled:opacity-40">
                   {plus ? <XIcon className="size-5" /> : <Plus className="size-5" />}
                 </button>
               </div>
             )}
             {phase !== "result" ? (
               <Button size="lg" className="h-[3.25rem] flex-1 gap-2 rounded-full text-[16px] pointer-coarse:h-[3.25rem] sm:h-10 sm:w-auto sm:min-w-48 sm:flex-none sm:rounded-md sm:text-sm" disabled={phase === "grading" || (!ready && card.grader !== "self")} onClick={reveal}>
-                {phase === "grading" ? <><Loader2 className="size-4 animate-spin" /> Grading…</> : card.grader === "self" ? <>Show answer <kbd className="hidden text-xs opacity-60 sm:inline">Space</kbd></> : <>Check <span className="hidden items-center gap-0.5 text-xs opacity-60 sm:flex"><kbd>Ctrl</kbd><CornerDownLeft className="size-3" /></span></>}
+                {phase === "grading" ? <><Loader2 className="size-4 animate-spin" /> {t("Grading…")}</> : card.grader === "self" ? <>{t("Show answer")} <kbd className="hidden text-xs opacity-60 sm:inline">Space</kbd></> : <>{t("Check")} <span className="hidden items-center gap-0.5 text-xs opacity-60 sm:flex"><kbd>Ctrl</kbd><CornerDownLeft className="size-3" /></span></>}
               </Button>
             ) : !card.scheduler.ratings ? (
               <>
                 <Button variant="outline" size="lg" className="h-[3.25rem] flex-1 gap-2 rounded-full pointer-coarse:h-[3.25rem] sm:h-10 sm:max-w-44 sm:flex-none sm:rounded-md" onClick={again}>
-                  <RotateCcw className="size-4" /> Go again <kbd className="hidden text-xs opacity-60 sm:inline">R</kbd>
+                  <RotateCcw className="size-4" /> {t("Go again")} <kbd className="hidden text-xs opacity-60 sm:inline">R</kbd>
                 </Button>
                 <Button size="lg" className="h-[3.25rem] flex-1 gap-2 rounded-full pointer-coarse:h-[3.25rem] sm:h-10 sm:max-w-56 sm:flex-none sm:rounded-md" onClick={() => rate(0)}>
-                  Next
-                  <span className="text-xs font-normal opacity-70">{practice ? "practice" : card.scheduler.next ? (new Date(card.scheduler.next).getTime() <= Date.now() + 60_000 ? "again today" : `back ${relative(card.scheduler.next)}`) : ""}</span>
+                  {t("Next")}
+                  <span className="text-xs font-normal opacity-70">{practice ? t("practice") : card.scheduler.next ? (new Date(card.scheduler.next).getTime() <= Date.now() + 60_000 ? t("again today") : `back ${relative(card.scheduler.next)}`) : ""}</span>
                 </Button>
               </>
             ) : (
@@ -540,8 +543,8 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
                     suggested === r && "ring-2 ring-current/60 max-sm:bg-current/10 max-md:ring-inset",
                   )}
                 >
-                  <span>{RATING_LABEL[r]}</span>
-                  <span className="tabular text-xs font-normal opacity-70">{practice ? "practice" : humanInterval(card.intervals[r])}</span>
+                  <span>{t(RATING_LABEL[r])}</span>
+                  <span className="tabular text-xs font-normal opacity-70">{practice ? t("practice") : humanInterval(card.intervals[r])}</span>
                 </button>
               ))
             )}
@@ -550,9 +553,9 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
           {phase === "result" && (
             <div className="hidden pb-3 text-center text-xs text-muted-foreground sm:block">
               {card.scheduler.ratings ? (
-                <><kbd>1</kbd>–<kbd>4</kbd> to rate{suggested ? <>, <kbd>Space</kbd> for {RATING_LABEL[suggested]}</> : null}</>
+                <><kbd>1</kbd>–<kbd>4</kbd> {t("to rate")}{suggested ? <>, <kbd>{t("Space")}</kbd> {t("for")} {t(RATING_LABEL[suggested])}</> : null}</>
               ) : (
-                <>Your result is saved either way. <kbd>Space</kbd> for next, <kbd>R</kbd> to go again</>
+                <>{t("Your result is saved either way.")} <kbd>{t("Space")}</kbd> {t("for next")}, <kbd>R</kbd> {t("to go again")}</>
               )}
             </div>
           )}
@@ -629,16 +632,16 @@ function Done({ counts, scope }: { counts: Counts | null; scope: Scope }) {
   };
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-24 text-center">
-      <div className="text-2xl font-semibold tracking-tight">{scope.ahead ? "Nothing left to study" : "All done for now"}</div>
+      <div className="text-2xl font-semibold tracking-tight">{scope.ahead ? t("Nothing left to study") : t("All done for now")}</div>
       <p className="max-w-sm text-muted-foreground">
-        {counts?.doneToday ? `${counts.doneToday} reviews today. ` : ""}
-        {scope.ahead ? "There are no cards in this deck." : counts?.nextDue ? `The next card comes back ${relative(counts.nextDue)}.` : "Nothing else is scheduled."}
+        {counts?.doneToday ? t("{count} reviews today. ", { count: counts.doneToday }) : ""}
+        {scope.ahead ? t("There are no cards in this deck.") : counts?.nextDue ? t("The next card comes back {time}.", { time: relative(counts.nextDue) }) : t("Nothing else is scheduled.")}
       </p>
       <div className="mt-4 flex gap-2">
-        <Button variant="outline" onClick={() => navigate("/")}>Back to decks</Button>
+        <Button variant="outline" onClick={() => navigate("/")}>{t("Back to decks")}</Button>
         {!scope.ahead && counts?.nextDue && (
-          <Button className="gap-1.5" onClick={() => navigate(aheadUrl())} title="Review cards before they're due. FSRS counts an early review for less.">
-            <FastForward className="size-4" />Practice ahead
+          <Button className="gap-1.5" onClick={() => navigate(aheadUrl())} title={t("Review cards before they're due. FSRS counts an early review for less.")}>
+            <FastForward className="size-4 rtl:rotate-180" />{t("Practice ahead")}
           </Button>
         )}
       </div>

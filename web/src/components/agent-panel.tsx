@@ -13,6 +13,7 @@ import { agentApi, DATA_EVENT, type AgentEvent, type AssistantContent, type Atta
 import { navigate } from "@/lib/router";
 import { refreshTheme } from "@/lib/theme";
 import { api, relative } from "@/lib/api";
+import { locale, t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const OPEN_KEY = "etude.agent.open";
@@ -74,25 +75,28 @@ export function AgentLauncher({ onOpen }: { onOpen(): void }) {
     onOpen();
   };
   return (
-    <div className="fixed right-3 bottom-[calc(var(--tabbar-h)+0.5rem)] z-30 flex items-center gap-2 md:right-4 md:bottom-4">
+    <div
+      data-agent-launcher-root
+      className="fixed right-3 bottom-[calc(var(--tabbar-h)+0.5rem)] z-30 flex items-center gap-2 rtl:flex-row-reverse md:right-4 md:bottom-4 rtl:right-auto rtl:left-3 md:rtl:left-4"
+    >
       {hint && (
         <button onClick={open} tabIndex={-1} aria-hidden className="agent-rise h-8 rounded-full border bg-card px-3 text-xs font-medium whitespace-nowrap text-foreground shadow-sm">
-          Ask Etude
+          {t("Ask Etude")}
         </button>
       )}
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             onClick={open}
-            aria-label="Ask Etude"
+            aria-label={t("Ask Etude")}
             data-agent-launcher
             className="flex size-11 items-center justify-center rounded-full border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.18),0_4px_12px_-4px_rgb(0_0_0/0.28)] transition-[translate,border-color,box-shadow] duration-150 outline-ring hover:-translate-y-px hover:border-foreground/30 focus-visible:outline-2 active:translate-y-0 motion-reduce:transition-none"
           >
             <Logo className="size-[26px]" />
           </button>
         </TooltipTrigger>
-        <TooltipContent side="left">
-          Ask Etude <span className="opacity-60">· {AGENT_SHORTCUT}</span>
+        <TooltipContent side={locale() === "ar" ? "right" : "left"}>
+          {t("Ask Etude")} <span className="opacity-60">· {AGENT_SHORTCUT}</span>
         </TooltipContent>
       </Tooltip>
     </div>
@@ -468,12 +472,16 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
     }
   };
 
-  // Desktop resize from the left edge.
+  // Desktop resize from the inner edge (left edge in LTR, right edge in RTL).
   const startResize = (e: React.PointerEvent) => {
     e.preventDefault();
     const x0 = e.clientX;
     const w0 = width;
-    const move = (ev: PointerEvent) => setWidth(Math.min(720, Math.max(340, w0 + (x0 - ev.clientX))));
+    const isRtl = document.documentElement.dir === "rtl";
+    const move = (ev: PointerEvent) => {
+      const delta = isRtl ? ev.clientX - x0 : x0 - ev.clientX;
+      setWidth(Math.min(720, Math.max(340, w0 + delta)));
+    };
     const up = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
@@ -510,11 +518,11 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
     <div
       ref={panel}
       role="complementary"
-      aria-label="Ask Etude"
+      aria-label={t("Ask Etude")}
       data-agent-panel
       className={cn(
         "flex flex-col bg-background text-foreground",
-        phone ? "agent-sheet-in fixed inset-x-0 top-0 z-50 h-dvh pt-[env(safe-area-inset-top)]" : "agent-panel-in sticky top-0 h-dvh shrink-0 border-l",
+        phone ? "agent-sheet-in fixed inset-x-0 top-0 z-50 h-dvh pt-[env(safe-area-inset-top)]" : "agent-panel-in sticky top-0 h-dvh shrink-0 border-l rtl:border-l-0 rtl:border-r",
         dragging && "outline-2 -outline-offset-2 outline-ring/60",
       )}
       style={phone ? (vv ? { height: vv.h, top: vv.top } : undefined) : { width }}
@@ -533,20 +541,20 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
         addFiles([...e.dataTransfer.files]);
       }}
     >
-      {!phone && <div onPointerDown={startResize} className="absolute inset-y-0 -left-1 z-10 w-2 cursor-col-resize" aria-hidden />}
-      <header className="mt-2.5 flex h-11 shrink-0 items-center gap-0.5 pr-2.5 pl-4 max-sm:mt-0 max-sm:pl-2 pointer-coarse:h-12">
+      {!phone && <div onPointerDown={startResize} className="absolute inset-y-0 -left-1 z-10 w-2 cursor-col-resize rtl:left-auto rtl:-right-1" aria-hidden />}
+      <header className="mt-2.5 flex h-11 shrink-0 items-center gap-0.5 pr-2.5 pl-4 max-sm:mt-0 max-sm:pl-2 rtl:pr-4 rtl:pl-2.5 pointer-coarse:h-12">
         {phone && (
-          <HeaderButton label="Close" tip="Close" onClick={onClose}>
-            <ChevronLeft />
+          <HeaderButton label={t("Close")} tip={t("Close")} onClick={onClose}>
+            <ChevronLeft className="rtl-flip" />
           </HeaderButton>
         )}
         {renaming && conv ? (
-          <TitleField title={conv.title || ""} onDone={(t) => (setRenaming(false), t !== null && rename(t))} />
+          <TitleField title={conv.title || ""} onDone={(newTitle) => (setRenaming(false), newTitle !== null && rename(newTitle))} />
         ) : (
-          <HistoryMenu convs={convs} active={conv?.id ?? null} title={conv?.title || "New chat"} onPick={openConv} onDelete={removeConv} />
+          <HistoryMenu convs={convs} active={conv?.id ?? null} title={conv?.title || t("New chat")} onPick={openConv} onDelete={removeConv} />
         )}
         <div className="flex-1" />
-        <HeaderButton label="New chat" disabled={busy || !conv} onClick={() => openConv(null)}>
+        <HeaderButton label={t("New chat")} disabled={busy || !conv} onClick={() => openConv(null)}>
           <SquarePen />
         </HeaderButton>
         <DropdownMenu>
@@ -555,34 +563,34 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  aria-label="More"
+                  aria-label={t("More")}
                   className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors outline-ring hover:bg-accent/70 hover:text-foreground focus-visible:outline-2 data-[state=open]:bg-accent/70 data-[state=open]:text-foreground pointer-coarse:size-9 [&_svg]:size-4"
                 >
                   <Ellipsis />
                 </button>
               </DropdownMenuTrigger>
             </TooltipTrigger>
-            <TooltipContent>More</TooltipContent>
+            <TooltipContent>{t("More")}</TooltipContent>
           </Tooltip>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem disabled={!conv || busy} onSelect={() => setRenaming(true)}>
               <Pencil />
-              Rename chat
+              {t("Rename chat")}
             </DropdownMenuItem>
             <DropdownMenuItem variant="destructive" disabled={!conv || busy} onSelect={() => conv && removeConv(conv.id)}>
               <Trash2 />
-              Delete chat
+              {t("Delete chat")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={openAiSettings}>
               <Settings2 />
-              AI settings
+              {t("AI settings")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         {!phone && (
-          <HeaderButton label="Close" tip={<>Close <span className="opacity-60">Esc</span></>} onClick={onClose}>
-            <ChevronsRight />
+          <HeaderButton label={t("Close")} tip={<>{t("Close")} <span className="opacity-60">Esc</span></>} onClick={onClose}>
+            <ChevronsRight className="rtl-flip" />
           </HeaderButton>
         )}
       </header>
@@ -602,10 +610,10 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
           {notConfigured ? (
             <div className="mt-auto flex flex-col items-start gap-3 pb-2">
               <Logo className="size-11" />
-              <p className="text-[17px] font-semibold tracking-tight">Set up an AI provider first</p>
-              <p className="text-[13px] text-muted-foreground">Ask Etude uses the model you connect in Settings: your ChatGPT plan, an API key, or a local server.</p>
+              <p className="text-[17px] font-semibold tracking-tight">{t("Set up an AI provider first")}</p>
+              <p className="text-[13px] text-muted-foreground">{t("Ask Etude uses the model you connect in Settings: your ChatGPT plan, an API key, or a local server.")}</p>
               <Button size="sm" variant="outline" onClick={openAiSettings}>
-                Settings → AI
+                {t("Settings → AI")}
               </Button>
             </div>
           ) : empty ? (
@@ -660,8 +668,8 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
                 addFiles(files);
               }
             }}
-            placeholder="Ask Etude…"
-            aria-label="Message"
+            placeholder={t("Ask Etude…")}
+            aria-label={t("Message")}
             className="block max-h-52 min-h-11 w-full resize-none bg-transparent px-3 pt-3 pb-1.5 text-sm text-foreground leading-normal outline-none placeholder:text-muted-foreground [field-sizing:content] max-sm:text-base"
           />
           <div className="flex items-center gap-1.5 px-3 pb-3">
@@ -670,7 +678,7 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  aria-label="Attach files"
+                  aria-label={t("Attach files")}
                   disabled={!!notConfigured}
                   onClick={() => fileInput.current?.click()}
                   className="flex size-7 items-center justify-center rounded-full border border-foreground/30 text-foreground/75 transition-colors outline-ring hover:bg-accent/70 hover:text-foreground focus-visible:outline-2 disabled:opacity-40 pointer-coarse:size-9"
@@ -678,18 +686,18 @@ export function AgentPanel({ width, setWidth, onClose, onChanged }: { width: num
                   <Plus className="size-4" strokeWidth={2.25} />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Attach images, PDFs, text or .apkg</TooltipContent>
+              <TooltipContent>{t("Attach images, PDFs, text or .apkg")}</TooltipContent>
             </Tooltip>
             <div className="flex-1" />
             <ModelPicker models={models} value={model} onPick={pickModel} />
             {busy ? (
-              <button type="button" aria-label="Stop" onClick={stop} className="flex size-7 items-center justify-center rounded-full bg-foreground text-background transition-opacity outline-ring hover:opacity-85 focus-visible:outline-2 pointer-coarse:size-9">
+              <button type="button" aria-label={t("Stop")} onClick={stop} className="flex size-7 items-center justify-center rounded-full bg-foreground text-background transition-opacity outline-ring hover:opacity-85 focus-visible:outline-2 pointer-coarse:size-9">
                 <Square className="size-2.5 fill-current" />
               </button>
             ) : (
               <button
                 type="button"
-                aria-label="Send"
+                aria-label={t("Send")}
                 disabled={!canSend}
                 onClick={send}
                 style={canSend ? { color: sendText } : undefined}
@@ -716,17 +724,17 @@ function openAiSettings() {
 function TitleField({ title, onDone }: { title: string; onDone(t: string | null): void }) {
   const [draft, setDraft] = useState(title);
   const done = useRef(false);
-  const finish = (t: string | null) => {
+  const finish = (val: string | null) => {
     if (done.current) return;
     done.current = true;
-    onDone(t);
+    onDone(val);
   };
   return (
     <input
       autoFocus
       value={draft}
       maxLength={80}
-      aria-label="Conversation title"
+      aria-label={t("Conversation title")}
       onChange={(e) => setDraft(e.target.value)}
       onFocus={(e) => e.currentTarget.select()}
       onBlur={() => finish(draft)}
@@ -755,7 +763,7 @@ function EmptyState({ onPick, onFile }: { onPick(t: string): void; onFile(): voi
   return (
     <div className="agent-rise mt-auto flex flex-col pb-3" data-agent-empty>
       <Logo className="-ml-1.5 size-12" />
-      <p className="mt-3.5 mb-3.5 text-[17px] leading-snug font-semibold tracking-tight">What are we practicing today?</p>
+      <p className="mt-3.5 mb-3.5 text-[17px] leading-snug font-semibold tracking-tight">{t("What are we practicing today?")}</p>
       <ul className="-mx-2 flex flex-col">
         {SUGGESTIONS.map(({ icon: Icon, label, file }) => (
           <li key={label}>
@@ -763,10 +771,10 @@ function EmptyState({ onPick, onFile }: { onPick(t: string): void; onFile(): voi
               type="button"
               data-suggestion
               onClick={() => (file ? onFile() : onPick(label))}
-              className="flex h-[35px] w-full items-center gap-2.5 rounded-lg px-2 text-left text-sm text-muted-foreground transition-colors outline-ring hover:bg-accent/60 hover:text-foreground focus-visible:outline-2 pointer-coarse:h-11"
+              className="flex h-[35px] w-full items-center gap-2.5 rounded-lg px-2 text-left rtl:text-right text-sm text-muted-foreground transition-colors outline-ring hover:bg-accent/60 hover:text-foreground focus-visible:outline-2 pointer-coarse:h-11"
             >
               <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
-              {label}
+              {t(label)}
             </button>
           </li>
         ))}
@@ -824,7 +832,7 @@ function MessageView({ m, conv, last, groups, onUndo }: { m: Message; conv: stri
     <div className="group/reply agent-rise flex flex-col gap-1.5" data-agent-reply>
       <Items items={c.items} />
       {c.error && <div className="rounded-[10px] border border-destructive/40 px-3 py-2 text-[13px] text-destructive">{c.error}</div>}
-      {c.stopped && <div className="text-[13px] text-muted-foreground">Stopped.</div>}
+      {c.stopped && <div className="text-[13px] text-muted-foreground">{t("Stopped.")}</div>}
       {(undo || (c.changed && m.undone) || meta) && (
         <div
           className={cn(
@@ -863,7 +871,7 @@ function LiveView({ live, onAnswer }: { live: Live; onAnswer(item: ToolItem, all
       {!waiting && !running && !lastIsText && (
         <div className="flex h-7 items-center gap-2 text-[13px] text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" />
-          {live.items.some((i) => i.type !== "text") ? "Working…" : "Thinking…"}
+          {live.items.some((i) => i.type !== "text") ? t("Working…") : t("Thinking…")}
         </div>
       )}
     </div>
@@ -1090,14 +1098,14 @@ function ConfirmCard({ item, onAnswer }: { item: ToolItem; onAnswer(item: ToolIt
   const summary = item.summary ?? `Runs etude ${label}.`;
   const affected = previewList(item.preview);
   return (
-    <div className="agent-rise rounded-[14px] border border-foreground/20 bg-[color-mix(in_oklab,var(--background),var(--foreground)_3.5%)] p-3.5" role="alertdialog" aria-label="Confirm" aria-describedby={`cf-${item.id}`}>
+    <div className="agent-rise rounded-[14px] border border-foreground/20 bg-[color-mix(in_oklab,var(--background),var(--foreground)_3.5%)] p-3.5" role="alertdialog" aria-label={t("Confirm")} aria-describedby={`cf-${item.id}`}>
       <p id={`cf-${item.id}`} className="text-sm leading-snug text-pretty text-foreground">
         {emphasize(summary.replace(/(\d) /g, "$1\u00a0").replace(/, (\d)/g, ",\u00a0$1"), item.target)}
       </p>
-      <p className="mt-1 text-[13px] text-foreground/75">You can undo this afterwards.</p>
+      <p className="mt-1 text-[13px] text-foreground/75">{t("You can undo this afterwards.")}</p>
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="mt-2.5 -ml-0.5 flex items-center gap-1 rounded-sm px-0.5 text-[13px] text-foreground/75 hover:text-foreground">
         <Chevron open={open} />
-        Details
+        {t("Details")}
       </button>
       {open && (
         <div className="mt-1.5 flex flex-col gap-1.5">
@@ -1120,10 +1128,10 @@ function ConfirmCard({ item, onAnswer }: { item: ToolItem; onAnswer(item: ToolIt
       )}
       <div className="mt-3 flex justify-end gap-2">
         <Button size="sm" variant="ghost" className="rounded-lg" disabled={sent} onClick={() => (setSent(true), onAnswer(item, false))}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button size="sm" variant="destructive" disabled={sent} className="rounded-lg bg-destructive hover:bg-destructive/90 dark:bg-destructive" style={{ color: dangerText }} onClick={() => (setSent(true), onAnswer(item, true))}>
-          {item.action ?? "Run"}
+          {item.action ? t(item.action) : t("Run")}
         </Button>
       </div>
     </div>
@@ -1138,7 +1146,7 @@ function HistoryMenu({ convs, active, title, onPick, onDelete }: { convs: Conver
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label="History"
+          aria-label={t("History")}
           data-agent-title
           className="-ml-1.5 flex h-7 min-w-0 items-center gap-1 rounded-md px-1.5 text-sm font-medium transition-colors outline-ring hover:bg-accent/70 focus-visible:outline-2 data-[state=open]:bg-accent/70 pointer-coarse:h-9"
         >
@@ -1147,25 +1155,25 @@ function HistoryMenu({ convs, active, title, onPick, onDelete }: { convs: Conver
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" sideOffset={6} className="w-[min(20rem,calc(100vw-1.5rem))] rounded-xl p-1">
-        <div className="px-2.5 pt-1.5 pb-1 text-xs text-muted-foreground">Chats</div>
+        <div className="px-2.5 pt-1.5 pb-1 text-xs text-muted-foreground">{t("Chats")}</div>
         {convs.length === 0 ? (
-          <div className="px-2.5 pb-2 text-sm text-muted-foreground">No chats yet.</div>
+          <div className="px-2.5 pb-2 text-sm text-muted-foreground">{t("No chats yet.")}</div>
         ) : (
           <ul className="max-h-80 overflow-y-auto" data-agent-history>
             {convs.map((c) => (
               <li key={c.id} className="group flex items-center gap-1 rounded-lg hover:bg-accent/70">
                 <button
-                  className={cn("flex min-w-0 flex-1 items-baseline gap-2 px-2.5 py-1.5 text-left", c.id === active && "text-highlight")}
+                  className={cn("flex min-w-0 flex-1 items-baseline gap-2 px-2.5 py-1.5 text-left rtl:text-right", c.id === active && "text-highlight")}
                   aria-current={c.id === active ? "true" : undefined}
                   onClick={() => {
                     onPick(c.id);
                     setOpen(false);
                   }}
                 >
-                  <span className="min-w-0 flex-1 truncate text-sm">{c.title || "New chat"}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm">{c.title || t("New chat")}</span>
                   <span className="shrink-0 text-xs text-muted-foreground">{relative(c.updated)}</span>
                 </button>
-                <button aria-label={`Delete ${c.title}`} onClick={() => onDelete(c.id)} className="mr-1 rounded-md p-1.5 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100 pointer-coarse:opacity-100">
+                <button aria-label={t("Delete chat")} onClick={() => onDelete(c.id)} className="mr-1 rtl:mr-0 rtl:ml-1 rounded-md p-1.5 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100 pointer-coarse:opacity-100">
                   <Trash2 className="size-3.5" />
                 </button>
               </li>
@@ -1187,7 +1195,7 @@ function ModelPicker({ models, value, onPick }: { models: { groups: ModelGroup[]
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label="Model"
+          aria-label={t("Model")}
           className="group/model flex h-7 max-w-[12rem] min-w-0 items-center gap-0.5 rounded-md px-2 text-[13px] text-foreground/80 transition-colors outline-ring hover:bg-accent/70 hover:text-foreground focus-visible:outline-2 data-[state=open]:text-foreground pointer-coarse:h-9"
         >
           <span className="truncate">{label}</span>
@@ -1196,9 +1204,9 @@ function ModelPicker({ models, value, onPick }: { models: { groups: ModelGroup[]
       </PopoverTrigger>
       <PopoverContent align="end" side="top" sideOffset={8} className="w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl p-0">
         <Command filter={(v, s) => (v.toLowerCase().includes(s.toLowerCase()) ? 1 : 0)}>
-          <CommandInput placeholder="Search models…" />
+          <CommandInput placeholder={t("Search models…")} />
           <CommandList className="max-h-72">
-            <CommandEmpty>No model found.</CommandEmpty>
+            <CommandEmpty>{t("No model found.")}</CommandEmpty>
             {groups.map((g) => (
               <CommandGroup key={g.provider} heading={g.label}>
                 {g.error && <div className="px-2 py-1 text-[11px] text-destructive">{g.error}</div>}

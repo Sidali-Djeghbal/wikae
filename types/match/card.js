@@ -1,4 +1,8 @@
 const { view } = etude;
+if (document.documentElement.lang === "ar" || document.documentElement.dir === "rtl") {
+  const help = etude.$(".help");
+  if (help) help.textContent = "اختر عنصراً من اليسار، ثم شريكه. انقر على عنصر متصل للتراجع.";
+}
 const L = etude.$(".left"), R = etude.$(".right"), svg = etude.$(".wires"), board = etude.$(".board");
 const chip = (side, o, i) => `<button type="button" class="e-option chip" data-side="${side}" data-id="${o.id}"><span class="e-key">${side === "l" ? i + 1 : String.fromCharCode(97 + i)}</span><span class="prose">${etude.md(o.text)}</span></button>`;
 L.innerHTML = view.left.map((o, i) => chip("l", o, i)).join("");

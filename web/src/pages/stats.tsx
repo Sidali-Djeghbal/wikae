@@ -9,12 +9,15 @@ import { api, type DeckNode, type LearnerSummary, type PracticeCard, type StatsS
 import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
 import { PHONE_H1 } from "@/components/page";
+import { useLocale } from "@/lib/useLocale";
+import { locale, t } from "@/lib/i18n";
 
 /** The engine window: ratings, verdicts and the heatmap cover this many weeks. */
 const WEEKS = 26;
 const pct = (v: number | null, digits = 0) => (v == null ? "—" : `${(v * 100).toFixed(digits)}%`);
 
 export function StatsPage({ deck }: { deck?: string }) {
+  const { t } = useLocale();
   const [stats, setStats] = useState<Stats | null>(null);
   const [decks, setDecks] = useState<DeckNode[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -42,13 +45,13 @@ export function StatsPage({ deck }: { deck?: string }) {
     <div className="mx-auto w-full max-w-5xl px-5 py-8 max-md:pt-[calc(1.25rem+env(safe-area-inset-top))] sm:px-8 sm:py-10">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className={cn("text-2xl font-semibold tracking-tight", PHONE_H1)}>Stats</h1>
-          <p className="mt-1 truncate text-sm text-muted-foreground max-md:hidden">{deck ? deck.replace(/::/g, " › ") : "All decks"}</p>
+          <h1 className={cn("text-2xl font-semibold tracking-tight", PHONE_H1)}>{t("Stats")}</h1>
+          <p className="mt-1 truncate text-sm text-muted-foreground max-md:hidden">{deck ? deck.replace(/::/g, " › ") : t("All decks")}</p>
         </div>
         <Select value={deck ?? "__all"} onValueChange={scope}>
           <SelectTrigger className="h-10 w-full sm:w-72" aria-label="Scope"><SelectValue /></SelectTrigger>
           <SelectContent className="max-h-80">
-            <SelectItem value="__all">All decks</SelectItem>
+            <SelectItem value="__all">{t("All decks")}</SelectItem>
             {decks.length > 0 && <SelectSeparator />}
             {decks.map((d) => (
               <SelectItem key={d.id} value={d.name}>
@@ -79,17 +82,17 @@ function Skills({ deck }: { deck: string }) {
   const pct = (x: number | null) => (x == null ? "–" : `${Math.round(x * 100)}%`);
   return (
     <div className="mb-6">
-      <Panel title="Skills" aside={summary.pace ? `${summary.pace.value} new cards today · ${summary.pace.reason}` : `Target ${pct(summary.settings.targetSuccess)} right`}>
+      <Panel title={t("Skills")} aside={summary.pace ? `${summary.pace.value} new cards today · ${summary.pace.reason}` : `Target ${pct(summary.settings.targetSuccess)} right`}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs text-muted-foreground">
+            <thead className="text-left text-xs text-muted-foreground rtl:text-right">
               <tr>
-                <th className="pb-2 font-normal">Skill</th>
-                <th className="pb-2 font-normal">Answers</th>
-                <th className="pb-2 font-normal" title="Share of the last 50 graded answers that were right">Recently right</th>
-                <th className="pb-2 font-normal" title="Predicted chance of getting a card of middling difficulty right">Typical card</th>
-                {summary.settings.levels.length > 0 && <th className="pb-2 font-normal">Level</th>}
-                <th className="pb-2 font-normal">Placement</th>
+                <th className="pb-2 font-normal">{t("Skill")}</th>
+                <th className="pb-2 font-normal">{t("Answers")}</th>
+                <th className="pb-2 font-normal" title={t("Share of the last 50 graded answers that were right")}>{t("Recently right")}</th>
+                <th className="pb-2 font-normal" title={t("Predicted chance of getting a card of middling difficulty right")}>{t("Typical card")}</th>
+                {summary.settings.levels.length > 0 && <th className="pb-2 font-normal">{t("Level")}</th>}
+                <th className="pb-2 font-normal">{t("Placement")}</th>
               </tr>
             </thead>
             <tbody className="tabular">
@@ -162,13 +165,13 @@ function Body({ stats, deck }: { stats: Stats; deck?: string }) {
   if (s.scheduler && s.scheduler !== "fsrs")
     return (
       <div className="flex flex-col gap-6">
-        {s.practice.length ? s.practice.map((p) => <PracticePanel key={p.cardId} card={p} />) : <Empty>Every run you do here is measured. Practice once and your results show up.</Empty>}
-        <Panel title="Practice days" aside={totalAnswers ? "Runs per day" : undefined}>
-          {totalAnswers ? <Heatmap days={s.days} weeks={activeWeeks} today={s.today.day} /> : <Empty>Each practice day fills a square here.</Empty>}
+        {s.practice.length ? s.practice.map((p) => <PracticePanel key={p.cardId} card={p} />) : <Empty>{t("Every run you do here is measured. Practice once and your results show up.")}</Empty>}
+        <Panel title={t("Practice days")} aside={totalAnswers ? t("Runs per day") : undefined}>
+          {totalAnswers ? <Heatmap days={s.days} weeks={activeWeeks} today={s.today.day} /> : <Empty>{t("Each practice day fills a square here.")}</Empty>}
           {totalMs > 0 && <TimeSpent days={s.days} today={s.today.day} />}
         </Panel>
         {totalAnswers > 0 && (
-          <Panel title="When you practice" aside={`Last ${WEEKS} weeks`}>
+          <Panel title={t("When you practice")} aside={t("Last {weeks} weeks", { weeks: WEEKS })}>
             <StudyClock hours={s.hours} target={target} />
           </Panel>
         )}
@@ -188,36 +191,38 @@ function Body({ stats, deck }: { stats: Stats; deck?: string }) {
       )}
 
       {s.curve.length > 0 && (
-        <Panel title="If you stopped today" aside="Average predicted recall, no more reviews">
+        <Panel title={t("If you stopped today")} aside={t("Average predicted recall, no more reviews")}>
           <ForgettingCurve curve={s.curve} target={target} />
         </Panel>
       )}
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
-        <Panel title="Cards" aside={<span className="tabular">{s.cards.total} {others.length ? "on FSRS" : "total"}</span>}>
+        <Panel title="Cards" aside={<span className="tabular">{s.cards.total} {others.length ? t("on FSRS") : t("total")}</span>}>
           <Donut
             center={s.cards.total}
-            sub="cards"
+            sub={t("cards")}
             parts={[
-              { key: "new", label: "New", value: s.cards.new, color: "var(--new)" },
-              { key: "learning", label: "Learning", value: s.cards.learning, color: "var(--learn)" },
-              { key: "young", label: "Young", value: young, color: "var(--chart-3)" },
-              { key: "mature", label: "Mature", value: s.cards.mature, color: "var(--review)" },
+              { key: "new", label: t("New"), value: s.cards.new, color: "var(--new)" },
+              { key: "learning", label: t("Learning"), value: s.cards.learning, color: "var(--learn)" },
+              { key: "young", label: t("Young"), value: young, color: "var(--chart-3)" },
+              { key: "mature", label: t("Mature"), value: s.cards.mature, color: "var(--review)" },
             ]}
             onPick={(i) => navigate(`/browse?q=${encodeURIComponent(scope + ["is:new", "is:learning", "is:review prop:stability<21", "is:review prop:stability>=21"][i])}`)}
           />
-          <p className="mt-3 text-xs text-muted-foreground">Mature cards hold for 21 days or more. Pick a row to browse those cards.</p>
+          <p className="mt-3 text-xs text-muted-foreground">{t("Mature cards hold for 21 days or more. Pick a row to browse those cards.")}</p>
         </Panel>
-        <Panel title="Memory strength" aside="Days until each card falls to 90% recall">
+        <Panel title={t("Memory strength")} aside={t("Days until each card falls to 90% recall")}>
           {studied ? (
             <>
               <Histogram
-                label="Studied cards by stability"
+                label={t("Studied cards by stability")}
                 height={104}
                 bars={s.stability.map((b, i) => {
                   const lo = i ? s.stability[i - 1].upTo! : 0;
                   const name = b.upTo == null ? `${lo}d+` : i === 0 ? "<1d" : `${lo}–${b.upTo}d`;
-                  return { key: name, value: b.cards, label: name.replace(/d\+?$/, (m) => (m === "d+" ? "+" : "")), color: "var(--review)", tip: `${b.cards} card${b.cards === 1 ? "" : "s"} · stability ${name}` };
+                  const localizedName = b.upTo == null ? `${lo}${t("d")}+` : i === 0 ? t("<1d") : `${lo}–${b.upTo}${t("d")}`;
+                  const cardCount = b.cards === 0 ? t("0 cards") : b.cards === 1 ? t("1 card") : b.cards === 2 ? t("2 cards") : t("{n} cards", { n: b.cards });
+                  return { key: name, value: b.cards, label: name.replace(/d\+?$/, (m) => (m === "d+" ? "+" : "")), color: "var(--review)", tip: `${cardCount} · ${t("stability")} ${localizedName}` };
                 })}
                 onPick={(i) => {
                   const lo = i ? s.stability[i - 1].upTo! : 0, hi = s.stability[i].upTo;
@@ -226,53 +231,53 @@ function Body({ stats, deck }: { stats: Stats; deck?: string }) {
               />
             </>
           ) : (
-            <Empty>Study a few cards and FSRS starts estimating how long each one stays in memory.</Empty>
+            <Empty>{t("Study a few cards and FSRS starts estimating how long each one stays in memory.")}</Empty>
           )}
         </Panel>
       </div>
 
-      <Panel title="Review activity" aside={totalAnswers ? "Answers per day" : undefined}>
+      <Panel title={t("Review activity")} aside={totalAnswers ? t("Answers per day") : undefined}>
         {totalAnswers ? (
           <Heatmap days={s.days} weeks={activeWeeks} today={s.today.day} />
         ) : (
-          <Empty>No reviews in the last {WEEKS} weeks. Each study day fills a square here.</Empty>
+          <Empty>{t("No reviews in the last {weeks} weeks. Each study day fills a square here.", { weeks: WEEKS })}</Empty>
         )}
         {totalMs > 0 && <TimeSpent days={s.days} today={s.today.day} />}
       </Panel>
 
-      <Panel title="Forecast" aside="Next 30 days">
+      <Panel title={t("Forecast")} aside={t("Next 30 days")}>
         <Forecast stats={s} deck={deck} />
       </Panel>
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
-        <Panel title="When you study" aside={`Last ${WEEKS} weeks`}>
-          {totalAnswers ? <StudyClock hours={s.hours} target={target} /> : <Empty>Your study hours show up after your first reviews.</Empty>}
+        <Panel title={t("When you study")} aside={t("Last {weeks} weeks", { weeks: WEEKS })}>
+          {totalAnswers ? <StudyClock hours={s.hours} target={target} /> : <Empty>{t("Your study hours show up after your first reviews.")}</Empty>}
         </Panel>
-        <Panel title="Ratings" aside={`Last ${WEEKS} weeks`}>
+        <Panel title={t("Ratings")} aside={t("Last {weeks} weeks", { weeks: WEEKS })}>
           {totalReviews ? (
             <Donut
               center={totalReviews}
-              sub="ratings"
+              sub={t("ratings")}
               parts={[
-                { key: "again", label: "Again", value: s.ratings.again, color: "var(--again)" },
-                { key: "hard", label: "Hard", value: s.ratings.hard, color: "var(--hard)" },
-                { key: "good", label: "Good", value: s.ratings.good, color: "var(--good)" },
-                { key: "easy", label: "Easy", value: s.ratings.easy, color: "var(--easy)" },
+                { key: "again", label: t("Again"), value: s.ratings.again, color: "var(--again)" },
+                { key: "hard", label: t("Hard"), value: s.ratings.hard, color: "var(--hard)" },
+                { key: "good", label: t("Good"), value: s.ratings.good, color: "var(--good)" },
+                { key: "easy", label: t("Easy"), value: s.ratings.easy, color: "var(--easy)" },
               ]}
             />
           ) : (
-            <Empty>Ratings appear after your first reviews.</Empty>
+            <Empty>{t("Ratings appear after your first reviews.")}</Empty>
           )}
           {s.verdicts.correct + s.verdicts.partial + s.verdicts.incorrect + s.verdicts.ungraded > 0 && (
             <div className="mt-5 border-t pt-4">
-              <div className="mb-3 text-xs font-medium">Graded answers</div>
+              <div className="mb-3 text-xs font-medium">{t("Graded answers")}</div>
               <ShareBar
-                label="Grading verdicts"
+                label={t("Grading verdicts")}
                 parts={[
-                  { key: "correct", label: "Correct", value: s.verdicts.correct, color: "var(--good)" },
-                  { key: "partial", label: "Partial", value: s.verdicts.partial, color: "var(--hard)" },
-                  { key: "incorrect", label: "Incorrect", value: s.verdicts.incorrect, color: "var(--again)" },
-                  { key: "ungraded", label: "Ungraded", value: s.verdicts.ungraded, color: "var(--muted-foreground)" },
+                  { key: "correct", label: t("Correct"), value: s.verdicts.correct, color: "var(--good)" },
+                  { key: "partial", label: t("Partial"), value: s.verdicts.partial, color: "var(--hard)" },
+                  { key: "incorrect", label: t("Incorrect"), value: s.verdicts.incorrect, color: "var(--again)" },
+                  { key: "ungraded", label: t("Ungraded"), value: s.verdicts.ungraded, color: "var(--muted-foreground)" },
                 ]}
               />
             </div>
@@ -280,7 +285,7 @@ function Body({ stats, deck }: { stats: Stats; deck?: string }) {
         </Panel>
       </div>
 
-      <Panel title="Weakest tags" aside={`Predicted recall now · the line is your ${Math.round(target * 100)}% target`}>
+      <Panel title={t("Weakest tags")} aside={t("Predicted recall now · the line is your {target}% target", { target: Math.round(target * 100) })}>
         <WeakTags tree={s.tagTree} target={target} />
       </Panel>
     </div>
@@ -309,37 +314,37 @@ export function Overview({ stats: s, deck, ring }: { stats: Stats; deck?: string
   const week = daily.slice(7).reduce((a, d) => ({ reviews: a.reviews + d.reviews, ms: a.ms + d.ms }), { reviews: 0, ms: 0 });
   const dueToday = s.forecast[0]?.due ?? 0;
   return (
-    <section aria-label="Overview" className="rounded-xl border bg-card/40">
+    <section aria-label={t("Overview")} className="rounded-xl border bg-card/40">
       <div className="flex flex-col gap-6 p-4 sm:p-5 lg:flex-row lg:items-center">
         <div className="flex items-center gap-5 sm:gap-6">
-          <RecallRing value={s.recall} target={target} size={ring} label="Recall now" sub={s.recall == null ? undefined : `target ${Math.round(target * 100)}%`} />
+          <RecallRing value={s.recall} target={target} size={ring} label={t("Recall now")} sub={s.recall == null ? undefined : t("target {target}%", { target: Math.round(target * 100) })} />
           <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Due today</div>
+            <div className="text-xs text-muted-foreground">{t("Due today")}</div>
             <div className="tabular text-5xl leading-none tracking-tight" style={SERIF}>{dueToday}</div>
             <div className="mt-1.5 text-xs text-muted-foreground">
-              {s.overdue ? <span className="text-again">{s.overdue} overdue</span> : dueToday ? "all on time" : "nothing waiting"}
-              {s.today.reviews > 0 && <> · {s.today.reviews} done today</>}
-              {drillsReady > 0 && <> · {drillsReady} drill{drillsReady === 1 ? "" : "s"} ready</>}
+              {s.overdue ? <span className="text-again">{t("{n} overdue", { n: s.overdue })}</span> : dueToday ? t("all on time") : t("nothing waiting")}
+              {s.today.reviews > 0 && <> · {t("{n} done today", { n: s.today.reviews })}</>}
+              {drillsReady > 0 && <> · {drillsReady === 1 ? t("1 drill ready") : t("{n} drills ready", { n: drillsReady })}</>}
             </div>
             <Button size="sm" className="mt-3 h-9 gap-1.5" disabled={!dueToday} onClick={() => navigate(deck ? `/study?deck=${encodeURIComponent(deck)}` : "/study")}>
-              <Play className="size-3.5" />Review now
+              <Play className="size-3.5" />{t("Review now")}
             </Button>
           </div>
         </div>
-        <div className="grid flex-1 grid-cols-2 gap-x-5 gap-y-5 lg:border-l lg:pl-6">
+        <div className="grid flex-1 grid-cols-2 gap-x-5 gap-y-5 lg:border-l lg:pl-6 rtl:lg:border-l-0 rtl:lg:border-r rtl:lg:pl-0 rtl:lg:pr-6">
           <Trend
-            label="True retention"
+            label={t("True retention")}
             value={pct(s.trueRetention.rate, 1)}
             tone={tone(s.trueRetention.rate)}
-            sub={s.trueRetention.reviewed ? `${s.trueRetention.passed}/${s.trueRetention.reviewed} passed · 30 days` : "No review answers in 30 days"}
+            sub={s.trueRetention.reviewed ? t("{passed}/{reviewed} passed · 30 days", { passed: s.trueRetention.passed, reviewed: s.trueRetention.reviewed }) : t("No review answers in 30 days")}
             spark={rateWeeks >= 3 ? recent.map((w) => w.rate) : undefined}
-            note={rateWeeks >= 3 ? undefined : "Trend after 3 weeks of reviews"}
+            note={rateWeeks >= 3 ? undefined : t("Trend after 3 weeks of reviews")}
             color={s.trueRetention.rate == null ? undefined : recallColor(s.trueRetention.rate, target)}
             domain={[0.5, 1]}
           />
-          <Trend label="Reviews, last 7 days" value={String(week.reviews)} sub={`${totalReviews} in ${WEEKS} weeks`} bars={daily.map((d) => d.reviews)} color="var(--chart-2)" />
-          <Trend label="Streak" value={`${s.streak} day${s.streak === 1 ? "" : "s"}`} sub={s.bestStreak ? `Best ${s.bestStreak} in ${WEEKS} weeks` : "Study today to start one"} streak={s.days} today={s.today.day} />
-          <Trend label="Time, last 7 days" value={fmtDuration(week.ms)} sub={totalMs ? `${fmtDuration(totalMs)} in ${WEEKS} weeks` : "Time per answer is recorded as you study"} bars={daily.map((d) => d.ms)} color="var(--chart-3)" />
+          <Trend label={t("Reviews, last 7 days")} value={String(week.reviews)} sub={t("{n} in {weeks} weeks", { n: totalReviews, weeks: WEEKS })} bars={daily.map((d) => d.reviews)} color="var(--chart-2)" />
+          <Trend label={t("Streak")} value={s.streak === 1 ? t("1 day") : t("{n} days", { n: s.streak })} sub={s.bestStreak ? t("Best {best} in {weeks} weeks", { best: s.bestStreak, weeks: WEEKS }) : t("Study today to start one")} streak={s.days} today={s.today.day} />
+          <Trend label={t("Time, last 7 days")} value={fmtDuration(week.ms)} sub={totalMs ? t("{duration} in {weeks} weeks", { duration: fmtDuration(totalMs), weeks: WEEKS }) : t("Time per answer is recorded as you study")} bars={daily.map((d) => d.ms)} color="var(--chart-3)" />
         </div>
       </div>
     </section>
@@ -385,7 +390,7 @@ function StreakDots({ days, today }: { days: Stats["days"]; today: string }) {
     return { key, on: by.has(key), today: k === 13 };
   });
   return (
-    <div className="flex h-full items-center gap-[3px]" aria-label="Study days, last two weeks">
+    <div className="flex h-full items-center gap-[3px]" aria-label={t("Study days, last two weeks")}>
       {cells.map((c) => (
         <span key={c.key} title={fmtDay(c.key)} className={cn("h-3.5 flex-1 rounded-[3px]", c.today && "ring-1 ring-foreground/60")} style={{ background: c.on ? "var(--highlight)" : "var(--muted)", opacity: c.on ? 0.9 : 0.6 }} />
       ))}
@@ -396,28 +401,28 @@ function StreakDots({ days, today }: { days: Stats["days"]; today: string }) {
 /** Cards on schedulers other than FSRS, one row each: they have no memory model, so they're counted apart. */
 export function Schedulers({ list }: { list: StatsScheduler[] }) {
   const max = Math.max(1, ...list.map((x) => x.cards));
-  const word = { fsrs: "Memory model", rated: "Rated, no recall model", drill: "Measured, always ready" } as const;
+  const word = { fsrs: t("Memory model"), rated: t("Rated, no recall model"), drill: t("Measured, always ready") } as const;
   return (
-    <Panel title="By scheduler" aside="Recall, card states and memory strength count FSRS cards only">
+    <Panel title={t("By scheduler")} aside={t("Recall, card states and memory strength count FSRS cards only")}>
       <ul className="flex flex-col divide-y">
         {list.map((x) => {
           const go = () => (x.decks.length === 1 ? navigate(`/stats?deck=${encodeURIComponent(x.decks[0])}`) : undefined);
-          const status = x.kind === "drill" ? (x.due ? `${x.due} ready` : "none ready") : `${x.due} due`;
-          const extra = x.kind === "drill" ? (x.answers ? `${x.answers} run${x.answers === 1 ? "" : "s"}` : "") : x.passRate != null ? `${pct(x.passRate)} pass` : "";
+          const status = x.kind === "drill" ? (x.due ? t("{n} ready", { n: x.due }) : t("none ready")) : t("{n} due", { n: x.due });
+          const extra = x.kind === "drill" ? (x.answers ? (x.answers === 1 ? t("1 run") : t("{n} runs", { n: x.answers })) : "") : x.passRate != null ? `${pct(x.passRate)} ${t("pass")}` : "";
           return (
             <li key={x.id} className="py-3 first:pt-0 last:pb-0">
-              <button type="button" onClick={go} disabled={x.decks.length !== 1} className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 text-left enabled:cursor-pointer enabled:hover:opacity-80 sm:grid-cols-[13rem_minmax(0,1fr)_auto]">
+              <button type="button" onClick={go} disabled={x.decks.length !== 1} className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 text-left rtl:text-right enabled:cursor-pointer enabled:hover:opacity-80 sm:grid-cols-[13rem_minmax(0,1fr)_auto]">
                 <div className="col-span-2 min-w-0 sm:col-span-1">
                   <div className="truncate text-sm font-medium">{x.name}</div>
                   <div className="truncate text-[11px] text-muted-foreground" title={x.decks.join(", ")}>
-                    {word[x.kind]} · {x.decks.length === 1 ? x.decks[0].split("::").pop() : `${x.decks.length} decks`}
+                    {word[x.kind]} · {x.decks.length === 1 ? x.decks[0].split("::").pop() : t("{n} decks", { n: x.decks.length })}
                   </div>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-muted/60">
                   <div className="h-full rounded-full" style={{ width: `${Math.max(2, (x.cards / max) * 100)}%`, background: x.kind === "fsrs" ? "var(--review)" : x.kind === "drill" ? "var(--chart-2)" : "var(--chart-3)" }} />
                 </div>
-                <div className="tabular grid grid-cols-[4.5rem_3.75rem_4.25rem] items-baseline text-right text-xs whitespace-nowrap text-muted-foreground sm:grid-cols-[4.75rem_4.5rem_4.5rem]">
-                  <span><span className="text-sm text-foreground">{x.cards}</span> card{x.cards === 1 ? "" : "s"}</span>
+                <div className="tabular grid grid-cols-[4.5rem_3.75rem_4.25rem] items-baseline text-right rtl:text-left text-xs whitespace-nowrap text-muted-foreground sm:grid-cols-[4.75rem_4.5rem_4.5rem]">
+                  <span><span className="text-sm text-foreground">{x.cards}</span> {t(x.cards === 1 ? "card" : "cards")}</span>
                   <span>{status}</span>
                   <span>{extra}</span>
                 </div>
@@ -443,68 +448,71 @@ function RatedBody({ stats: s, deck, summary }: { stats: Stats; deck: string; su
   const ratedTotal = s.ratings.again + s.ratings.hard + s.ratings.good + s.ratings.easy;
   return (
     <div className="flex flex-col gap-6">
-      <section aria-label="Overview" className="rounded-xl border bg-card/40">
+      <section aria-label={t("Overview")} className="rounded-xl border bg-card/40">
         <div className="grid grid-cols-2 gap-x-5 gap-y-5 p-4 sm:grid-cols-4 sm:p-5">
           <div>
-            <div className="text-xs text-muted-foreground">Due today</div>
+            <div className="text-xs text-muted-foreground">{t("Due today")}</div>
             <div className="tabular text-5xl leading-none tracking-tight" style={SERIF}>{dueToday}</div>
-            <div className="mt-1.5 text-xs text-muted-foreground">{s.overdue ? <span className="text-again">{s.overdue} overdue</span> : dueToday ? "all on time" : "nothing waiting"}</div>
+            <div className="mt-1.5 text-xs text-muted-foreground">{s.overdue ? <span className="text-again">{t("{n} overdue", { n: s.overdue })}</span> : dueToday ? t("all on time") : t("nothing waiting")}</div>
             <Button size="sm" className="mt-3 h-9 gap-1.5" disabled={!dueToday && !summary.new} onClick={() => navigate(`/study?deck=${encodeURIComponent(deck)}`)}>
-              <Play className="size-3.5" />Practice
+              <Play className="size-3.5" />{t("Practice")}
             </Button>
           </div>
-          <Stat label="Pass rate" value={pct(summary.passRate)} sub={summary.rated ? `${summary.passed}/${summary.rated} not Again · ${WEEKS} weeks` : "No answers yet"} tone={tone(summary.passRate)} />
-          <Stat label="Cards" value={String(summary.cards)} sub={summary.new ? `${summary.new} not seen yet` : "all seen"} />
-          <Stat label="Streak" value={`${s.streak} day${s.streak === 1 ? "" : "s"}`} sub={s.bestStreak ? `Best ${s.bestStreak} in ${WEEKS} weeks` : "Practice today to start one"} />
+          <Stat label={t("Pass rate")} value={pct(summary.passRate)} sub={summary.rated ? t("{passed}/{rated} not Again · {weeks} weeks", { passed: summary.passed, rated: summary.rated, weeks: WEEKS }) : t("No answers yet")} tone={tone(summary.passRate)} />
+          <Stat label={t("Cards")} value={String(summary.cards)} sub={summary.new ? t("{n} not seen yet", { n: summary.new }) : t("all seen")} />
+          <Stat label={t("Streak")} value={s.streak === 1 ? t("1 day") : t("{n} days", { n: s.streak })} sub={s.bestStreak ? t("Best {best} in {weeks} weeks", { best: s.bestStreak, weeks: WEEKS }) : t("Practice today to start one")} />
         </div>
-        <p className="border-t px-4 py-3 text-xs text-muted-foreground sm:px-5">Scheduled by {summary.name}. It decides when cards come back without predicting recall, so there's no forgetting curve here.</p>
+        <p className="border-t px-4 py-3 text-xs text-muted-foreground sm:px-5">{t("Scheduled by {name}. It decides when cards come back without predicting recall, so there's no forgetting curve here.", { name: summary.name })}</p>
       </section>
 
       {g && (
-        <Panel title={`Cards by ${g.label.toLowerCase()}`} aside={<span className="tabular">{groupTotal} seen</span>}>
+        <Panel title={t("Cards by {label}", { label: g.label.toLowerCase() })} aside={<span className="tabular">{t("{n} seen", { n: groupTotal })}</span>}>
           {groupTotal ? (
             <>
               <Histogram
-                label={`Seen cards by ${g.label}`}
+                label={t("Seen cards by {label}", { label: g.label })}
                 height={120}
-                bars={g.bins.map((b) => ({ key: b.key, value: b.cards, label: b.key, color: "var(--chart-3)", tip: `${g.label} ${b.key}: ${b.cards} card${b.cards === 1 ? "" : "s"}` }))}
+                bars={g.bins.map((b) => {
+                  const cardCount = b.cards === 0 ? t("0 cards") : b.cards === 1 ? t("1 card") : b.cards === 2 ? t("2 cards") : t("{n} cards", { n: b.cards });
+                  return { key: b.key, value: b.cards, label: b.key, color: "var(--chart-3)", tip: `${g.label} ${b.key}: ${cardCount}` };
+                })}
               />
-              {g.other > 0 && <p className="mt-3 text-xs text-muted-foreground">{g.other} card{g.other === 1 ? "" : "s"} without a {g.label.toLowerCase()} yet.</p>}
+              {g.other > 0 && <p className="mt-3 text-xs text-muted-foreground">{t("{n} cards without a {label} yet.", { n: g.other, label: g.label.toLowerCase() })}</p>}
             </>
           ) : (
-            <Empty>Answer a few cards and they spread across the {g.label.toLowerCase()}es.</Empty>
+            <Empty>{t("Answer a few cards and they spread across the {label}.", { label: g.label.toLowerCase() })}</Empty>
           )}
         </Panel>
       )}
 
-      <Panel title="Forecast" aside="Next 30 days">
+      <Panel title={t("Forecast")} aside={t("Next 30 days")}>
         <Forecast stats={s} deck={deck} />
       </Panel>
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
-        <Panel title="Ratings" aside={`Last ${WEEKS} weeks`}>
+        <Panel title={t("Ratings")} aside={t("Last {weeks} weeks", { weeks: WEEKS })}>
           {ratedTotal ? (
             <Donut
               center={ratedTotal}
-              sub="ratings"
+              sub={t("ratings")}
               parts={[
-                { key: "again", label: "Again", value: s.ratings.again, color: "var(--again)" },
-                { key: "hard", label: "Hard", value: s.ratings.hard, color: "var(--hard)" },
-                { key: "good", label: "Good", value: s.ratings.good, color: "var(--good)" },
-                { key: "easy", label: "Easy", value: s.ratings.easy, color: "var(--easy)" },
+                { key: "again", label: t("Again"), value: s.ratings.again, color: "var(--again)" },
+                { key: "hard", label: t("Hard"), value: s.ratings.hard, color: "var(--hard)" },
+                { key: "good", label: t("Good"), value: s.ratings.good, color: "var(--good)" },
+                { key: "easy", label: t("Easy"), value: s.ratings.easy, color: "var(--easy)" },
               ]}
             />
           ) : (
-            <Empty>Ratings appear after your first answers.</Empty>
+            <Empty>{t("Ratings appear after your first answers.")}</Empty>
           )}
         </Panel>
-        <Panel title="When you practice" aside={`Last ${WEEKS} weeks`}>
-          {totalReviews ? <StudyClock hours={s.hours} target={target} /> : <Empty>Your practice hours show up after your first answers.</Empty>}
+        <Panel title={t("When you practice")} aside={t("Last {weeks} weeks", { weeks: WEEKS })}>
+          {totalReviews ? <StudyClock hours={s.hours} target={target} /> : <Empty>{t("Your practice hours show up after your first answers.")}</Empty>}
         </Panel>
       </div>
 
-      <Panel title="Practice days" aside={totalReviews ? "Answers per day" : undefined}>
-        {totalReviews ? <Heatmap days={s.days} weeks={activeWeeks} today={s.today.day} /> : <Empty>Each practice day fills a square here.</Empty>}
+      <Panel title={t("Practice days")} aside={totalReviews ? t("Answers per day") : undefined}>
+        {totalReviews ? <Heatmap days={s.days} weeks={activeWeeks} today={s.today.day} /> : <Empty>{t("Each practice day fills a square here.")}</Empty>}
         {totalMs > 0 && <TimeSpent days={s.days} today={s.today.day} />}
       </Panel>
     </div>
@@ -549,15 +557,15 @@ export function PracticePanel({ card }: { card: PracticeCard }) {
       )}
       <div className="mb-4 grid grid-cols-3 gap-4">
         <div>
-          <div className="text-xs text-muted-foreground">Last</div>
+          <div className="text-xs text-muted-foreground">{t("Last")}</div>
           <div className="tabular text-3xl leading-tight tracking-tight" style={SERIF}>{fmt(m.last)}</div>
         </div>
         <div>
-          <div className="text-xs text-muted-foreground">Best</div>
+          <div className="text-xs text-muted-foreground">{t("Best")}</div>
           <div className="tabular text-3xl leading-tight tracking-tight text-good" style={SERIF}>{fmt(m.best)}</div>
         </div>
         <div>
-          <div className="text-xs text-muted-foreground">Since the first</div>
+          <div className="text-xs text-muted-foreground">{t("Since the first")}</div>
           <div className={cn("tabular text-3xl leading-tight tracking-tight", delta == null ? "text-muted-foreground/50" : up ? "text-good" : delta === 0 ? "" : "text-again")} style={SERIF}>
             {delta == null ? "—" : `${delta > 0 ? "+" : delta < 0 ? "−" : ""}${Math.abs(delta).toFixed(m.digits)}`}
           </div>
@@ -572,8 +580,8 @@ function Panel({ title, aside, children }: { title: string; aside?: ReactNode; c
   return (
     <section className="rounded-xl border bg-card/40 p-4 sm:p-5">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-        <h2 className="shrink-0 text-sm font-medium">{title}</h2>
-        {aside && <div className="min-w-0 text-xs text-muted-foreground">{aside}</div>}
+        <h2 className="shrink-0 text-sm font-medium">{t(title)}</h2>
+        {aside && <div className="min-w-0 text-xs text-muted-foreground">{typeof aside === "string" ? t(aside) : aside}</div>}
       </div>
       {children}
     </section>
@@ -581,7 +589,7 @@ function Panel({ title, aside, children }: { title: string; aside?: ReactNode; c
 }
 
 function Empty({ children }: { children: ReactNode }) {
-  return <div className="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">{children}</div>;
+  return <div className="rounded-lg border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">{typeof children === "string" ? t(children) : children}</div>;
 }
 
 const TONE = { good: "text-good", hard: "text-hard", again: "text-again" } as const;
@@ -597,17 +605,17 @@ function TimeSpent({ days, today }: { days: Stats["days"]; today: string }) {
       d.setDate(d.getDate() - i);
       const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       const e = by.get(k);
-      out.push({ key: k, value: Math.round(((e?.ms ?? 0) / 60000) * 10) / 10, label: i === 0 ? "today" : fmtDay(k, { month: "short", day: "numeric" }), reviews: e?.reviews ?? 0 });
+      out.push({ key: k, value: Math.round(((e?.ms ?? 0) / 60000) * 10) / 10, label: i === 0 ? t("today") : fmtDay(k, { month: "short", day: "numeric" }), reviews: e?.reviews ?? 0 });
     }
     return out;
-  }, [days, today]);
+  }, [days, today, t]);
   const total = series.reduce((a, d) => a + d.value, 0);
   if (!total) return null;
   return (
     <div className="mt-6 border-t pt-5">
       <div className="mb-2 flex items-baseline justify-between text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">Time studying</span>
-        <span className="tabular">{fmtDuration(total * 60000)} in 30 days</span>
+        <span className="font-medium text-foreground">{t("Time studying")}</span>
+        <span className="tabular">{t("{duration} in 30 days", { duration: fmtDuration(total * 60000) })}</span>
       </div>
       <BarChart
         data={series}
@@ -615,9 +623,20 @@ function TimeSpent({ days, today }: { days: Stats["days"]; today: string }) {
         color="var(--chart-2)"
         highlight={series.length - 1}
         ticks={[1, 8, 15, 22, 29]}
-        format={(v) => `${v}m`}
-        label={`Minutes studied per day, last 30 days: ${Math.round(total)} minutes total`}
-        valueLabel={(v, i) => [fmtDay(series[i].key), `${fmtDuration(v * 60000)} · ${series[i].reviews} review${series[i].reviews === 1 ? "" : "s"}`]}
+        format={(v) => t("{v}m", { v })}
+        label={t("Minutes studied per day, last 30 days: {total} minutes total", { total: Math.round(total) })}
+        valueLabel={(v, i) => [
+          fmtDay(series[i].key),
+          `${fmtDuration(v * 60000)} · ${
+            series[i].reviews === 0
+              ? t("0 reviews")
+              : series[i].reviews === 1
+              ? t("1 review")
+              : series[i].reviews === 2
+              ? t("2 reviews")
+              : t("{n} reviews", { n: series[i].reviews })
+          }`,
+        ]}
       />
     </div>
   );
@@ -626,7 +645,7 @@ function TimeSpent({ days, today }: { days: Stats["days"]; today: string }) {
 export function Forecast({ stats, deck, height = 170 }: { stats: Stats; deck?: string; height?: number }) {
   const f = stats.forecast;
   const total = f.reduce((a, d) => a + d.due, 0);
-  const data = f.map((d, i) => ({ key: d.day, value: d.due, label: i === 0 ? "today" : fmtDay(d.day, { month: "short", day: "numeric" }) }));
+  const data = f.map((d, i) => ({ key: d.day, value: d.due, label: i === 0 ? t("today") : fmtDay(d.day, { month: "short", day: "numeric" }) }));
   // The deadline falls on a forecast day: place the marker at the matching fraction of that day.
   let mark: { at: number; label: string } | null = null;
   let after = false;
@@ -639,7 +658,7 @@ export function Forecast({ stats, deck, height = 170 }: { stats: Stats; deck?: s
       const next = new Date(start);
       next.setDate(next.getDate() + 1);
       if (dl < next) {
-        mark = { at: i + (dl.getTime() - start.getTime()) / (next.getTime() - start.getTime()), label: "Exam" };
+        mark = { at: i + (dl.getTime() - start.getTime()) / (next.getTime() - start.getTime()), label: t("Exam") };
         break;
       }
     }
@@ -655,9 +674,9 @@ export function Forecast({ stats, deck, height = 170 }: { stats: Stats; deck?: s
   return (
     <div>
       <div className="mb-4 grid grid-cols-3 gap-3 text-sm sm:max-w-md">
-        <Mini label="Due today" value={f[0].due} sub={stats.overdue ? `${stats.overdue} overdue` : undefined} />
-        <Mini label="Next 7 days" value={f.slice(0, 7).reduce((a, d) => a + d.due, 0)} />
-        <Mini label="Next 30 days" value={total} />
+        <Mini label={t("Due today")} value={f[0].due} sub={stats.overdue ? `${stats.overdue} ${t("overdue")}` : undefined} />
+        <Mini label={t("Next 7 days")} value={f.slice(0, 7).reduce((a, d) => a + d.due, 0)} />
+        <Mini label={t("Next 30 days")} value={total} />
       </div>
       {total ? (
         <BarChart
@@ -667,26 +686,33 @@ export function Forecast({ stats, deck, height = 170 }: { stats: Stats; deck?: s
           highlight={0}
           ticks={ticks}
           mark={mark}
-          label={`Cards due per day for the next 30 days: ${total} total, busiest ${fmtDay(f[busiest].day)} with ${f[busiest].due}${mark ? `; exam on ${fmtDay(f[Math.floor(mark.at)].day)}` : ""}`}
-          valueLabel={(v, i) => [i === 0 ? `Today · ${fmtDay(f[i].day)}` : fmtDay(f[i].day), `${v} card${v === 1 ? "" : "s"} due${i === 0 && stats.overdue ? ` (${stats.overdue} overdue)` : ""}`]}
+          label={t("Cards due per day for the next 30 days: {total} total, busiest {busiest} with {due}", { total, busiest: fmtDay(f[busiest].day), due: f[busiest].due })}
+          valueLabel={(v, i) => {
+            const dueText = v === 0 ? t("No cards due") : v === 1 ? t("1 card due") : v === 2 ? t("2 cards due") : t("{n} cards due", { n: v });
+            const overdueText = i === 0 && stats.overdue ? ` (${stats.overdue === 1 ? t("1 overdue") : stats.overdue === 2 ? t("2 overdue") : t("{n} overdue", { n: stats.overdue })})` : "";
+            return [
+              i === 0 ? `${t("Today")} · ${fmtDay(f[i].day)}` : fmtDay(f[i].day),
+              `${dueText}${overdueText}`,
+            ];
+          }}
         />
       ) : (
-        <Empty>Nothing is scheduled in the next 30 days. New cards enter the forecast once you study them.</Empty>
+        <Empty>{t("Nothing is scheduled in the next 30 days. New cards enter the forecast once you study them.")}</Empty>
       )}
       {total > 0 && (stats.overdue > 0 || span < f.length) && (
         <p className="mt-3 text-xs text-muted-foreground">
-          {stats.overdue > 0 && <><span className="mr-1.5 inline-block size-2 rounded-full bg-highlight" />Today includes {stats.overdue} overdue card{stats.overdue === 1 ? "" : "s"}. </>}
-          {span < f.length && `Showing ${span} days; nothing else is due in the next 30.`}
+          {stats.overdue > 0 && <><span className="mr-1.5 rtl:mr-0 rtl:ml-1.5 inline-block size-2 rounded-full bg-highlight" />{stats.overdue === 1 ? t("Today includes 1 overdue card.") : t("Today includes {n} overdue cards.", { n: stats.overdue })} </>}
+          {span < f.length && t("Showing {span} days; nothing else is due in the next 30.", { span })}
         </p>
       )}
       {stats.deadline && (
         <p className="mt-3 flex items-start gap-1.5 text-xs text-balance text-muted-foreground">
           <CalendarClock className="mt-px size-3.5 shrink-0 text-highlight" />
-          Exam {new Date(stats.deadline).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-          {new Date(stats.deadline) < new Date() ? " (passed)" : after ? " (after this window)" : ""} · last reviews at least {stats.deadlineMargin}h before
+          {t("Exam")} {new Date(stats.deadline).toLocaleString(locale() === "ar" ? "ar-EG" : undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+          {new Date(stats.deadline) < new Date() ? ` (${t("passed")})` : after ? ` (${t("after this window")})` : ""} · {t("last reviews at least {margin}h before", { margin: stats.deadlineMargin })}
         </p>
       )}
-      {!deck && <p className="mt-3 text-xs text-muted-foreground">Pick a deck to see its exam deadline on the forecast.</p>}
+      {!deck && <p className="mt-3 text-xs text-muted-foreground">{t("Pick a deck to see its exam deadline on the forecast.")}</p>}
     </div>
   );
 }
@@ -702,11 +728,12 @@ function Mini({ label, value, sub }: { label: string; value: number; sub?: strin
 }
 
 export function WeakTags({ tree, target, limit = 10 }: { tree: Stats["tagTree"]; target: number; limit?: number }) {
+  const { t } = useLocale();
   const roots = useMemo(() => tree.filter((t) => t.depth === 0).sort((a, b) => b.cards - a.cards), [tree]);
   const [group, setGroup] = useState<string>("__leaf");
   const [all, setAll] = useState(false);
 
-  if (!tree.length) return <Empty>No tags in this scope. Tag items (for example exam::core) to see which topics are weakest.</Empty>;
+  if (!tree.length) return <Empty>{t("No tags in this scope. Tag items (for example exam::core) to see which topics are weakest.")}</Empty>;
 
   const inGroup = group === "__leaf" ? tree.filter((t) => t.direct) : tree.filter((t) => t.tag.startsWith(group + "::"));
   const seen = inGroup.filter((t) => t.seen > 0).sort((a, b) => a.recall! - b.recall! || b.seen - a.seen);
@@ -718,8 +745,8 @@ export function WeakTags({ tree, target, limit = 10 }: { tree: Stats["tagTree"];
 
   return (
     <div>
-      <div className="-mx-1 mb-4 flex flex-wrap gap-1.5" role="radiogroup" aria-label="Tag group">
-        <Chip active={group === "__leaf"} onClick={() => setGroup("__leaf")}>Every tag</Chip>
+      <div className="-mx-1 mb-4 flex flex-wrap gap-1.5" role="radiogroup" aria-label={t("Tag group")}>
+        <Chip active={group === "__leaf"} onClick={() => setGroup("__leaf")}>{t("Every tag")}</Chip>
         {roots.filter((r) => tree.some((t) => t.tag.startsWith(r.tag + "::"))).map((r) => (
           <Chip key={r.tag} active={group === r.tag} onClick={() => setGroup(r.tag)}>{r.tag}</Chip>
         ))}
@@ -727,12 +754,12 @@ export function WeakTags({ tree, target, limit = 10 }: { tree: Stats["tagTree"];
       {head && (
         <div className="mb-3 flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2.5 text-sm">
           <span className="font-mono text-[13px]">{head.tag}</span>
-          <span className="text-xs text-muted-foreground">all {head.cards} cards · {head.seen} studied</span>
+          <span className="text-xs text-muted-foreground">{t("all {cards} cards · {seen} studied", { cards: head.cards, seen: head.seen })}</span>
           <span className="tabular ml-auto font-medium">{pct(head.recall)}</span>
         </div>
       )}
       {seen.length === 0 ? (
-        <Empty>None of these tags has a studied card yet. Recall per tag appears after your first reviews.</Empty>
+        <Empty>{t("None of these tags has a studied card yet. Recall per tag appears after your first reviews.")}</Empty>
       ) : (
         <ul className="-mx-2">
           {shown.map((t) => {
@@ -742,7 +769,7 @@ export function WeakTags({ tree, target, limit = 10 }: { tree: Stats["tagTree"];
               <li key={t.tag}>
                 <button
                   onClick={() => navigate(`/browse?q=${encodeURIComponent(`tag:${t.tag}`)}`)}
-                  className="grid min-h-11 w-full grid-cols-[minmax(0,1fr)_3.5rem] items-center gap-x-4 gap-y-1.5 rounded-md px-2 py-2 text-left hover:bg-accent/40 sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_3.5rem_1rem]"
+                  className="grid min-h-11 w-full grid-cols-[minmax(0,1fr)_3.5rem] items-center gap-x-4 gap-y-1.5 rounded-md px-2 py-2 text-left rtl:text-right hover:bg-accent/40 sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_3.5rem_1rem]"
                 >
                   <span className="flex min-w-0 items-baseline gap-2">
                     <span className="min-w-0 truncate font-mono text-[13px]">
@@ -751,9 +778,9 @@ export function WeakTags({ tree, target, limit = 10 }: { tree: Stats["tagTree"];
                     </span>
                     <span className="tabular shrink-0 text-xs text-muted-foreground">{t.seen === t.cards ? t.cards : `${t.seen}/${t.cards}`}</span>
                   </span>
-                  <span className="tabular text-right text-sm font-medium sm:order-3" style={{ color: recallColor(t.recall!, target) }}>{pct(t.recall)}</span>
+                  <span className="tabular text-right rtl:text-left text-sm font-medium sm:order-3" style={{ color: recallColor(t.recall!, target) }}>{pct(t.recall)}</span>
                   <span className="col-span-2 sm:order-2 sm:col-span-1"><TargetMeter value={t.recall!} target={target} lo={lo} /></span>
-                  <ChevronRight className="hidden size-4 text-muted-foreground sm:order-4 sm:block" />
+                  <ChevronRight className="hidden size-4 text-muted-foreground sm:order-4 sm:block rtl-flip" />
                 </button>
               </li>
             );
@@ -762,9 +789,9 @@ export function WeakTags({ tree, target, limit = 10 }: { tree: Stats["tagTree"];
       )}
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
         {seen.length > limit && (
-          <button className="h-10 rounded-md border px-3 text-foreground hover:bg-accent/50" onClick={() => setAll(!all)}>{all ? "Show fewer" : `Show all ${seen.length}`}</button>
+          <button className="h-10 rounded-md border px-3 text-foreground hover:bg-accent/50" onClick={() => setAll(!all)}>{all ? t("Show fewer") : t("Show all {n}", { n: seen.length })}</button>
         )}
-        {unseen.length > 0 && <span>{unseen.length} tag{unseen.length === 1 ? "" : "s"} not studied yet</span>}
+        {unseen.length > 0 && <span>{unseen.length === 1 ? t("1 tag not studied yet") : t("{n} tags not studied yet", { n: unseen.length })}</span>}
       </div>
     </div>
   );

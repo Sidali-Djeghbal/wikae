@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { StepsInput } from "@/components/deck-steps-input";
 import { api, type DeckDetail, type DeckFace, type DeckNode, type OptimizeResult, type PresetConfig, type Preset, type SchedulerSummary } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { locale, t } from "@/lib/i18n";
 
 export type DeckFull = DeckDetail;
 type Key = keyof PresetConfig;
@@ -83,7 +84,7 @@ function toLocalInput(iso: string | null | undefined): string {
 }
 
 export function formatDeadline(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleString(locale() === "ar" ? "ar-EG" : undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 export function DeckOptions({ deck, decks, presets, onChanged }: { deck: DeckFull; decks: DeckNode[]; presets: Preset[]; onChanged(): Promise<void> | void }) {
@@ -309,14 +310,14 @@ export function DeckOptions({ deck, decks, presets, onChanged }: { deck: DeckFul
       <div className="rounded-xl border bg-card/40 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="min-w-0 flex-1">
-            <Label htmlFor="preset-select" className="text-sm font-medium">Preset</Label>
+            <Label htmlFor="preset-select" className="text-sm font-medium">{t("Preset")}</Label>
             <p className="mt-1 text-sm text-muted-foreground">
               {preset ? (
                 <span title={presetUsers.map((d) => d.name).join("\n")}>
-                  Shared by {presetUsers.length} deck{presetUsers.length === 1 ? "" : "s"}. Saving to the preset changes all of them.
+                  {t("Shared by {count} decks. Saving to the preset changes all of them.", { count: presetUsers.length })}
                 </span>
               ) : (
-                "No preset: this deck takes its parents' settings plus its own overrides."
+                t("No preset: this deck takes its parents' settings plus its own overrides.")
               )}
             </p>
           </div>
@@ -324,7 +325,7 @@ export function DeckOptions({ deck, decks, presets, onChanged }: { deck: DeckFul
             <Select value={deck.presetId ?? "__none"} onValueChange={(v) => setPreset(v === "__none" ? null : v)}>
               <SelectTrigger id="preset-select" className="h-10 w-full min-w-48 sm:w-56"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none">None</SelectItem>
+                <SelectItem value="__none">{t("None")}</SelectItem>
                 {presets.length > 0 && <SelectSeparator />}
                 {presets.map((p) => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
@@ -428,9 +429,7 @@ export function DeckOptions({ deck, decks, presets, onChanged }: { deck: DeckFul
             </div>
             <div className="tabular -mt-1 flex justify-between pr-15 text-[11px] text-muted-foreground"><span>70%</span><span>99%</span></div>
           </div>,
-          <>
-            When a card comes up for review, you should remember it about <span className="text-foreground">{Math.round(retention * 100)}%</span> of the time. Higher means shorter intervals and more reviews; above 95% the workload climbs steeply.
-          </>,
+          t("When a card comes up for review, you should remember it about {pct}% of the time. Higher means shorter intervals and more reviews; above 95% the workload climbs steeply.", { pct: String(Math.round(retention * 100)) }),
         )}
         {row(
           "maximumInterval",
@@ -708,8 +707,8 @@ function Group({ title, description, children }: { title: string; description?: 
   return (
     <section>
       <div className="mb-2">
-        <h3 className="text-sm font-medium">{title}</h3>
-        {description && <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>}
+        <h3 className="text-sm font-medium">{t(title)}</h3>
+        {description && <p className="mt-0.5 text-[13px] text-muted-foreground">{t(description)}</p>}
       </div>
       <div className="divide-y overflow-hidden rounded-xl border bg-card/40">{children}</div>
     </section>
@@ -724,8 +723,8 @@ const SOURCE_CLS: Record<Source["kind"], string> = {
 };
 
 function SourceTag({ source }: { source: Source }) {
-  const prefix = source.kind === "parent" ? "from " : source.kind === "preset" ? "preset: " : "";
-  const text = source.kind === "default" ? "default" : source.kind === "deck" ? "this deck" : `${prefix}${source.label}`;
+  const prefix = source.kind === "parent" ? `${t("from")} ` : source.kind === "preset" ? `${t("preset")}: ` : "";
+  const text = source.kind === "default" ? t("default") : source.kind === "deck" ? t("this deck") : `${prefix}${source.label}`;
   return (
     <span className={cn("inline-flex h-5 max-w-full items-center truncate rounded-full border px-2 text-[11px] leading-none", SOURCE_CLS[source.kind])} title={`Current value comes from ${text}`}>
       <span className="truncate">{text}</span>
@@ -740,11 +739,11 @@ function SettingRow({ k, label, source, dirty, help, wide, inline, onReset, chil
       <div className="flex items-start gap-4 px-4 py-4 sm:px-5">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <span className="text-sm font-medium">{label ?? LABELS[k]}</span>
+            <span className="text-sm font-medium">{t(label ?? LABELS[k])}</span>
             {dirty ? <EditedTag /> : <SourceTag source={source} />}
             {onReset && !dirty && <ResetButton onClick={onReset} />}
           </div>
-          {help && <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{help}</p>}
+          {help && <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{typeof help === "string" ? t(help) : help}</p>}
         </div>
         <div className="flex h-10 shrink-0 items-center">{children}</div>
       </div>
@@ -753,11 +752,11 @@ function SettingRow({ k, label, source, dirty, help, wide, inline, onReset, chil
     <div className={cn("grid gap-3 px-4 py-4 sm:px-5", wide ? "md:grid-cols-[minmax(0,1fr)_22rem]" : "md:grid-cols-[minmax(0,1fr)_16rem]", "md:items-start md:gap-8")}>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <span className="text-sm font-medium">{label ?? LABELS[k]}</span>
+          <span className="text-sm font-medium">{t(label ?? LABELS[k])}</span>
           {dirty ? <EditedTag /> : <SourceTag source={source} />}
           {onReset && !dirty && <ResetButton onClick={onReset} />}
         </div>
-        {help && <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{help}</p>}
+        {help && <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{typeof help === "string" ? t(help) : help}</p>}
       </div>
       <div className="min-w-0 md:pt-px">{children}</div>
     </div>
@@ -765,13 +764,13 @@ function SettingRow({ k, label, source, dirty, help, wide, inline, onReset, chil
 }
 
 function EditedTag() {
-  return <span className="inline-flex h-5 items-center rounded-full border border-warning/40 px-2 text-[11px] leading-none text-warning">edited, not saved</span>;
+  return <span className="inline-flex h-5 items-center rounded-full border border-warning/40 px-2 text-[11px] leading-none text-warning">{t("edited, not saved")}</span>;
 }
 
 function ResetButton({ onClick }: { onClick(): void }) {
   return (
     <button className="-my-2 inline-flex h-8 items-center gap-1 rounded px-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground" onClick={onClick}>
-      <RotateCcw className="size-3" />Reset to inherited
+      <RotateCcw className="size-3" />{t("Reset to inherited")}
     </button>
   );
 }
@@ -786,7 +785,7 @@ function LimitField({ value, onChange, ariaLabel }: { value: number | null; onCh
       <Input
         inputMode="numeric"
         value={text}
-        placeholder="No limit of its own"
+        placeholder={t("No limit of its own")}
         aria-label={ariaLabel}
         aria-invalid={invalid || undefined}
         onChange={(e) => {
@@ -796,9 +795,9 @@ function LimitField({ value, onChange, ariaLabel }: { value: number | null; onCh
           else if (/^\d+$/.test(t)) onChange(Number(t));
         }}
         onBlur={() => invalid && setText(value == null ? "" : String(value))}
-        className="tabular h-10 pr-16"
+        className="tabular h-10 pr-16 rtl:pr-3 rtl:pl-16"
       />
-      <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">cards</span>
+      <span className="pointer-events-none absolute top-1/2 right-3 rtl:right-auto rtl:left-3 -translate-y-1/2 text-sm text-muted-foreground">{t("cards")}</span>
     </div>
   );
 }
@@ -828,9 +827,9 @@ function NumberField({ value, onChange, min, max, step = 1, suffix, ariaLabel }:
             if ((min === undefined || n >= min) && (max === undefined || n <= max)) onChange(Math.round(n * 1000) / 1000);
           }
         }}
-        className={cn("tabular h-10", suffix && "pr-16")}
+        className={cn("tabular h-10", suffix && "pr-16 rtl:pr-3 rtl:pl-16")}
       />
-      {suffix && <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">{suffix}</span>}
+      {suffix && <span className="pointer-events-none absolute top-1/2 right-3 rtl:right-auto rtl:left-3 -translate-y-1/2 text-sm text-muted-foreground">{t(suffix)}</span>}
     </div>
   );
 }
@@ -841,7 +840,7 @@ function ChoiceSelect({ value, onChange, options, ariaLabel }: { value: string; 
       <SelectTrigger className="h-10 w-full" aria-label={ariaLabel}><SelectValue /></SelectTrigger>
       <SelectContent>
         {options.map(([v, l]) => (
-          <SelectItem key={v} value={v}>{l}</SelectItem>
+          <SelectItem key={v} value={v}>{t(l)}</SelectItem>
         ))}
       </SelectContent>
     </Select>

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { EmptyState, Page, PageHeader, Section } from "@/components/page";
 import { childrenOf, clashes, leafOf, moveDeck, MoveDeckDialog, parentOf } from "@/components/move-deck";
 import { usePhone } from "@/lib/phone";
+import { useLocale } from "@/lib/useLocale";
 import { PhoneDecks } from "@/components/phone-decks";
 import { DeckContextMenu, type DeckMenuEntry, useDeckActions } from "@/components/deck-actions";
 
@@ -26,6 +27,7 @@ export function DecksPage({ archived = false }: { archived?: boolean }) {
 }
 
 function DesktopDecks({ archived }: { archived: boolean }) {
+  const { t } = useLocale();
   const [decks, setDecks] = useState<(DeckNode & { displayDepth: number })[] | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(JSON.parse(localStorage.getItem("etude.collapsed") ?? "[]")));
   const [creating, setCreating] = useState(false);
@@ -189,20 +191,20 @@ function DesktopDecks({ archived }: { archived: boolean }) {
   return (
     <Page>
       <PageHeader
-        title={archived ? "Archived Decks" : "Decks"}
-        crumbs={archived ? [{ label: "Decks", onClick: () => navigate("/") }] : undefined}
-        description={archived ? "Cards and review history are kept. Move a deck out of the archive to study it again." : decks ? (due ? `${due} cards to study today` : "Nothing due right now") : "\u00a0"}
+        title={archived ? t("Archived Decks") : t("Decks")}
+        crumbs={archived ? [{ label: t("Decks"), onClick: () => navigate("/") }] : undefined}
+        description={archived ? t("Cards and review history are kept. Move a deck out of the archive to study it again.") : decks ? (due ? t("{due} cards to study today", { due }) : t("Nothing due right now")) : "\u00a0"}
         actions={!archived &&
           <>
             <ImportButton onDone={reload} />
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />New deck</Button>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />{t("New deck")}</Button>
           </>
         }
       />
 
       {decks && decks.length === 0 && (
-        <EmptyState title={archived ? "No archived decks" : "No decks yet"} action={!archived && <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />New deck</Button>}>
-          {archived ? "Decks you move to the archive will appear here." : "Import a pack or create a deck to start."}
+        <EmptyState title={archived ? t("No archived decks") : t("No decks yet")} action={!archived && <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setCreating(true)}><Plus className="size-4" />{t("New deck")}</Button>}>
+          {archived ? t("Decks you move to the archive will appear here.") : t("Import a pack or create a deck to start.")}
         </EmptyState>
       )}
 
@@ -210,11 +212,11 @@ function DesktopDecks({ archived }: { archived: boolean }) {
         <Section>
           <div ref={listRef} className="relative">
           <div className={cn("hidden items-center gap-2 border-b px-5 py-2.5 text-xs font-medium text-muted-foreground sm:grid", archived ? "grid-cols-[1fr_4rem_2.5rem]" : "grid-cols-[1fr_4rem_repeat(3,3.5rem)_8.5rem]")}>
-            <span>Deck</span>
-            <span className="text-right">Cards</span>
-            {!archived && <><span className="text-right">New</span>
-            <span className="text-right">Learn</span>
-            <span className="text-right">Due</span></>}
+            <span>{t("Deck")}</span>
+            <span className="text-right">{t("Cards")}</span>
+            {!archived && <><span className="text-right">{t("New")}</span>
+            <span className="text-right">{t("Learn")}</span>
+            <span className="text-right">{t("Due")}</span></>}
             <span />
           </div>
           {visible.map((d, i) => {
@@ -240,6 +242,7 @@ function DesktopDecks({ archived }: { archived: boolean }) {
                 onMove: () => setMoving(d.name),
                 onTop: d.depth > 0 && !clashes(decks ?? [], d.name, "") ? () => place(d.name, "", childrenOf(decks ?? [], "").indexOf(d.name.split("::")[0]) + 1) : undefined,
                 onUp: d.depth > 1 && !clashes(decks ?? [], d.name, parentOf(parentOf(d.name))) ? () => { const gp = parentOf(parentOf(d.name)); place(d.name, gp, childrenOf(decks ?? [], gp).indexOf(parentOf(d.name)) + 1); } : undefined,
+                t,
               }),
             };
             return (
@@ -281,30 +284,30 @@ function DesktopDecks({ archived }: { archived: boolean }) {
                       aria-label={collapsed.has(d.name) ? `Expand ${name}` : `Collapse ${name}`}
                       aria-expanded={!collapsed.has(d.name)}
                     >
-                      <ChevronRight className={cn("size-4 transition-transform", !collapsed.has(d.name) && "rotate-90")} />
+                      <ChevronRight className={cn("size-4 transition-transform", !collapsed.has(d.name) ? "rotate-90" : "rtl-flip")} />
                     </button>
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col justify-center py-2">
                     <button
-                      className={cn("text-left text-[0.95rem] leading-snug hover:underline sm:truncate", d.displayDepth === 0 ? "font-medium" : "text-foreground/90")}
+                      className={cn("text-left rtl:text-right text-[0.95rem] leading-snug hover:underline sm:truncate", d.displayDepth === 0 ? "font-medium" : "text-foreground/90")}
                       onClick={() => navigate(`/deck?name=${encodeURIComponent(d.name)}`)}
                     >
                       {d.displayDepth === 0 ? d.name : name}
-                      {soon && <span className="ml-2 inline-flex items-center gap-1 align-middle text-xs font-normal text-highlight"><CalendarClock className="size-3.5" />{relative(d.deadline!)}</span>}
+                      {soon && <span className="ml-2 rtl:mr-2 rtl:ml-0 inline-flex items-center gap-1 align-middle text-xs font-normal text-highlight"><CalendarClock className="size-3.5" />{relative(d.deadline!)}</span>}
                     </button>
                     {/* Phone: counts on one line under the name instead of three narrow columns. */}
                     <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs tabular text-muted-foreground sm:hidden [&>span]:whitespace-nowrap">
-                      {archived ? <span>{d.cards} card{d.cards === 1 ? "" : "s"}</span> : watch ? (
-                        <span>{d.cards} card{d.cards === 1 ? "" : "s"} to watch</span>
+                      {archived ? <span>{d.cards} {t(d.cards === 1 ? "card" : "cards")}</span> : watch ? (
+                        <span>{d.cards} {t(d.cards === 1 ? "card to watch" : "cards to watch")}</span>
                       ) : work ? (
                         <>
-                          <span>{d.cards} card{d.cards === 1 ? "" : "s"}</span>
-                          {d.new > 0 && <span className="text-new">{d.new} new</span>}
-                          {d.learning > 0 && <span className="text-learn">{d.learning} learning</span>}
-                          {d.review > 0 && <span className="text-review">{d.review} due</span>}
+                          <span>{d.cards} {t(d.cards === 1 ? "card" : "cards")}</span>
+                          {d.new > 0 && <span className="text-new">{d.new} {t("new")}</span>}
+                          {d.learning > 0 && <span className="text-learn">{d.learning} {t("learning")}</span>}
+                          {d.review > 0 && <span className="text-review">{d.review} {t("due")}</span>}
                         </>
                       ) : (
-                        <span>{d.cards ? `${d.cards} card${d.cards === 1 ? "" : "s"} · nothing due` : "empty"}</span>
+                        <span>{d.cards ? `${d.cards} ${t(d.cards === 1 ? "card" : "cards")} · ${t("nothing due")}` : t("empty")}</span>
                       )}
                     </div>
                   </div>
@@ -330,12 +333,12 @@ function DesktopDecks({ archived }: { archived: boolean }) {
                     aria-label={`${watch ? "Watch" : work || !d.cards ? "Practice" : "Practice ahead"} ${name}`}
                   >
                     {watch ? (
-                      <><Eye className="size-4 text-highlight sm:size-3.5 sm:text-current" /> <span className="hidden sm:inline">Watch</span></>
+                      <><Eye className="size-4 text-highlight sm:size-3.5 sm:text-current" /> <span className="hidden sm:inline">{t("Watch")}</span></>
                     ) : (
                       work || !d.cards ? (
-                      <><Play className={cn("size-4 sm:size-3.5", work && "fill-current text-highlight sm:fill-none sm:text-current")} /> <span className="hidden sm:inline">Practice</span></>
+                      <><Play className={cn("size-4 sm:size-3.5", work && "fill-current text-highlight sm:fill-none sm:text-current")} /> <span className="hidden sm:inline">{t("Practice")}</span></>
                     ) : (
-                      <><FastForward className="size-4 sm:size-3.5" /> <span className="hidden sm:inline">Ahead</span></>
+                      <><FastForward className="size-4 sm:size-3.5" /> <span className="hidden sm:inline">{t("Ahead")}</span></>
                     )
                     )}
                   </Button>}
@@ -387,14 +390,14 @@ function DesktopDecks({ archived }: { archived: boolean }) {
 }
 
 /** Row-specific entries for a deck's menu: move it somewhere, take it out a level, rename. */
-function rowEntries({ name, archived, onMove, onTop, onUp }: { name: string; archived: boolean; onMove(): void; onTop?: () => void; onUp?: () => void }): DeckMenuEntry[] {
+function rowEntries({ name, archived, onMove, onTop, onUp, t }: { name: string; archived: boolean; onMove(): void; onTop?: () => void; onUp?: () => void; t: (s: string) => string }): DeckMenuEntry[] {
   if (archived) return [];
   return [
-    { icon: <FolderInput />, label: "Move to…", onSelect: onMove },
-    ...(onUp ? [{ icon: <ArrowUpLeft />, label: "Move up a level", onSelect: onUp }] : []),
-    ...(onTop ? [{ icon: <ArrowUpToLine />, label: "Make it a deck of its own", onSelect: onTop }] : []),
+    { icon: <FolderInput />, label: t("Move to…"), onSelect: onMove },
+    ...(onUp ? [{ icon: <ArrowUpLeft className="rtl-flip" />, label: t("Move up a level"), onSelect: onUp }] : []),
+    ...(onTop ? [{ icon: <ArrowUpToLine />, label: t("Make it a deck of its own"), onSelect: onTop }] : []),
     "-",
-    { icon: <Pencil />, label: "Rename", onSelect: () => navigate(`/deck?name=${encodeURIComponent(name)}&rename=1`) },
+    { icon: <Pencil />, label: t("Rename"), onSelect: () => navigate(`/deck?name=${encodeURIComponent(name)}&rename=1`) },
   ];
 }
 
@@ -415,6 +418,7 @@ export function TreeGuides({ depth }: { depth: number }) {
 }
 
 export function NewDeckDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange(o: boolean): void; onDone(): void }) {
+  const { t } = useLocale();
   const [name, setName] = useState("");
   const create = async () => {
     if (!name.trim()) return;
@@ -431,12 +435,12 @@ export function NewDeckDialog({ open, onOpenChange, onDone }: { open: boolean; o
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New deck</DialogTitle>
-          <DialogDescription>Use :: for subdecks, like Course::Week 1.</DialogDescription>
+          <DialogTitle>{t("New deck")}</DialogTitle>
+          <DialogDescription>{t("Use :: for subdecks, like Course::Week 1.")}</DialogDescription>
         </DialogHeader>
-        <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && create()} placeholder="Deck name" aria-label="Deck name" />
+        <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && create()} placeholder={t("Deck name")} aria-label={t("Deck name")} />
         <DialogFooter>
-          <Button onClick={create} disabled={!name.trim()}>Create</Button>
+          <Button onClick={create} disabled={!name.trim()}>{t("Create")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -444,13 +448,14 @@ export function NewDeckDialog({ open, onOpenChange, onDone }: { open: boolean; o
 }
 
 export function ImportButton({ onDone, phone }: { onDone(): void; phone?: boolean }) {
+  const { t } = useLocale();
   const pick = useImportPicker(onDone);
   if (phone)
     return (
-      <button onClick={pick} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border bg-card text-[15px] active:bg-accent"><Upload className="size-4" />Import a file</button>
+      <button onClick={pick} className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border bg-card text-[15px] active:bg-accent"><Upload className="size-4" />{t("Import a file")}</button>
     );
   return (
-    <Button variant="outline" size="sm" className="gap-1.5" onClick={pick}><Upload className="size-4" />Import</Button>
+    <Button variant="outline" size="sm" className="gap-1.5" onClick={pick}><Upload className="size-4" />{t("Import")}</Button>
   );
 }
 

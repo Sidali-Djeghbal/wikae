@@ -62,7 +62,7 @@
 
 /* Fonts are theme variables: not inlined, so utilities and the page font follow a theme's --font-sans/--font-mono. */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Cairo", "Noto Sans Arabic", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
 }
 
@@ -246,3 +246,135 @@ html.embed, html.embed body { background: transparent; }
 /* Live markdown fields sit where textareas used to: same box, theme font. */
 .live-md .cm-content { font-size: 0.875rem; }
 .live-md { background: color-mix(in oklab, var(--input) 30%, transparent); }
+
+/* RTL and Arabic typography support */
+[dir="rtl"] {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Cairo", "Noto Sans Arabic", "Noto Kufi Arabic", system-ui, sans-serif;
+}
+[dir="rtl"] .text-left { text-align: right; }
+[dir="rtl"] .text-right { text-align: left; }
+[dir="rtl"] .prose-etude ul, [dir="rtl"] .prose-etude ol {
+  padding-left: 0;
+  padding-right: 1.3em;
+}
+[dir="rtl"] .agent-prose ul, [dir="rtl"] .agent-prose ol {
+  padding-left: 0;
+  padding-right: 1.15em;
+}
+[dir="rtl"] .score-list > *::before,
+[dir="rtl"] .score-list > *:last-child::after {
+  left: 0;
+  right: 1.25rem;
+}
+[dir="rtl"] .score-list .lucide-chevron-right,
+[dir="rtl"] nav[aria-label="Folder"] .lucide-chevron-right,
+[dir="rtl"] nav[aria-label="Breadcrumb"] .lucide-chevron-right,
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* Switch thumb RTL translate: symmetric 2px inset and travel */
+[dir="rtl"] [data-slot="switch-thumb"][data-state="checked"] {
+  transform: translateX(-1rem) !important;
+}
+[dir="rtl"] [data-size="sm"] [data-slot="switch-thumb"][data-state="checked"] {
+  transform: translateX(-0.75rem) !important;
+}
+[dir="rtl"] [data-slot="switch-thumb"][data-state="unchecked"] {
+  transform: translateX(0) !important;
+}
+
+/* AI chat floating launcher RTL position */
+[dir="rtl"] [data-agent-launcher-root] {
+  right: auto !important;
+  left: 0.75rem !important;
+}
+@media (min-width: 768px) {
+  [dir="rtl"] [data-agent-launcher-root] {
+    right: auto !important;
+    left: 1rem !important;
+  }
+}
+
+/* Dialog and sheet close buttons in RTL */
+[dir="rtl"] [data-slot="dialog-close"],
+[dir="rtl"] [data-slot="sheet-close"],
+[dir="rtl"] .lucide-x.absolute.top-3.right-3,
+[dir="rtl"] button.absolute.top-3.right-3,
+[dir="rtl"] button.absolute.top-4.right-4 {
+  right: auto !important;
+  left: 0.75rem !important;
+}
+@media (min-width: 640px) {
+  [dir="rtl"] button.absolute.top-3.right-3,
+  [dir="rtl"] button.absolute.top-4.right-4 {
+    left: 1rem !important;
+  }
+}
+
+/* Directional chevron and arrow icons */
+[dir="rtl"] .lucide-chevron-right.rtl-flip,
+[dir="rtl"] .lucide-chevron-left.rtl-flip,
+[dir="rtl"] .lucide-arrow-left.rtl-flip,
+[dir="rtl"] .lucide-arrow-right.rtl-flip,
+[dir="rtl"] .lucide-arrow-left-to-line.rtl-flip,
+[dir="rtl"] .lucide-arrow-up-left.rtl-flip,
+[dir="rtl"] .lucide-corner-down-right.rtl-flip,
+[dir="rtl"] .lucide-corner-down-left.rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* Radix Select, DropdownMenu, ContextMenu, Popover in RTL */
+[dir="rtl"] [data-slot="select-content"],
+[dir="rtl"] [data-slot="dropdown-menu-content"],
+[dir="rtl"] [data-slot="context-menu-content"],
+[dir="rtl"] [data-slot="popover-content"] {
+  direction: rtl;
+  text-align: right;
+}
+[dir="rtl"] [data-slot="select-item"] {
+  padding-right: 0.75rem !important;
+  padding-left: 2rem !important;
+}
+[dir="rtl"] [data-slot="select-item"] [data-slot="select-item-indicator"] {
+  right: auto !important;
+  left: 0.5rem !important;
+}
+[dir="rtl"] [data-slot="dropdown-menu-item"][data-inset] {
+  padding-left: 0.5rem !important;
+  padding-right: 2rem !important;
+}
+[dir="rtl"] [data-slot="dropdown-menu-checkbox-item"] {
+  padding-left: 0.5rem !important;
+  padding-right: 2rem !important;
+}
+[dir="rtl"] [data-slot="dropdown-menu-checkbox-item"] > span {
+  left: auto !important;
+  right: 0.5rem !important;
+}
+
+/* ToggleGroup in RTL mode */
+[dir="rtl"] [data-slot="toggle-group"][data-spacing="0"] > [data-slot="toggle-group-item"],
+[dir="rtl"] [data-slot="toggle-group-item"][data-spacing="0"] {
+  border-radius: 0;
+}
+[dir="rtl"] [data-slot="toggle-group"][data-spacing="0"] > [data-slot="toggle-group-item"]:first-child,
+[dir="rtl"] [data-slot="toggle-group-item"][data-spacing="0"]:first-child {
+  border-top-right-radius: calc(var(--radius) - 2px) !important;
+  border-bottom-right-radius: calc(var(--radius) - 2px) !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-right-width: 1px !important;
+}
+[dir="rtl"] [data-slot="toggle-group"][data-spacing="0"] > [data-slot="toggle-group-item"]:last-child,
+[dir="rtl"] [data-slot="toggle-group-item"][data-spacing="0"]:last-child {
+  border-top-left-radius: calc(var(--radius) - 2px) !important;
+  border-bottom-left-radius: calc(var(--radius) - 2px) !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+[dir="rtl"] [data-slot="toggle-group"][data-spacing="0"] > [data-slot="toggle-group-item"][data-variant="outline"]:not(:first-child),
+[dir="rtl"] [data-slot="toggle-group-item"][data-spacing="0"][data-variant="outline"]:not(:first-child) {
+  border-right-width: 0 !important;
+  border-left-width: 1px !important;
+}

@@ -126,3 +126,26 @@ kbd { font: 0.75rem var(--font-mono); border: 1px solid var(--border); border-bo
 
 /* Answer previews (browsing, editing): show the key without marking anything wrong. */
 [data-preview="1"] .is-wrong { border-color: var(--border) !important; background: transparent !important; }
+
+/* RTL and Arabic support inside card frames */
+[dir="rtl"] body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Cairo", "Noto Sans Arabic", "Noto Kufi Arabic", system-ui, sans-serif;
+  text-align: right;
+  direction: rtl;
+}
+[dir="rtl"] .prose th, [dir="rtl"] .prose td {
+  text-align: right;
+}
+[dir="rtl"] .e-option {
+  text-align: right;
+}
+[dir="rtl"] .prose ul, [dir="rtl"] .prose ol {
+  padding-left: 0;
+  padding-right: 1.4em;
+}
+[dir="rtl"] .prose blockquote {
+  padding-left: 0;
+  padding-right: 1em;
+  border-left: none;
+  border-right: 2px solid var(--border);
+}

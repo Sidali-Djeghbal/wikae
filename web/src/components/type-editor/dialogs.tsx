@@ -10,6 +10,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { api, type CardType, type TypeSummary } from "@/lib/api";
 import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 import { BLANK_SAMPLE, blankType, exportShape, slugify, stashPending, TYPE_ID, typesFromJson } from "./starter";
 
 export function NewTypeDialog({
@@ -95,23 +96,23 @@ export function NewTypeDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{from ? `Duplicate ${from.def.name}` : folder ? `New card type in “${folder.split("::").pop()}”` : "New card type"}</DialogTitle>
+          <DialogTitle>{from ? `${t("Duplicate")} ${from.def.name}` : folder ? `${t("New card type in")} “${folder.split("::").pop()}”` : t("New card type")}</DialogTitle>
           <DialogDescription>
-            {from ? "Makes an independent copy, including unsaved edits. Nothing is created until you save it." : "Nothing is created until you save it in the editor."}
+            {from ? t("Makes an independent copy, including unsaved edits. Nothing is created until you save it.") : t("Nothing is created until you save it in the editor.")}
           </DialogDescription>
         </DialogHeader>
         {!from && (
           <ToggleGroup type="single" variant="outline" value={mode} onValueChange={(v) => v && setMode(v as "blank" | "copy")} className="w-full">
-            <ToggleGroupItem value="blank" className="h-10 flex-1">Start blank</ToggleGroupItem>
-            <ToggleGroupItem value="copy" className="h-10 flex-1">Copy a type</ToggleGroupItem>
+            <ToggleGroupItem value="blank" className="h-10 flex-1">{t("Start blank")}</ToggleGroupItem>
+            <ToggleGroupItem value="copy" className="h-10 flex-1">{t("Copy a type")}</ToggleGroupItem>
           </ToggleGroup>
         )}
         {!from && mode === "blank" && (
-          <p className="-mt-1 text-xs text-muted-foreground">A minimal working type: a prompt, a typed answer checked by script, and an explanation. Change anything from there.</p>
+          <p className="-mt-1 text-xs text-muted-foreground">{t("A minimal working type: a prompt, a typed answer checked by script, and an explanation. Change anything from there.")}</p>
         )}
         {!from && mode === "copy" && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium">Copy from</span>
+            <span className="text-sm font-medium">{t("Copy from")}</span>
             <Select
               value={source}
               onValueChange={(v) => {
@@ -121,7 +122,7 @@ export function NewTypeDialog({
                 if (!idTouched) setId(freeId(`${v}-copy`, types));
               }}
             >
-              <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Pick a type" /></SelectTrigger>
+              <SelectTrigger className="h-10 w-full"><SelectValue placeholder={t("Pick a type")} /></SelectTrigger>
               <SelectContent>
                 {types.map((t) => (
                   <SelectItem key={t.id} value={t.id}>{t.name} <span className="font-mono text-xs text-muted-foreground">{t.id}</span></SelectItem>
@@ -131,7 +132,7 @@ export function NewTypeDialog({
           </div>
         )}
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Name</span>
+          <span className="text-sm font-medium">{t("Name")}</span>
           <Input
             autoFocus
             value={name}
@@ -140,12 +141,12 @@ export function NewTypeDialog({
               if (!idTouched) setId(slugify(e.target.value));
             }}
             onKeyDown={(e) => e.key === "Enter" && create()}
-            placeholder="True or false"
+            placeholder={t("True or false")}
             className="h-10"
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Id</span>
+          <span className="text-sm font-medium">{t("Id")}</span>
           <Input
             value={id}
             onChange={(e) => {
@@ -158,12 +159,12 @@ export function NewTypeDialog({
             placeholder="true-false"
           />
           <span className={cn("text-xs", id && (!validId || taken) ? "text-destructive" : "text-muted-foreground")}>
-            {taken ? `"${id}" is already a type.` : id && !validId ? "Lowercase letters, digits and dashes, starting with a letter or digit." : "Items refer to the type by this id. It can't change after saving."}
+            {taken ? `"${id}" ${t("is already a type.")}` : id && !validId ? t("Lowercase letters, digits and dashes, starting with a letter or digit.") : t("Items refer to the type by this id. It can't change after saving.")}
           </span>
         </div>
         <DialogFooter>
           <Button onClick={create} disabled={!canCreate} className="h-10 gap-1.5 sm:h-9">
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}Open in editor
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}{t("Open in editor")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -250,8 +251,8 @@ export function ImportTypesDialog({ open, onOpenChange, types, onDone }: { open:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Import card types</DialogTitle>
-          <DialogDescription>A type JSON file (as exported here), a list of types, or a pack. Only the types are imported; use Decks › Import for a whole pack.</DialogDescription>
+          <DialogTitle>{t("Import card types")}</DialogTitle>
+          <DialogDescription>{t("A type JSON file (as exported here), a list of types, or a pack. Only the types are imported; use Decks › Import for a whole pack.")}</DialogDescription>
         </DialogHeader>
         <button
           onClick={pick}
@@ -266,7 +267,7 @@ export function ImportTypesDialog({ open, onOpenChange, types, onDone }: { open:
           className={cn("flex min-h-28 flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-6 text-sm text-muted-foreground transition-colors hover:border-ring hover:text-foreground", drag && "border-highlight text-foreground")}
         >
           {file ? <FileJson className="size-5" /> : <Upload className="size-5" />}
-          {file ? <span className="font-mono text-xs">{file}</span> : <span>Choose or drop a .json file</span>}
+          {file ? <span className="font-mono text-xs">{file}</span> : <span>{t("Choose or drop a .json file")}</span>}
         </button>
         {candidates.length > 0 && (
           <div className="flex flex-col divide-y rounded-lg border">

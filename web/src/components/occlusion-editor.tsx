@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export interface OcclusionBox {
   id: string;
@@ -474,10 +475,10 @@ export function OcclusionEditor({ image, boxes: propBoxes, mode, onChange, onPen
         >
           {uploading ? <Loader2 className="size-6 animate-spin" /> : <ImageUp className="size-7" />}
           <div className="text-sm">
-            <span className="font-medium text-foreground">Drop an image here</span>, paste a screenshot <kbd className="rounded border px-1 font-mono text-[11px]">Ctrl V</kbd>, or
+            <span className="font-medium text-foreground">{t("Drop an image here")}</span>{t(", paste a screenshot")} <kbd className="rounded border px-1 font-mono text-[11px]">Ctrl V</kbd>{t(", or")}
           </div>
-          <Button variant="outline" size="sm" disabled={uploading} onClick={() => fileInput.current?.click()}>Choose an image</Button>
-          <p className="max-w-sm text-xs">A diagram, a slide, an atlas page. Then drag boxes over the parts to hide.</p>
+          <Button variant="outline" size="sm" disabled={uploading} onClick={() => fileInput.current?.click()}>{t("Choose an image")}</Button>
+          <p className="max-w-sm text-xs">{t("A diagram, a slide, an atlas page. Then drag boxes over the parts to hide.")}</p>
         </div>
         <input ref={fileInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }} />
       </div>
@@ -488,21 +489,21 @@ export function OcclusionEditor({ image, boxes: propBoxes, mode, onChange, onPen
     <div ref={root} tabIndex={-1} className="flex flex-col gap-3 outline-none" onKeyDown={onKeyDown} onKeyUp={onKeyUp} data-occlusion-editor>
       <div className="flex flex-wrap items-center gap-1">
         <div className="flex rounded-md border p-0.5">
-          <Tip label="Draw boxes"><Button type="button" size="icon-sm" variant="ghost" aria-pressed={!panning} className={cn("size-7", !panning && "bg-accent text-foreground")} onClick={() => setTool("draw")} aria-label="Draw boxes"><SquareDashed /></Button></Tip>
-          <Tip label="Move the image (or hold Space)"><Button type="button" size="icon-sm" variant="ghost" aria-pressed={panning} className={cn("size-7", panning && "bg-accent text-foreground")} onClick={() => setTool("pan")} aria-label="Move the image"><Hand /></Button></Tip>
+          <Tip label={t("Draw boxes")}><Button type="button" size="icon-sm" variant="ghost" aria-pressed={!panning} className={cn("size-7", !panning && "bg-accent text-foreground")} onClick={() => setTool("draw")} aria-label={t("Draw boxes")}><SquareDashed /></Button></Tip>
+          <Tip label={t("Move the image (or hold Space)")}><Button type="button" size="icon-sm" variant="ghost" aria-pressed={panning} className={cn("size-7", panning && "bg-accent text-foreground")} onClick={() => setTool("pan")} aria-label={t("Move the image")}><Hand /></Button></Tip>
         </div>
-        <Tip label="Undo (Ctrl Z)"><Button type="button" size="icon-sm" variant="ghost" disabled={!past.length} onClick={undo} aria-label="Undo"><Undo2 /></Button></Tip>
-        <Tip label="Redo (Ctrl Shift Z)"><Button type="button" size="icon-sm" variant="ghost" disabled={!future.length} onClick={redo} aria-label="Redo"><Redo2 /></Button></Tip>
+        <Tip label={t("Undo (Ctrl Z)")}><Button type="button" size="icon-sm" variant="ghost" disabled={!past.length} onClick={undo} aria-label={t("Undo")}><Undo2 /></Button></Tip>
+        <Tip label={t("Redo (Ctrl Shift Z)")}><Button type="button" size="icon-sm" variant="ghost" disabled={!future.length} onClick={redo} aria-label={t("Redo")}><Redo2 /></Button></Tip>
         <span className="mx-1 h-5 w-px bg-border" />
-        <Tip label="Group: asked together as one card (Ctrl G)"><Button type="button" size="sm" variant="ghost" className="h-8 gap-1.5 px-2" disabled={sel.length < 2} onClick={group}><Group /><span className="hidden sm:inline">Group</span></Button></Tip>
-        <Tip label="Ungroup (Ctrl Shift G)"><Button type="button" size="sm" variant="ghost" className="h-8 gap-1.5 px-2" disabled={!selGrouped} onClick={ungroup}><Ungroup /><span className="hidden sm:inline">Ungroup</span></Button></Tip>
-        <Tip label="Duplicate (Ctrl D)"><Button type="button" size="icon-sm" variant="ghost" disabled={!sel.length} onClick={duplicate} aria-label="Duplicate"><Copy /></Button></Tip>
-        <Tip label="Delete (Del)"><Button type="button" size="icon-sm" variant="ghost" disabled={!sel.length} onClick={remove} aria-label="Delete box"><Trash2 /></Button></Tip>
+        <Tip label={t("Group: asked together as one card (Ctrl G)")}><Button type="button" size="sm" variant="ghost" className="h-8 gap-1.5 px-2" disabled={sel.length < 2} onClick={group}><Group /><span className="hidden sm:inline">{t("Group")}</span></Button></Tip>
+        <Tip label={t("Ungroup (Ctrl Shift G)")}><Button type="button" size="sm" variant="ghost" className="h-8 gap-1.5 px-2" disabled={!selGrouped} onClick={ungroup}><Ungroup /><span className="hidden sm:inline">{t("Ungroup")}</span></Button></Tip>
+        <Tip label={t("Duplicate (Ctrl D)")}><Button type="button" size="icon-sm" variant="ghost" disabled={!sel.length} onClick={duplicate} aria-label={t("Duplicate")}><Copy /></Button></Tip>
+        <Tip label={t("Delete (Del)")}><Button type="button" size="icon-sm" variant="ghost" disabled={!sel.length} onClick={remove} aria-label={t("Delete box")}><Trash2 /></Button></Tip>
         <span className="mx-1 hidden h-5 w-px bg-border sm:block" />
-        <Tip label="Zoom out (−)"><Button type="button" size="icon-sm" variant="ghost" disabled={z <= 1} onClick={() => zoomAt(z / 1.4, size.W / 2, size.H / 2)} aria-label="Zoom out"><ZoomOut /></Button></Tip>
-        <button type="button" className="h-8 min-w-12 rounded-md px-1 text-xs tabular text-muted-foreground hover:text-foreground" onClick={() => setView({ z: 1, tx: 0, ty: 0 })} title="Fit (0)">{Math.round(z * 100)}%</button>
-        <Tip label="Zoom in (+, Ctrl + scroll, pinch)"><Button type="button" size="icon-sm" variant="ghost" disabled={z >= MAX_Z} onClick={() => zoomAt(z * 1.4, size.W / 2, size.H / 2)} aria-label="Zoom in"><ZoomIn /></Button></Tip>
-        <Tip label="Fit the image"><Button type="button" size="icon-sm" variant="ghost" className="hidden sm:inline-flex" disabled={z <= 1} onClick={() => setView({ z: 1, tx: 0, ty: 0 })} aria-label="Fit"><Maximize /></Button></Tip>
+        <Tip label={t("Zoom out (−)")}><Button type="button" size="icon-sm" variant="ghost" disabled={z <= 1} onClick={() => zoomAt(z / 1.4, size.W / 2, size.H / 2)} aria-label={t("Zoom out")}><ZoomOut /></Button></Tip>
+        <button type="button" className="h-8 min-w-12 rounded-md px-1 text-xs tabular text-muted-foreground hover:text-foreground" onClick={() => setView({ z: 1, tx: 0, ty: 0 })} title={t("Fit (0)")}>{Math.round(z * 100)}%</button>
+        <Tip label={t("Zoom in (+, Ctrl + scroll, pinch)")}><Button type="button" size="icon-sm" variant="ghost" disabled={z >= MAX_Z} onClick={() => zoomAt(z * 1.4, size.W / 2, size.H / 2)} aria-label={t("Zoom in")}><ZoomIn /></Button></Tip>
+        <Tip label={t("Fit the image")}><Button type="button" size="icon-sm" variant="ghost" className="hidden sm:inline-flex" disabled={z <= 1} onClick={() => setView({ z: 1, tx: 0, ty: 0 })} aria-label={t("Fit")}><Maximize /></Button></Tip>
         <div className="flex-1" />
         <span className="text-sm tabular" data-occlusion-count>{faces.length} card{faces.length === 1 ? "" : "s"}</span>
       </div>
@@ -586,22 +587,22 @@ export function OcclusionEditor({ image, boxes: propBoxes, mode, onChange, onPen
               {!shown.length ? "Drag on the image to cover a part." : coarse ? "Drag to add a box. Tap the numbers in the list to select several." : "Drag to add a box. Shift-click, or click the numbers in the list, to select several."}
             </span>
             <div className="flex-1" />
-            <button type="button" className="hover:text-foreground" onClick={() => fileInput.current?.click()}>Replace image</button>
+            <button type="button" className="hover:text-foreground" onClick={() => fileInput.current?.click()}>{t("Replace image")}</button>
             <input ref={fileInput} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }} />
           </div>
         </div>
 
         <div className="flex min-w-0 flex-col gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">On each card</span>
+            <span className="text-xs font-medium text-muted-foreground">{t("On each card")}</span>
             <div className="flex-1" />
-            <div className="flex rounded-md border p-0.5 text-xs" role="radiogroup" aria-label="What a card covers">
+            <div className="flex rounded-md border p-0.5 text-xs" role="radiogroup" aria-label={t("What a card covers")}>
               {[["hide-all", "Hide all"], ["hide-one", "Hide one"]].map(([v, l]) => (
-                <button key={v} type="button" role="radio" aria-checked={(mode || "hide-all") === v} title={v === "hide-all" ? "Every box is covered and one is asked" : "Only the asked box is covered; the others stay visible"} onClick={() => onChange({ mode: v })} className={cn("h-6 rounded px-2 pointer-coarse:h-8", (mode || "hide-all") === v ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground")}>{l}</button>
+                <button key={v} type="button" role="radio" aria-checked={(mode || "hide-all") === v} title={v === "hide-all" ? t("Every box is covered and one is asked") : t("Only the asked box is covered; the others stay visible")} onClick={() => onChange({ mode: v })} className={cn("h-6 rounded px-2 pointer-coarse:h-8", (mode || "hide-all") === v ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground")}>{t(l)}</button>
               ))}
             </div>
           </div>
-          {faces.length === 0 && <p className="rounded-md border border-dashed px-3 py-4 text-center text-xs text-muted-foreground">No boxes yet.</p>}
+          {faces.length === 0 && <p className="rounded-md border border-dashed px-3 py-4 text-center text-xs text-muted-foreground">{t("No boxes yet.")}</p>}
           <div className="flex flex-col gap-1.5 lg:max-h-[min(70vh,900px)] lg:overflow-y-auto lg:pr-0.5" data-occlusion-list>
             {faces.map((f, i) => {
               const on = f.boxes.some((b) => sel.includes(b.id));

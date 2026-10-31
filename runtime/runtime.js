@@ -195,10 +195,48 @@ function watchCodeBlocks(root) {
 
 function applyTheme(theme) {
   if (!theme) return;
+  if (theme.lang) document.documentElement.lang = theme.lang;
+  if (theme.dir) document.documentElement.dir = theme.dir;
   const css = Object.entries(theme.vars ?? {})
     .map(([k, v]) => `${k}: ${v};`)
     .join(" ");
   document.getElementById("etude-theme").textContent = `:root { ${css} color-scheme: ${theme.scheme ?? "dark"}; }`;
+}
+
+const CARD_STRINGS_AR = {
+  "Pick a left item, then its partner. Click a connected item to undo.": "اختر عنصراً من اليسار، ثم شريكه. انقر على عنصر متصل للتراجع.",
+  "Select all that apply.": "اختر كل ما ينطبق.",
+  "Drag to reorder, or focus a block and use <kbd>Alt</kbd>+<kbd>↑</kbd> <kbd>↓</kbd>.": "اسحب لإعادة الترتيب، أو حدد عنصراً واستخدم <kbd>Alt</kbd>+<kbd>↑</kbd> <kbd>↓</kbd>.",
+  "Rate how well you knew it.": "قيّم مدى معرفتك بها.",
+  "Reference solution": "الحل المرجعي",
+  "Reference answer": "الإجابة المرجعية",
+  "What a correct drawing shows": "ما يظهره الرسم الصحيح",
+  "Your answer renders here": "ستظهر إجابتك هنا",
+  "Accepted": "المقبول",
+  "Correct order": "الترتيب الصحيح",
+  "<kbd>Tab</kbd> indents · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> submits": "<kbd>Tab</kbd> للمسافة البادئة · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> للإرسال",
+  "Type your answer": "اكتب إجابتك",
+  "Your answer": "إجابتك",
+  "Answer in your own words": "أجب بأسلوبك الخاص",
+  "Pinch or double-tap to zoom": "قرّب بالإصبعين أو اضغط مرتين للتكبير",
+  "Ctrl + scroll or double-click to zoom": "Ctrl + التمرير أو انقر نقراً مزدوجاً للتكبير",
+};
+
+function translateCard(root) {
+  if (document.documentElement.lang !== "ar") return;
+  if (!root) return;
+  for (const [en, ar] of Object.entries(CARD_STRINGS_AR)) {
+    for (const el of root.querySelectorAll(".e-muted, .help, .hint, .code-hint, .io-self, .e-section-title, .mx-empty, .mx-help")) {
+      if (el.textContent?.trim() === en || el.innerHTML?.trim() === en) {
+        el.innerHTML = ar;
+      }
+    }
+    for (const input of root.querySelectorAll("input, textarea")) {
+      if (input.placeholder?.trim() === en) {
+        input.placeholder = ar;
+      }
+    }
+  }
 }
 
 // --etude-screen-height: the screen height the card can fill, or unset when the page scrolls.
@@ -323,17 +361,20 @@ export function boot(main, templateHtml, assets) {
         el.setAttribute("data-autofocus", "");
       }
       api.root.replaceChildren(tpl.content);
+      translateCard(api.root);
       watchCodeBlocks(api.root);
       const showResult = api._result;
       api._result = (result) => {
         if (result?.preview) document.body.dataset.preview = "1";
         fillResultSlots({ ...api.view, ...(result?.key ?? {}), grade: result?.grade });
         showResult(result);
+        translateCard(api.root);
       };
       if (msg.result?.preview) document.body.dataset.preview = "1";
       if (msg.result) fillResultSlots({ ...api.view, ...(msg.result.key ?? {}), grade: msg.result.grade });
       try {
         await main(api);
+        translateCard(api.root);
       } catch (err) {
         api.root.insertAdjacentHTML("beforeend", `<pre class="e-error">${escapeHtml(err?.stack ?? err)}</pre>`);
         send("error", { message: String(err?.message ?? err) });

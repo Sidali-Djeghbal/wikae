@@ -18,6 +18,7 @@ import { api, humanInterval, relative, RATING_LABEL, STATE_NAMES, type CardType,
 import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
 import { useLongPress, usePhone } from "@/lib/phone";
+import { t } from "@/lib/i18n";
 
 export const STATE_CLS = ["text-new", "text-learn", "text-review", "text-learn"];
 
@@ -49,7 +50,7 @@ export function OrderSelect({ value, onChange, className }: { value: string; onC
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger size="sm" className={cn("h-7 w-auto gap-1 border-0 px-2 text-xs shadow-none", className)}><SelectValue /></SelectTrigger>
       <SelectContent>
-        {ORDERS.map(([v, label]) => <SelectItem key={v} value={v}>{label}</SelectItem>)}
+        {ORDERS.map(([v, label]) => <SelectItem key={v} value={v}>{t(label)}</SelectItem>)}
       </SelectContent>
     </Select>
   );
@@ -92,7 +93,7 @@ export function ItemRow({ row: r, active, checked, onOpen, onToggle, className, 
         <CheckBox
           checked={checked}
           className="mt-0.5"
-          label="Select"
+          label={t("Select")}
           onClick={(e) => {
             e.stopPropagation();
             onToggle();
@@ -105,10 +106,10 @@ export function ItemRow({ row: r, active, checked, onOpen, onToggle, className, 
           {!hideDeck && <><span className="truncate">{r.deck.split("::").slice(-1)[0]}</span><span>·</span></>}
           <span className="shrink-0">{r.type}</span>
           {r.generated && <Dices className="size-3 shrink-0" />}
-          {r.faces > 1 && <span className="shrink-0">· {r.faces} cards</span>}
+          {r.faces > 1 && <span className="shrink-0">· {r.faces} {t("cards")}</span>}
           <div className="flex-1" />
-          <span className={cn("shrink-0", STATE_CLS[r.state])}>{r.suspended ? "suspended" : STATE_NAMES[r.state].toLowerCase()}</span>
-          {r.state !== 0 && <span className="tabular shrink-0">{new Date(r.due) <= new Date() ? "due" : humanInterval(r.due)}</span>}
+          <span className={cn("shrink-0", STATE_CLS[r.state])}>{r.suspended ? t("suspended") : t(STATE_NAMES[r.state])}</span>
+          {r.state !== 0 && <span className="tabular shrink-0">{new Date(r.due) <= new Date() ? t("due") : humanInterval(r.due)}</span>}
         </div>
       </div>
     </div>
@@ -149,19 +150,19 @@ export function BulkBar({ checked, rows, decks, tags, onClear, onDone, onDeleted
     <>
       {checked.size > 0 && (
         <div className={cn("flex flex-wrap items-center gap-1 border-b bg-accent/40 px-3 py-2 text-xs", className)}>
-          <span className="mr-1 font-medium">{checked.size} selected</span>
-          <Button size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs" onClick={() => setMoveOpen(true)}><FolderInput className="size-3.5" />Move</Button>
-          <Button size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs" onClick={() => setTagOpen(true)}><Tag className="size-3.5" />Tags</Button>
+          <span className="mr-1 font-medium">{checked.size} {t("selected")}</span>
+          <Button size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs" onClick={() => setMoveOpen(true)}><FolderInput className="size-3.5" />{t("Move")}</Button>
+          <Button size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs" onClick={() => setTagOpen(true)}><Tag className="size-3.5" />{t("Tags")}</Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild><Button size="sm" variant="ghost" className="h-7 px-2" aria-label="More actions"><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => bulkCards("suspend")}><Pause />Suspend</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => bulkCards("unsuspend")}><Play />Unsuspend</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => bulkCards("reset")}><RotateCcw />Forget scheduling</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => bulkCards("suspend")}><Pause />{t("Suspend")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => bulkCards("unsuspend")}><Play />{t("Unsuspend")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => bulkCards("reset")}><RotateCcw />{t("Forget scheduling")}</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => bulk("archive")}><Archive />Archive</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => bulk("unarchive")}><ArchiveRestore />Unarchive</DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" onClick={() => setConfirmDelete(true)}><Trash2 />Delete…</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => bulk("archive")}><Archive />{t("Archive")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => bulk("unarchive")}><ArchiveRestore />{t("Unarchive")}</DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onClick={() => setConfirmDelete(true)}><Trash2 />{t("Delete…")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="flex-1" />
@@ -173,12 +174,12 @@ export function BulkBar({ checked, rows, decks, tags, onClear, onDone, onDeleted
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {checked.size} item{checked.size === 1 ? "" : "s"}?</AlertDialogTitle>
-            <AlertDialogDescription>This removes them with all their review history. Archiving hides them and keeps the history.</AlertDialogDescription>
+            <AlertDialogTitle>{checked.size === 1 ? t("Delete 1 item?") : t("Delete {count} items?", { count: checked.size })}</AlertDialogTitle>
+            <AlertDialogDescription>{t("This removes them with all their review history. Archiving hides them and keeps the history.")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={() => bulk("delete")}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={() => bulk("delete")}>{t("Delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -195,7 +196,7 @@ export function SearchHints({ onPick }: { onPick(s: string): void }) {
     return (
       <div className="-mx-5 flex gap-2 overflow-x-auto px-5 [scrollbar-width:none]">
         {hints.map((h) => (
-          <button key={h} onClick={() => onPick(h)} className="h-9 shrink-0 rounded-full border bg-card px-3.5 text-[13px] text-muted-foreground active:bg-accent active:text-foreground">{HINT_LABEL[h]}</button>
+          <button key={h} onClick={() => onPick(h)} className="h-9 shrink-0 rounded-full border bg-card px-3.5 text-[13px] text-muted-foreground active:bg-accent active:text-foreground">{t(HINT_LABEL[h])}</button>
         ))}
       </div>
     );
@@ -314,23 +315,23 @@ export function ItemEditor({ id, decks, tags, onSaved, onDeleted, onDuplicate, o
         <Button size="icon" variant="ghost" className={cn("-ml-2 size-9", !closeAlways && "md:hidden")} onClick={onBack} aria-label="Back to list"><ArrowLeft className="size-4" /></Button>
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 pt-1.5 md:pt-0">
           <Badge variant="outline" className="font-normal">{type.name}</Badge>
-          {item.archived && <Badge variant="outline" className="font-normal text-muted-foreground">archived</Badge>}
-          {allSuspended && <Badge variant="outline" className="font-normal text-muted-foreground">suspended</Badge>}
-          <button className="truncate font-mono text-xs text-muted-foreground hover:text-foreground" title="Copy id" onClick={() => { navigator.clipboard.writeText(item.id); toast("Copied id"); }}>{item.id}</button>
+          {item.archived && <Badge variant="outline" className="font-normal text-muted-foreground">{t("archived")}</Badge>}
+          {allSuspended && <Badge variant="outline" className="font-normal text-muted-foreground">{t("suspended")}</Badge>}
+          <button className="truncate font-mono text-xs text-muted-foreground hover:text-foreground" title={t("Copy id")} onClick={() => { navigator.clipboard.writeText(item.id); toast(t("Copied id")); }}>{item.id}</button>
         </div>
-        <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => navigate(`/study?card=${item.cards[0]?.id}&deck=${encodeURIComponent(item.deck)}`)}><Play className="size-4" />Practice</Button>
+        <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => navigate(`/study?card=${item.cards[0]?.id}&deck=${encodeURIComponent(item.deck)}`)}><Play className="size-4" />{t("Practice")}</Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="size-8"><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem disabled={mediaPending} onClick={duplicate}><Copy />Duplicate</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate(`/types/${encodeURIComponent(item.type)}`)}><Dices />Edit card type</DropdownMenuItem>
-            <DropdownMenuItem onClick={async () => { await api.bulkCards("reset", item.cards.map((c) => c.id)); load(); onSaved(); }}><RotateCcw />Forget scheduling</DropdownMenuItem>
+            <DropdownMenuItem disabled={mediaPending} onClick={duplicate}><Copy />{t("Duplicate")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`/types/${encodeURIComponent(item.type)}`)}><Dices />{t("Edit card type")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => { await api.bulkCards("reset", item.cards.map((c) => c.id)); load(); onSaved(); }}><RotateCcw />{t("Forget scheduling")}</DropdownMenuItem>
             <DropdownMenuItem onClick={async () => { await api.bulkCards(allSuspended ? "unsuspend" : "suspend", item.cards.map((c) => c.id)); load(); onSaved(); }}>
-              <Pause />{allSuspended ? "Unsuspend" : "Suspend"}
+              <Pause />{allSuspended ? t("Unsuspend") : t("Suspend")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={archive}>{item.archived ? <ArchiveRestore /> : <Archive />}{item.archived ? "Unarchive" : "Archive"}</DropdownMenuItem>
-            <DropdownMenuItem variant="destructive" onClick={del}><Trash2 />Delete</DropdownMenuItem>
+            <DropdownMenuItem onClick={archive}>{item.archived ? <ArchiveRestore /> : <Archive />}{item.archived ? t("Unarchive") : t("Archive")}</DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" onClick={del}><Trash2 />{t("Delete")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -383,14 +384,14 @@ export function ItemEditor({ id, decks, tags, onSaved, onDeleted, onDuplicate, o
           <div className="flex flex-col gap-3">
             {item.cards.map((c) => (
               <div key={c.id} className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-lg border p-4 text-sm sm:grid-cols-4">
-                {item.cards.length > 1 && <div className="col-span-full text-xs font-medium text-muted-foreground">Face: {c.face}</div>}
-                <Stat label="State" value={<span className={STATE_CLS[c.state]}>{c.suspended ? "suspended" : STATE_NAMES[c.state]}</span>} />
-                <Stat label="Due" value={c.state === 0 ? "new" : relative(c.due)} />
-                <Stat label="Recall now" value={c.retrievability == null ? "n/a" : `${Math.round(c.retrievability * 100)}%`} />
-                <Stat label="Reviews" value={`${c.reps} (${c.lapses} lapses)`} />
-                <Stat label="Stability" value={c.state === 0 ? "n/a" : `${Number(c.stability).toFixed(1)} days`} />
-                <Stat label="Difficulty" value={c.state === 0 ? "n/a" : `${Number(c.difficulty).toFixed(1)} / 10`} />
-                <Stat label="Last review" value={c.last_review ? relative(c.last_review) : "never"} />
+                {item.cards.length > 1 && <div className="col-span-full text-xs font-medium text-muted-foreground">{t("Face")}: {c.face}</div>}
+                <Stat label={t("State")} value={<span className={STATE_CLS[c.state]}>{c.suspended ? t("suspended") : t(STATE_NAMES[c.state])}</span>} />
+                <Stat label={t("Due")} value={c.state === 0 ? t("new") : relative(c.due)} />
+                <Stat label={t("Recall now")} value={c.retrievability == null ? t("n/a") : `${Math.round(c.retrievability * 100)}%`} />
+                <Stat label={t("Reviews")} value={`${c.reps} (${c.lapses} ${t("lapses")})`} />
+                <Stat label={t("Stability")} value={c.state === 0 ? t("n/a") : `${Number(c.stability).toFixed(1)} ${t("days")}`} />
+                <Stat label={t("Difficulty")} value={c.state === 0 ? t("n/a") : `${Number(c.difficulty).toFixed(1)} / 10`} />
+                <Stat label={t("Last review")} value={c.last_review ? relative(c.last_review) : t("never")} />
               </div>
             ))}
           </div>
@@ -402,10 +403,10 @@ export function ItemEditor({ id, decks, tags, onSaved, onDeleted, onDuplicate, o
       </Tabs>
 
       <div className={cn("sticky bottom-0 -mx-4 mt-2 flex items-center gap-2 border-t bg-background px-4 py-3 transition-opacity sm:-mx-6 sm:px-6 xl:-mx-10 xl:px-10", dirty || mediaPending ? "opacity-100" : "pointer-events-none opacity-0")}>
-        <span className="text-sm text-muted-foreground">{mediaPending ? "Copying media…" : "Unsaved changes"}</span>
+        <span className="text-sm text-muted-foreground">{mediaPending ? t("Copying media…") : t("Unsaved changes")}</span>
         <div className="flex-1" />
-        <Button variant="ghost" size="sm" disabled={mediaPending} onClick={() => setDraft(draftOf(item))}>Discard</Button>
-        <Button size="sm" className="gap-1.5" onClick={save} disabled={saving || mediaPending}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}Save <kbd className="hidden text-[10px] opacity-60 sm:inline">Ctrl S</kbd></Button>
+        <Button variant="ghost" size="sm" disabled={mediaPending} onClick={() => setDraft(draftOf(item))}>{t("Discard")}</Button>
+        <Button size="sm" className="gap-1.5" onClick={save} disabled={saving || mediaPending}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}{t("Save")} <kbd className="hidden text-[10px] opacity-60 sm:inline">Ctrl S</kbd></Button>
       </div>
     </div>
   );
@@ -414,7 +415,7 @@ export function ItemEditor({ id, decks, tags, onSaved, onDeleted, onDuplicate, o
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-xs text-muted-foreground">{t(label)}</div>
       <div className="tabular">{value}</div>
     </div>
   );
@@ -427,15 +428,15 @@ function History({ item }: { item: ItemDetail }) {
     ...item.reviews.map((r) => ({ kind: "review" as const, ts: r.ts, r })),
     ...item.attempts.map((a) => ({ kind: "attempt" as const, ts: a.ts, a })),
   ].sort((x, y) => y.ts.localeCompare(x.ts));
-  if (!events.length) return <p className="text-sm text-muted-foreground">Not studied yet.</p>;
+  if (!events.length) return <p className="text-sm text-muted-foreground">{t("Not studied yet.")}</p>;
   return (
     <div className="flex flex-col gap-2 pb-4">
       {events.map((e, i) =>
         e.kind === "review" ? (
           <div key={i} className="flex items-center gap-3 px-1 text-sm">
             <span className="w-24 shrink-0 text-xs tabular text-muted-foreground sm:w-32">{fmtTs(e.ts)}</span>
-            <span className={cn("font-medium", ["", "text-again", "text-hard", "text-good", "text-easy"][e.r.rating])}>{RATING_LABEL[e.r.rating as 1]}</span>
-            {e.r.practice ? <span className="text-xs text-muted-foreground">practice</span> : <span className="text-xs text-muted-foreground">next in {humanInterval(e.r.due_after, new Date(e.ts))}</span>}
+            <span className={cn("font-medium", ["", "text-again", "text-hard", "text-good", "text-easy"][e.r.rating])}>{t(RATING_LABEL[e.r.rating as 1])}</span>
+            {e.r.practice ? <span className="text-xs text-muted-foreground">{t("practice")}</span> : <span className="text-xs text-muted-foreground">{t("next in {time}", { time: humanInterval(e.r.due_after, new Date(e.ts)) })}</span>}
             {e.r.duration_ms != null && <span className="ml-auto text-xs tabular text-muted-foreground">{Math.round(e.r.duration_ms / 1000)}s</span>}
           </div>
         ) : (
@@ -443,9 +444,9 @@ function History({ item }: { item: ItemDetail }) {
             <div className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
               <span className="tabular">{fmtTs(e.ts)}</span>
               <span className={cn({ correct: "text-good", partial: "text-hard", incorrect: "text-again", ungraded: "" }[e.a.grade.verdict])}>
-                {e.a.grade.verdict}{e.a.grade.score != null && e.a.grade.verdict === "partial" ? ` ${Math.round(e.a.grade.score * 100)}%` : ""}
+                {t(e.a.grade.verdict)}{e.a.grade.score != null && e.a.grade.verdict === "partial" ? ` ${Math.round(e.a.grade.score * 100)}%` : ""}
               </span>
-              {e.a.practice ? <span>· practice</span> : null}
+              {e.a.practice ? <span>· {t("practice")}</span> : null}
               {e.a.grade.grader.model && <span className="truncate">· {e.a.grade.grader.model}</span>}
             </div>
             <AnswerView answer={e.a.answer} />
@@ -463,7 +464,7 @@ function AnswerView({ answer }: { answer: unknown }) {
     return <img src={img.startsWith("media:") ? `/media/${img.slice(6)}` : img} alt="drawing" className="max-h-64 rounded border bg-white" />;
   }
   const text = typeof answer === "string" ? answer : JSON.stringify(answer);
-  return <pre className="whitespace-pre-wrap break-words font-mono text-[13px]">{text || <span className="text-muted-foreground">(empty)</span>}</pre>;
+  return <pre className="whitespace-pre-wrap break-words font-mono text-[13px]">{text || <span className="text-muted-foreground">{t("(empty)")}</span>}</pre>;
 }
 
 export function DeckInput({ value, decks, onChange }: { value: string; decks: string[]; onChange(v: string): void }) {
@@ -564,24 +565,24 @@ export function NewItemDialog({ open, onOpenChange, decks, types, onCreated, def
         {/* An image occlusion note starts on the image: tags come after the boxes. */}
         {!occlusion && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Tags</label>
+            <label className="text-sm font-medium">{t("Tags")}</label>
             <TagInput value={tags} known={[]} onChange={setTags} />
           </div>
         )}
         {def && def.id === type && <div className="border-t pt-4"><FieldEditor key={type} fields={def.fields} value={fields} onChange={setFields} onMediaPendingChange={setMediaPending} /></div>}
         {occlusion && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Tags</label>
+            <label className="text-sm font-medium">{t("Tags")}</label>
             <TagInput value={tags} known={[]} onChange={setTags} />
           </div>
         )}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">ID <span className="font-normal text-muted-foreground">(optional, keeps the card matched across imports)</span></label>
+          <label className="text-sm font-medium">{t("ID")} <span className="font-normal text-muted-foreground">{t("(optional, keeps the card matched across imports)")}</span></label>
           <Input value={id} onChange={(e) => setId(e.target.value)} placeholder="course.topic.slug" className="font-mono text-[13px]" />
         </div>
         <DialogFooter className={cn(occlusion && "sticky -bottom-6 -mx-6 -mb-6 border-t bg-background px-6 py-3")}>
-          {occlusion && <span className="mr-auto self-center text-xs text-muted-foreground">{Array.isArray(fields.boxes) && fields.boxes.length ? "Each box or group becomes a card" : "Draw boxes over the image first"}</span>}
-          <Button disabled={mediaPending} onClick={create} className="gap-1.5"><Check className="size-4" />Add card</Button>
+          {occlusion && <span className="mr-auto self-center text-xs text-muted-foreground">{Array.isArray(fields.boxes) && fields.boxes.length ? t("Each box or group becomes a card") : t("Draw boxes over the image first")}</span>}
+          <Button disabled={mediaPending} onClick={create} className="gap-1.5"><Check className="size-4" />{t("Add card")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -593,9 +594,9 @@ export function MoveDialog({ open, onOpenChange, decks, onMove }: { open: boolea
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Move to deck</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("Move to deck")}</DialogTitle></DialogHeader>
         <DeckInput value={deck} decks={decks} onChange={setDeck} />
-        <DialogFooter><Button disabled={!deck.trim()} onClick={() => { onMove(deck.trim()); onOpenChange(false); }}>Move</Button></DialogFooter>
+        <DialogFooter><Button disabled={!deck.trim()} onClick={() => { onMove(deck.trim()); onOpenChange(false); }}>{t("Move")}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -607,10 +608,10 @@ export function TagDialog({ open, onOpenChange, tags, onApply }: { open: boolean
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Edit tags</DialogTitle></DialogHeader>
-        <div className="flex flex-col gap-1.5"><label className="text-sm font-medium">Add</label><TagInput value={add} known={tags} onChange={setAdd} /></div>
-        <div className="flex flex-col gap-1.5"><label className="text-sm font-medium">Remove</label><TagInput value={remove} known={tags} onChange={setRemove} /></div>
-        <DialogFooter><Button onClick={() => { onApply(add, remove); onOpenChange(false); setAdd([]); setRemove([]); }}>Apply</Button></DialogFooter>
+        <DialogHeader><DialogTitle>{t("Edit tags")}</DialogTitle></DialogHeader>
+        <div className="flex flex-col gap-1.5"><label className="text-sm font-medium">{t("Add")}</label><TagInput value={add} known={tags} onChange={setAdd} /></div>
+        <div className="flex flex-col gap-1.5"><label className="text-sm font-medium">{t("Remove")}</label><TagInput value={remove} known={tags} onChange={setRemove} /></div>
+        <DialogFooter><Button onClick={() => { onApply(add, remove); onOpenChange(false); setAdd([]); setRemove([]); }}>{t("Apply")}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
