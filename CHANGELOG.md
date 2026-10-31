@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.6.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.5.0...v2.6.0) (2026-10-31)
+
+
+### Features
+
+* add Arabic language and RTL support ([b9483fe](https://github.com/Sidali-Djeghbal/wikae/commit/b9483fe9a0495815df7ac84f883ab1e7b5e9ad35))
+* add item generation command, UI support, and Groq integration ([650dd65](https://github.com/Sidali-Djeghbal/wikae/commit/650dd65981335ac2317c6a060b000c55a558ea88))
+* add local fallback for market file reading and create islamic market build script ([a1b6772](https://github.com/Sidali-Djeghbal/wikae/commit/a1b6772adc99d4c0b0e45c648b2fed5d85c4c720))
+* add local-only type folder defaults to exclude from sync outbox ([c3600c6](https://github.com/Sidali-Djeghbal/wikae/commit/c3600c6aeca57239d85f584926057baea32fbd44))
+* add mutashabihat editor and model support ([1c20981](https://github.com/Sidali-Djeghbal/wikae/commit/1c20981daa88dd34d4d6bf235ffb4d4ccc95f732))
+* add quran mutashabihat card type with arabic text normalization ([ae4620a](https://github.com/Sidali-Djeghbal/wikae/commit/ae4620aea2410866a584444f195687f91e6a043e))
+* **ci:** add release-please workflow and update desktop release configuration ([cc4c282](https://github.com/Sidali-Djeghbal/wikae/commit/cc4c282692e74b4f15656a4de0b388f9eb27173b))
+* **desktop:** configure standalone platform assets with Wikae branding ([945a605](https://github.com/Sidali-Djeghbal/wikae/commit/945a6059491d5a322a2f024797b6ca6a7230a723))
+* update market data and UI components with new banner asset ([c53c25f](https://github.com/Sidali-Djeghbal/wikae/commit/c53c25f7e27b99bc0015f2862d7cc56cba6e8afc))
+
+
+### Bug Fixes
+
+* banner asset paths and dimensions ([77cd102](https://github.com/Sidali-Djeghbal/wikae/commit/77cd102fe612bba450e869fb31afbb6c9a6747f7))
+* **ci:** remove invalid package-name input from release-please action ([7475966](https://github.com/Sidali-Djeghbal/wikae/commit/7475966fe894ad2a2d4189101bf0ca70bf9d1d01))
+* **test:** use MARKET_REPO constant in market publish test ([5247831](https://github.com/Sidali-Djeghbal/wikae/commit/524783131c6dfda3abaeed7f4663086784be0306))
+
 ## 2.5.0
 
 - **Etude for desktop**: a real app for Mac, Windows and Linux, with nothing else to install. Mac: a .dmg for Apple Silicon or Intel (the 2.4.0 and 2.4.1 Mac downloads didn't start; this replaces them). Windows: an installer that needs no administrator. Linux: .deb, .rpm or AppImage. The collection stays in `~/.etude`, shared with the `etude` command and agents; the app reuses an `etude serve` already running for the same collection, and the engine it starts answers only its own window. Windows and the AppImage update themselves (in the background, installing when you restart or quit); the Mac app and the .deb and .rpm show a link to the new version for now. Settings → Desktop app installs the `etude` command (the Linux packages install it as `/usr/bin/etude`), running the app's own engine. Thanks to Victor Bonato.
