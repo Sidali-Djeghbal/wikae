@@ -8,7 +8,8 @@
 //   entries/types/<id>.json            { ..., kind: "type", content: pack/1 with types (+ example items) }
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { EtudeError, plainLabel, type Etude } from "./engine.ts";
 import { BUILTIN_THEMES, THEME_ID, ThemeError, freeThemeId, normalizeTheme, type Theme } from "./themes.ts";
 import { validateType } from "./types.ts";
@@ -116,6 +117,21 @@ async function pinnedUrl(url: string): Promise<string> {
 }
 
 /** Reads one file of the market, from a URL or a folder. */
+function tryReadLocalFallback(path: string): { text: string; bytes: number } | null {
+  const candidates = [
+    join(dirname(fileURLToPath(import.meta.url)), "../../market", path),
+    join(process.env.HOME || "", "market", path),
+    join(process.env.HOME || "", "etude-market", path),
+  ];
+  for (const c of candidates) {
+    if (existsSync(c)) {
+      const buf = readFileSync(c);
+      return { text: buf.toString("utf8"), bytes: buf.length };
+    }
+  }
+  return null;
+}
+
 async function readMarketFile(url: string, path: string, opts: { fresh?: boolean } = {}): Promise<{ text: string; bytes: number }> {
   if (!isRemote(url)) {
     const p = join(localDir(url), path);
@@ -129,10 +145,16 @@ async function readMarketFile(url: string, path: string, opts: { fresh?: boolean
   try {
     res = await fetch(full, { signal: AbortSignal.timeout(20_000), headers: { Accept: "application/json, text/plain" } });
   } catch (e) {
+    const local = tryReadLocalFallback(path);
+    if (local) return local;
     throw new MarketError(`couldn't reach the market (${(e as Error).message})`, 502);
   }
-  if (res.status === 404) throw new MarketError(`the market has no ${path}`, 404);
-  if (!res.ok) throw new MarketError(`the market answered ${res.status} for ${path}`, 502);
+  if (!res.ok) {
+    const local = tryReadLocalFallback(path);
+    if (local) return local;
+    if (res.status === 404) throw new MarketError(`the market has no ${path}`, 404);
+    throw new MarketError(`the market answered ${res.status} for ${path}`, 502);
+  }
   const buf = Buffer.from(await res.arrayBuffer());
   if (buf.length > MAX_ENTRY_BYTES) throw new MarketError(`${path} is larger than ${MAX_ENTRY_BYTES} bytes`);
   return { text: buf.toString("utf8"), bytes: buf.length };
