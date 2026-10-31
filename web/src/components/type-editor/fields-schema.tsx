@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { FieldSpec } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 import { FIELD_NAME } from "./starter";
 
 const KINDS: { value: FieldSpec["kind"]; label: string; hint: string }[] = [
@@ -61,10 +62,10 @@ export function FieldsSchema({
     <div className="flex flex-col gap-3">
       {itemCount > 0 && (
         <p className="text-xs text-muted-foreground">
-          Items store their fields by name. Renaming or removing a field here doesn't change the {itemCount} existing item{itemCount === 1 ? "" : "s"}.
+          {t("Items store their fields by name. Renaming or removing a field here doesn't change the existing items ({n}).", { n: itemCount })}
         </p>
       )}
-      {!fields.length && <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">No fields yet. A type needs at least one field to hold content.</div>}
+      {!fields.length && <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">{t("No fields yet. A type needs at least one field to hold content.")}</div>}
       <div className="flex flex-col gap-2">
         {fields.map((f, i) => {
           const badName = !FIELD_NAME.test(f.name);
@@ -76,7 +77,7 @@ export function FieldsSchema({
                 <button
                   className="flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
                   onClick={() => setOpen(expanded ? null : i)}
-                  aria-label={expanded ? "Collapse field" : "Expand field"}
+                  aria-label={expanded ? t("Collapse field") : t("Expand field")}
                   aria-expanded={expanded}
                 >
                   <ChevronRight className={cn("size-4 transition-transform", expanded && "rotate-90")} />
@@ -89,39 +90,39 @@ export function FieldsSchema({
                     set(i, { ...f, name });
                   }}
                   className="h-9 min-w-0 flex-1 basis-32 font-mono text-[13px]"
-                  aria-label="Field name"
+                  aria-label={t("Field name")}
                   spellCheck={false}
                 />
                 <Select value={f.kind} onValueChange={(v) => set(i, { ...f, kind: v as FieldSpec["kind"], default: undefined })}>
-                  <SelectTrigger className="h-9 w-[7.5rem] shrink-0" aria-label="Kind"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9 w-[7.5rem] shrink-0" aria-label={t("Kind")}><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {KINDS.map((k) => (
-                      <SelectItem key={k.value} value={k.value}>{k.label}</SelectItem>
+                      <SelectItem key={k.value} value={k.value}>{t(k.label)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <div className="ml-auto flex shrink-0 items-center gap-0.5">
-                  <Button variant="ghost" size="icon" className="size-9" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up"><ArrowUp className="size-4" /></Button>
-                  <Button variant="ghost" size="icon" className="size-9" onClick={() => move(i, 1)} disabled={i === fields.length - 1} aria-label="Move down"><ArrowDown className="size-4" /></Button>
-                  <Button variant="ghost" size="icon" className="size-9" onClick={() => { onChange(fields.filter((_, k) => k !== i)); setOpen(null); }} aria-label="Remove field"><Trash2 className="size-4" /></Button>
+                  <Button variant="ghost" size="icon" className="size-9" onClick={() => move(i, -1)} disabled={i === 0} aria-label={t("Move up")}><ArrowUp className="size-4" /></Button>
+                  <Button variant="ghost" size="icon" className="size-9" onClick={() => move(i, 1)} disabled={i === fields.length - 1} aria-label={t("Move down")}><ArrowDown className="size-4" /></Button>
+                  <Button variant="ghost" size="icon" className="size-9" onClick={() => { onChange(fields.filter((_, k) => k !== i)); setOpen(null); }} aria-label={t("Remove field")}><Trash2 className="size-4" /></Button>
                 </div>
               </div>
               {!expanded && (f.required || f.private || f.label) && (
                 <div className="-mt-1 flex flex-wrap gap-x-3 gap-y-1 px-[3.25rem] pb-2 text-xs text-muted-foreground">
                   {f.label && <span>“{f.label}”</span>}
-                  {f.required && <span>required</span>}
-                  {f.private && <span className="flex items-center gap-1"><EyeOff className="size-3" />hidden until answered</span>}
+                  {f.required && <span>{t("required")}</span>}
+                  {f.private && <span className="flex items-center gap-1"><EyeOff className="size-3" />{t("hidden until answered")}</span>}
                 </div>
               )}
               {(badName || dup) && (
-                <p className="px-3 pb-2 text-xs text-destructive">{dup ? `"${f.name}" is used twice.` : "Use letters, digits and _, starting with a letter or _."}</p>
+                <p className="px-3 pb-2 text-xs text-destructive">{dup ? t("\"{name}\" is used twice.", { name: f.name }) : t("Use letters, digits and _, starting with a letter or _.")}</p>
               )}
               {expanded && <FieldDetails field={f} onChange={(nf) => set(i, nf)} />}
             </div>
           );
         })}
       </div>
-      <Button variant="outline" size="sm" className="h-9 self-start gap-1.5" onClick={add}><Plus className="size-4" />Add field</Button>
+      <Button variant="outline" size="sm" className="h-9 self-start gap-1.5" onClick={add}><Plus className="size-4" />{t("Add field")}</Button>
     </div>
   );
 }
@@ -130,7 +131,7 @@ function FieldDetails({ field: f, onChange }: { field: FieldSpec; onChange(f: Fi
   const kind = KINDS.find((k) => k.value === f.kind);
   return (
     <div className="flex flex-col gap-4 border-t px-3 py-4 sm:px-4">
-      {kind?.hint && <p className="-mt-1 text-xs text-muted-foreground">{kind.hint}.</p>}
+      {kind?.hint && <p className="-mt-1 text-xs text-muted-foreground">{t(kind.hint)}.</p>}
       <div className="grid gap-4 sm:grid-cols-2">
         <Labeled label="Label" hint="Shown in editors instead of the name.">
           <Input value={f.label ?? ""} onChange={(e) => onChange({ ...f, label: e.target.value || undefined })} placeholder={f.name} />
@@ -139,7 +140,7 @@ function FieldDetails({ field: f, onChange }: { field: FieldSpec; onChange(f: Fi
           <Select value={f.editor ?? "none"} onValueChange={(v) => onChange({ ...f, editor: v === "none" ? undefined : (v as FieldSpec["editor"]) })}>
             <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {EDITORS.map((e) => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
+              {EDITORS.map((e) => <SelectItem key={e.value} value={e.value}>{t(e.label)}</SelectItem>)}
             </SelectContent>
           </Select>
         </Labeled>
@@ -153,11 +154,11 @@ function FieldDetails({ field: f, onChange }: { field: FieldSpec; onChange(f: Fi
       <div className="flex flex-col gap-3 sm:flex-row sm:gap-8">
         <label className="flex min-h-9 items-center gap-2.5 text-sm">
           <Switch checked={!!f.required} onCheckedChange={(v) => onChange({ ...f, required: v || undefined })} />
-          Required
+          {t("Required")}
         </label>
         <label className="flex min-h-9 items-center gap-2.5 text-sm">
           <Switch checked={!!f.private} onCheckedChange={(v) => onChange({ ...f, private: v || undefined })} />
-          <span>Hidden until answered <span className="text-muted-foreground">(private)</span></span>
+          <span>{t("Hidden until answered")} <span className="text-muted-foreground">{t("(private)")}</span></span>
         </label>
       </div>
     </div>
@@ -167,9 +168,9 @@ function FieldDetails({ field: f, onChange }: { field: FieldSpec; onChange(f: Fi
 function Labeled({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-sm font-medium">{t(label)}</span>
       {children}
-      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+      {hint && <span className="text-xs text-muted-foreground">{t(hint)}</span>}
     </div>
   );
 }
@@ -187,7 +188,7 @@ function DefaultInput({ field: f, onChange }: { field: FieldSpec; onChange(v: un
       <Select value={f.default === undefined ? "unset" : String(f.default)} onValueChange={(v) => onChange(v === "unset" ? undefined : v === "true")}>
         <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
         <SelectContent>
-          <SelectItem value="unset">No default</SelectItem>
+          <SelectItem value="unset">{t("No default")}</SelectItem>
           <SelectItem value="true">true</SelectItem>
           <SelectItem value="false">false</SelectItem>
         </SelectContent>
@@ -199,30 +200,30 @@ function DefaultInput({ field: f, onChange }: { field: FieldSpec; onChange(v: un
       <Input
         value={text}
         className={cn((structured || f.kind === "number") && "font-mono text-[13px]")}
-        placeholder={structured ? (f.kind === "list" ? '["a", "b"]' : "JSON value") : "No default"}
+        placeholder={structured ? (f.kind === "list" ? '["a", "b"]' : t("JSON value")) : t("No default")}
         onChange={(e) => {
-          const t = e.target.value;
-          setText(t);
-          if (!t.trim()) {
+          const val = e.target.value;
+          setText(val);
+          if (!val.trim()) {
             setError(null);
             return onChange(undefined);
           }
           if (f.kind === "number") {
-            const n = Number(t);
+            const n = Number(val);
             if (Number.isFinite(n)) {
               setError(null);
               onChange(n);
-            } else setError("Not a number");
+            } else setError(t("Not a number"));
           } else if (structured) {
             try {
-              const v = JSON.parse(t);
-              if (f.kind === "list" && !Array.isArray(v)) throw new Error("A list default must be an array");
+              const v = JSON.parse(val);
+              if (f.kind === "list" && !Array.isArray(v)) throw new Error(t("A list default must be an array"));
               setError(null);
               onChange(v);
             } catch (err) {
               setError((err as Error).message);
             }
-          } else onChange(t);
+          } else onChange(val);
         }}
       />
       {error && <span className="text-xs text-destructive">{error}</span>}

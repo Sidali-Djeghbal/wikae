@@ -44,6 +44,9 @@ export function setLocale(id: LocaleId) {
     localStorage.setItem(STORAGE_KEY, id);
   } catch { /* storage blocked */ }
   applyLocaleToDocument();
+  if (typeof document !== "undefined" && document.body) {
+    walkAndTranslate(document.body);
+  }
   window.dispatchEvent(new Event("etude:locale"));
 }
 
@@ -103,38 +106,81 @@ function translateText(text: string): string | null {
   return null;
 }
 
+const originalText = new WeakMap<Node, string>();
+const originalAttrs = new WeakMap<Element, { placeholder?: string; title?: string; aria?: string }>();
+
 function translateElementAttributes(el: HTMLElement) {
   if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
     const input = el as HTMLInputElement;
     if (input.placeholder) {
-      const trans = locales[current]?.[input.placeholder.trim()];
-      if (trans && trans !== input.placeholder) {
-        input.placeholder = trans;
+      if (!originalAttrs.has(el)) originalAttrs.set(el, {});
+      const stored = originalAttrs.get(el)!;
+      if (!("placeholder" in stored)) stored.placeholder = input.placeholder;
+      if (stored.placeholder) {
+        const trans = locales[current]?.[stored.placeholder.trim()];
+        if (trans && trans !== input.placeholder) {
+          input.placeholder = trans;
+        }
       }
     }
   }
   if (el.title) {
-    const trans = locales[current]?.[el.title.trim()];
-    if (trans && trans !== el.title) {
-      el.title = trans;
+    if (!originalAttrs.has(el)) originalAttrs.set(el, {});
+    const stored = originalAttrs.get(el)!;
+    if (!("title" in stored)) stored.title = el.title;
+    if (stored.title) {
+      const trans = locales[current]?.[stored.title.trim()];
+      if (trans && trans !== el.title) {
+        el.title = trans;
+      }
     }
   }
   const aria = el.getAttribute("aria-label");
   if (aria) {
-    const trans = locales[current]?.[aria.trim()];
-    if (trans && trans !== aria) {
-      el.setAttribute("aria-label", trans);
+    if (!originalAttrs.has(el)) originalAttrs.set(el, {});
+    const stored = originalAttrs.get(el)!;
+    if (!("aria" in stored)) stored.aria = aria;
+    if (stored.aria) {
+      const trans = locales[current]?.[stored.aria.trim()];
+      if (trans && trans !== aria) {
+        el.setAttribute("aria-label", trans);
+      }
     }
   }
 }
 
+function restoreElementAttributes(el: HTMLElement) {
+  const stored = originalAttrs.get(el);
+  if (!stored) return;
+  if ("placeholder" in stored && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) {
+    (el as HTMLInputElement).placeholder = stored.placeholder!;
+  }
+  if ("title" in stored) {
+    el.title = stored.title!;
+  }
+  if ("aria" in stored) {
+    el.setAttribute("aria-label", stored.aria!);
+  }
+}
+
 function walkAndTranslate(root: Node) {
-  if (current !== "ar") return;
   if (root.nodeType === Node.TEXT_NODE) {
     if (!shouldSkipNode(root)) {
-      const translated = translateText(root.nodeValue ?? "");
-      if (translated && root.nodeValue !== translated) {
-        root.nodeValue = translated;
+      if (current === "ar") {
+        const raw = root.nodeValue ?? "";
+        if (!originalText.has(root)) {
+          originalText.set(root, raw);
+        }
+        const source = originalText.get(root) ?? raw;
+        const translated = translateText(source);
+        if (translated && root.nodeValue !== translated) {
+          root.nodeValue = translated;
+        }
+      } else {
+        const orig = originalText.get(root);
+        if (orig !== undefined && root.nodeValue !== orig) {
+          root.nodeValue = orig;
+        }
       }
     }
     return;
@@ -144,7 +190,11 @@ function walkAndTranslate(root: Node) {
     if (IGNORED_TAGS.has(el.tagName) || el.hasAttribute("data-no-translate") || el.classList.contains("cm-editor")) {
       return;
     }
-    translateElementAttributes(el);
+    if (current === "ar") {
+      translateElementAttributes(el);
+    } else {
+      restoreElementAttributes(el);
+    }
     let child = root.firstChild;
     while (child) {
       walkAndTranslate(child);
@@ -160,13 +210,12 @@ function setupDomTranslator() {
 
   applyLocaleToDocument();
 
-  if (current === "ar") {
+  if (document.body) {
     walkAndTranslate(document.body);
   }
 
   if (!observer) {
     observer = new MutationObserver((mutations) => {
-      if (current !== "ar") return;
       for (const m of mutations) {
         if (m.type === "childList") {
           for (const node of m.addedNodes) {
@@ -174,9 +223,13 @@ function setupDomTranslator() {
           }
         } else if (m.type === "characterData") {
           if (!shouldSkipNode(m.target)) {
-            const translated = translateText(m.target.nodeValue ?? "");
-            if (translated && m.target.nodeValue !== translated) {
-              m.target.nodeValue = translated;
+            if (current === "ar") {
+              const raw = m.target.nodeValue ?? "";
+              const translated = translateText(raw);
+              if (translated && m.target.nodeValue !== translated) {
+                originalText.set(m.target, raw);
+                m.target.nodeValue = translated;
+              }
             }
           }
         }

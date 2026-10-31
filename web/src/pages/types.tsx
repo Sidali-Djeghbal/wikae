@@ -35,7 +35,7 @@ const parentOf = (path: string) => path.split("::").slice(0, -1).join("::");
 const within = (path: string, folder: string) => path === folder || path.startsWith(folder + "::");
 const byName = (a: TypeSummary, b: TypeSummary) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
 const byLeaf = (a: string, b: string) => leaf(a).localeCompare(leaf(b), undefined, { sensitivity: "base" });
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+const plural = (n: number, one: string, many: string) => `${n} ${tr(n === 1 ? one : many)}`;
 
 function ancestors(path: string): string[] {
   const parts = path.split("::");
@@ -124,7 +124,7 @@ function TypeLibrary() {
       await api.moveType(id, folder);
       await reload();
       const t = all.find((x) => x.id === id);
-      toast.success(`Moved ${t?.name ?? id} to ${folder ? leaf(folder) : "the top level"}`, folder && folder !== here ? { action: { label: "Open", onClick: () => open(folder) } } : undefined);
+      toast.success(tr("Moved {name} to {folder}", { name: t?.name ?? id, folder: folder ? leaf(folder) : tr("the top level") }), folder && folder !== here ? { action: { label: tr("Open"), onClick: () => open(folder) } } : undefined);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -133,7 +133,7 @@ function TypeLibrary() {
     const to = parent ? `${parent}::${leaf(path)}` : leaf(path);
     if (to === path) return;
     if (within(parent, path)) return void toast.error("A folder can't go inside itself");
-    if (folders.includes(to)) return void toast.error(`There's already a folder called “${leaf(path)}” there`);
+    if (folders.includes(to)) return void toast.error(tr("There's already a folder called “{name}” there", { name: leaf(path) }));
     try {
       await api.renameTypeFolder(path, to);
       if (within(here, path)) open(to + here.slice(path.length));
@@ -201,7 +201,7 @@ function TypeLibrary() {
   const subfolders = inBuiltIn ? [] : childFolders(here);
   const listed = inBuiltIn ? builtins : typesIn(here);
   const crumbs = here && !inBuiltIn ? ancestors(here) : [];
-  const title = inBuiltIn ? tr("Built in") : here ? leaf(here) : tr("Card types");
+  const title = inBuiltIn ? tr("Built in") : here ? tr(leaf(here)) : tr("Card types");
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10">
@@ -213,7 +213,7 @@ function TypeLibrary() {
             {crumbs.slice(0, -1).map((c) => (
               <span key={c} className="flex min-w-0 items-center">
                 <ChevronRight className="size-3.5 shrink-0 opacity-50" />
-                <Crumb label={leaf(c)} onClick={() => open(c)} drop={drop(c)} active={dropAt === c} />
+                <Crumb label={tr(leaf(c))} onClick={() => open(c)} drop={drop(c)} active={dropAt === c} />
               </span>
             ))}
             <ChevronRight className="size-3.5 shrink-0 opacity-50" />
@@ -229,7 +229,7 @@ function TypeLibrary() {
               {inBuiltIn
                 ? tr("These ship with Etude. Open one to see how it's made, or duplicate it to start your own.")
                 : here
-                  ? [plural(listed.length, "type"), subfolders.length ? plural(subfolders.length, "folder") : ""].filter(Boolean).join(" · ")
+                  ? [plural(listed.length, "type", "types"), subfolders.length ? plural(subfolders.length, "folder", "folders") : ""].filter(Boolean).join(" · ")
                   : tr("Fields, an HTML/CSS/JS template and a grader. Built\u2011in types are written the same way, so any of them can be copied or changed.")}
             </p>
           </div>
@@ -287,7 +287,7 @@ function TypeLibrary() {
             </div>
 
             {q ? (
-              <Group label={`${plural(results.length, "match")}`}>
+              <Group label={`${plural(results.length, "result", "results")}`}>
                 {results.length ? (
                   <List>{results.map((t) => <TypeRow key={t.id} {...rowProps(t)} showPlace />)}</List>
                 ) : (
@@ -365,15 +365,18 @@ function TypeLibrary() {
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete the folder “{deleting && leaf(deleting)}”?</AlertDialogTitle>
+            <AlertDialogTitle>{tr("Delete the folder “{name}”?", { name: deleting ? leaf(deleting) : "" })}</AlertDialogTitle>
             <AlertDialogDescription>
               {deleting && deepCount(deleting) > 0
-                ? `No type is deleted. The ${plural(deepCount(deleting), "type")} inside move to ${parentOf(deleting) ? `“${leaf(parentOf(deleting))}”` : "the top level"}, and the folders inside it go too.`
-                : "It's empty, so nothing else changes."}
+                ? tr("No type is deleted. The {count} inside move to “{parent}”, and the folders inside it go too.", {
+                    count: plural(deepCount(deleting), "type", "types"),
+                    parent: parentOf(deleting) ? leaf(parentOf(deleting)) : tr("the top level"),
+                  })
+                : tr("It's empty, so nothing else changes.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tr("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 const d = deleting!;
@@ -386,7 +389,7 @@ function TypeLibrary() {
                 }
               }}
             >
-              Delete folder
+              {tr("Delete folder")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -488,7 +491,7 @@ function RailTree(p: {
               <button
                 className={cn("flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground", !kids && "invisible")}
                 onClick={() => p.toggle(f)}
-                aria-label={expanded ? `Collapse ${leaf(f)}` : `Expand ${leaf(f)}`}
+                aria-label={expanded ? tr("Collapse {name}", { name: leaf(f) }) : tr("Expand {name}", { name: leaf(f) })}
                 aria-expanded={expanded}
                 tabIndex={kids ? 0 : -1}
               >
@@ -496,7 +499,7 @@ function RailTree(p: {
               </button>
               <button className="flex h-full min-w-0 flex-1 items-center gap-2 text-left rtl:text-right" onClick={() => p.onOpen(f)}>
                 {p.dropAt === f ? <FolderOpen className="size-4 shrink-0 text-highlight" /> : active ? <FolderOpen className="size-4 shrink-0 text-foreground/80" /> : <Folder className="size-4 shrink-0 text-muted-foreground" />}
-                <span className="min-w-0 flex-1 truncate">{leaf(f)}</span>
+                <span className="min-w-0 flex-1 truncate">{tr(leaf(f))}</span>
                 <span className="tabular w-6 text-right rtl:text-left text-xs text-muted-foreground">{p.count(f)}</span>
               </button>
             </div>
@@ -512,7 +515,7 @@ function FolderMenu(p: { name: string; onNewType(): void; onNewFolder(): void; o
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className={cn("size-8 shrink-0 text-muted-foreground", p.className)} aria-label={`Actions for folder ${p.name}`} onClick={(e) => e.stopPropagation()}>
+        <Button variant="ghost" size="icon" className={cn("size-8 shrink-0 text-muted-foreground", p.className)} aria-label={tr("Actions for folder {name}", { name: p.name })} onClick={(e) => e.stopPropagation()}>
           <MoreHorizontal className="size-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -559,8 +562,8 @@ function FolderCard(p: {
     >
       {p.dropping ? <FolderOpen className="size-5 shrink-0 text-highlight" /> : <Folder className="size-5 shrink-0 text-muted-foreground" />}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[0.95rem] font-medium">{name}</div>
-        <div className="truncate text-xs text-muted-foreground">{p.count || p.folders ? [p.count ? plural(p.count, "type") : "", p.folders ? plural(p.folders, "folder") : ""].filter(Boolean).join(" · ") : tr("Empty")}</div>
+        <div className="truncate text-[0.95rem] font-medium">{tr(name)}</div>
+        <div className="truncate text-xs text-muted-foreground">{p.count || p.folders ? [p.count ? plural(p.count, "type", "types") : "", p.folders ? plural(p.folders, "folder", "folders") : ""].filter(Boolean).join(" · ") : tr("Empty")}</div>
       </div>
       <FolderMenu name={name} {...p} className="size-9" />
     </div>
@@ -589,7 +592,7 @@ function TypeRow({ t, onExport, onDuplicate, onMove, drag, showPlace }: {
   /** In search results: say which folder the type lives in. */
   showPlace?: boolean;
 }) {
-  const place = t.folder ? t.folder.split("::").join(" › ") : t.shipped ? tr("Built in") : tr("Not in a folder");
+  const place = t.folder ? t.folder.split("::").map((s) => tr(s)).join(" › ") : t.shipped ? tr("Built in") : tr("Not in a folder");
   // Most types are script-graded; only say so when it's something else.
   const grader = t.grader !== "script" ? GRADER_LABEL[t.grader] ?? t.grader : null;
   return (
@@ -620,7 +623,7 @@ function TypeRow({ t, onExport, onDuplicate, onMove, drag, showPlace }: {
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="size-9 shrink-0 text-muted-foreground transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 sm:data-[state=open]:opacity-100" aria-label={`Actions for ${t.name}`}><MoreHorizontal className="size-4" /></Button>
+          <Button variant="ghost" size="icon" className="size-9 shrink-0 text-muted-foreground transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 sm:data-[state=open]:opacity-100" aria-label={tr("Actions for {name}", { name: t.name })}><MoreHorizontal className="size-4" /></Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onMove}><FolderInput />{tr("Move to folder…")}</DropdownMenuItem>
@@ -654,7 +657,7 @@ function MoveDialog({ target, folders, onOpenChange, onMoveType, onMoveFolder }:
   const current = target.kind === "type" ? target.folder : parentOf(target.path);
   const freshName = fresh.replace(/::/g, " ").trim();
   const dest = freshName ? (pick ? `${pick}::${freshName}` : freshName) : pick;
-  const title = target.kind === "type" ? `Move “${target.name}”` : `Move the folder “${leaf(target.path)}”`;
+  const title = target.kind === "type" ? tr("Move “{name}”", { name: target.name }) : tr("Move the folder “{name}”", { name: leaf(target.path) });
 
   const go = async () => {
     if (dest === current) return;
@@ -686,7 +689,7 @@ function MoveDialog({ target, folders, onOpenChange, onMoveType, onMoveFolder }:
                 onClick={() => setPick(f)}
               >
                 {f ? (chosen ? <FolderOpen className="size-4 shrink-0 text-highlight" /> : <Folder className="size-4 shrink-0 text-muted-foreground" />) : <Inbox className={cn("size-4 shrink-0", chosen ? "text-highlight" : "text-muted-foreground")} />}
-                <span className="min-w-0 flex-1 truncate">{f ? leaf(f) : target.kind === "type" ? tr("No folder") : tr("Top level")}</span>
+                <span className="min-w-0 flex-1 truncate">{f ? tr(leaf(f)) : target.kind === "type" ? tr("No folder") : tr("Top level")}</span>
                 {f === current && <span className="shrink-0 text-xs font-normal text-muted-foreground">{tr("here now")}</span>}
                 <Check className={cn("size-4 shrink-0 text-highlight", !chosen && "invisible")} />
               </button>
@@ -694,13 +697,13 @@ function MoveDialog({ target, folders, onOpenChange, onMoveType, onMoveFolder }:
           })}
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[13px] text-muted-foreground">{pick ? <>{tr("or make a new folder inside")} <span className="text-foreground">{leaf(pick)}</span></> : tr("or make a new folder at the top level")}</span>
+          <span className="text-[13px] text-muted-foreground">{pick ? <>{tr("or make a new folder inside")} <span className="text-foreground">{tr(leaf(pick))}</span></> : tr("or make a new folder at the top level")}</span>
           <Input value={fresh} onChange={(e) => setFresh(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder={tr("New folder name")} className="h-10" />
         </div>
         <DialogFooter>
           <Button onClick={go} disabled={dest === current} className="h-10 gap-1.5 sm:h-9">
             <FolderInput className="size-4" />
-            {freshName ? `${tr("Move to new folder")} “${freshName}”` : dest ? `${tr("Move to")} ${leaf(dest)}` : target.kind === "type" ? tr("Take out of folder") : tr("Move to top level")}
+            {freshName ? `${tr("Move to new folder")} “${freshName}”` : dest ? `${tr("Move to")} ${tr(leaf(dest))}` : target.kind === "type" ? tr("Take out of folder") : tr("Move to top level")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -744,7 +747,7 @@ function FolderNameDialog({ state, folders, onOpenChange, onDone }: { state: Fol
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>{state.mode === "create" ? tr("New folder") : tr("Rename folder")}</DialogTitle>
-          <DialogDescription>{state.mode === "create" ? (parent ? `${tr("Inside")} ${parent.split("::").join(" › ")}.` : tr("At the top level.")) : tr("Everything inside stays inside.")}</DialogDescription>
+          <DialogDescription>{state.mode === "create" ? (parent ? `${tr("Inside")} ${parent.split("::").map((s) => tr(s)).join(" › ")}.` : tr("At the top level.")) : tr("Everything inside stays inside.")}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1.5">
           <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && save()} placeholder="Networks" className={cn("h-10", taken && "border-destructive")} />

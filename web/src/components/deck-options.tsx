@@ -262,13 +262,13 @@ export function DeckOptions({ deck, decks, presets, onChanged }: { deck: DeckFul
       <SettingRow
         key={`face:${f.face}`}
         k="newPerFace"
-        label={`New ${f.face} cards per day`}
+        label={t("New {face} cards per day", { face: f.face })}
         source={source("newPerFace", (c) => c.newPerFace?.[f.face] !== undefined)}
         dirty={"newPerFace" in draft && !same((draft.newPerFace ?? {})[f.face], deck.resolved.newPerFace?.[f.face])}
         help={
           <>
-            {f.types.map((t) => t.name).join(", ")} · {f.new.toLocaleString()} new (<a href={browse} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-foreground">view</a>).
-            Empty: they share the limit above.
+            {f.types.map((t) => t.name).join(", ")} · {f.new.toLocaleString()} {t("new")} (<a href={browse} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-foreground">{t("view")}</a>).{" "}
+            {t("Empty: they share the limit above.")}
           </>
         }
         onReset={own ? () => {
@@ -281,7 +281,7 @@ export function DeckOptions({ deck, decks, presets, onChanged }: { deck: DeckFul
       >
         <LimitField
           value={faceLimits[f.face] ?? null}
-          ariaLabel={`New ${f.face} cards per day`}
+          ariaLabel={t("New {face} cards per day", { face: f.face })}
           onChange={(v) => {
             const next = { ...faceLimits };
             // Clearing a limit set further up needs an explicit null to drop it here.

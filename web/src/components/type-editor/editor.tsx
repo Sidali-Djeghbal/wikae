@@ -28,7 +28,7 @@ import { BLANK_SAMPLE, clearPending, download, exportShape, fieldDefaults, GRADE
 type Grader = CardType["grader"] & { code?: string; vision?: boolean; instructions?: string };
 
 const same = (a: CardType, b: CardType) => JSON.stringify(exportShape(a)) === JSON.stringify(exportShape(b));
-const count = (n: number, one: string) => `${n.toLocaleString()} ${one}${n === 1 ? "" : "s"}`;
+const count = (n: number, one: string) => t(n === 1 ? `{n} ${one}` : `{n} ${one}s`, { n: n.toLocaleString() });
 
 export function TypeEditor({ id }: { id: string }) {
   const [saved, setSaved] = useState<CardType | null>(null);
@@ -54,12 +54,12 @@ export function TypeEditor({ id }: { id: string }) {
       const r = await api.search(`type:${typeId}`, { limit: 1 });
       if (r.rows[0]) {
         const it = await api.item(r.rows[0].itemId);
-        return { fields: it.fields, from: `item ${it.id}` };
+        return { fields: it.fields, from: t("item {id}", { id: it.id }) };
       }
     } catch {
       // fall through to defaults
     }
-    return { fields: fieldDefaults(def), from: "field defaults" };
+    return { fields: fieldDefaults(def), from: t("field defaults") };
   }, []);
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export function TypeEditor({ id }: { id: string }) {
       setDraft(pending.def);
       if (pending.sample) {
         setSample(pending.sample);
-        setSampleFrom(pending.from ? `copied from ${pending.from}` : "starter sample");
+        setSampleFrom(pending.from ? t("copied from {name}", { name: pending.from }) : t("starter sample"));
       } else {
         const s = await pickSample(pending.from ?? id, pending.def);
         if (!live) return;
@@ -261,7 +261,7 @@ export function TypeEditor({ id }: { id: string }) {
   const prune = async () => {
     try {
       const r = await api.deleteLeftoverCards({ type: id });
-      toast.success(`Deleted ${cardCount(r.cards)}`);
+      toast.success(t("Deleted {n} cards", { n: r.cards }));
       setLeftover(await api.typeLeftover(id));
     } catch (e) {
       toast.error((e as Error).message);
@@ -329,7 +329,9 @@ export function TypeEditor({ id }: { id: string }) {
   const del = async () => {
     try {
       const r = await api.deleteType(id, { items: !!usage?.items });
-      toast.success(`Deleted ${saved?.name ?? id}${r.items ? ` and ${count(r.items, "item")}` : ""}`);
+      toast.success(r.items
+        ? t("Deleted {name} and {count}", { name: saved?.name ?? id, count: count(r.items, "item") })
+        : t("Deleted {name}", { name: saved?.name ?? id }));
       navigate("/types");
     } catch (e) {
       toast.error("Couldn't delete", { description: (e as Error).message });
@@ -364,8 +366,8 @@ export function TypeEditor({ id }: { id: string }) {
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <code className="font-mono">{draft.id}</code>
             {isNew ? <Badge variant="outline" className="font-normal text-highlight">{t("new, not saved")}</Badge> : <Kind summary={summary} />}
-            {!isNew && <span className="tabular">{items} item{items === 1 ? "" : "s"}</span>}
-            {!isNew && archived > 0 && <span className="tabular" title={`Archived items still use this type. Find them in Browse with type:${draft.id} is:archived.`}>· {archived} archived</span>}
+            {!isNew && <span className="tabular">{t(items === 1 ? "{n} item" : "{n} items", { n: items })}</span>}
+            {!isNew && archived > 0 && <span className="tabular" title={t("Archived items still use this type. Find them in Browse with type:{type} is:archived.", { type: draft.id })}>· {t("{n} archived", { n: archived })}</span>}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -398,7 +400,7 @@ export function TypeEditor({ id }: { id: string }) {
 
       {saved?.builtin && (
         <p className="mx-4 mt-4 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground sm:mx-6 lg:mx-8">
-          This is a built-in type. Saving makes it your own version: Etude updates won't replace it, and you can reset it to the shipped version at any time.
+          {t("This is a built-in type. Saving makes it your own version: Etude updates won't replace it, and you can reset it to the shipped version at any time.")}
         </p>
       )}
 
@@ -406,7 +408,7 @@ export function TypeEditor({ id }: { id: string }) {
         <div className="mx-4 mt-4 flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/5 px-3 py-2.5 text-sm sm:mx-6 lg:mx-8">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
           <ul className="min-w-0 flex-1 space-y-0.5">{saveErrors.map((e, i) => <li key={i} className="break-words font-mono text-[12.5px]">{e}</li>)}</ul>
-          <button className="text-muted-foreground hover:text-foreground" onClick={() => setSaveErrors([])} aria-label="Dismiss"><X className="size-4" /></button>
+          <button className="text-muted-foreground hover:text-foreground" onClick={() => setSaveErrors([])} aria-label={t("Dismiss")}><X className="size-4" /></button>
         </div>
       )}
 
@@ -462,12 +464,20 @@ export function TypeEditor({ id }: { id: string }) {
               {!!leftover?.cards && (
                 <div className="flex flex-col gap-3 rounded-lg border px-3.5 py-3 text-sm sm:flex-row sm:items-center">
                   <span className="min-w-0 flex-1 text-muted-foreground">
-                    {cardCount(leftover.cards)} {leftover.cards === 1 ? "is" : "are"} on {leftover.faces.length === 1 ? "a face" : "faces"} this type no longer makes ({leftover.faces.map((f) => f.face).join(", ")})
-                    {leftover.reviews ? `, with ${leftover.reviews.toLocaleString()} review${leftover.reviews === 1 ? "" : "s"} of history` : ""}. {leftover.cards === 1 ? "It still comes" : "They still come"} up in study unless suspended.
+                    {t(leftover.cards === 1
+                      ? "{count} is on {faces} this type no longer makes ({faceList}){history}. It still comes up in study unless suspended."
+                      : "{count} are on {faces} this type no longer makes ({faceList}){history}. They still come up in study unless suspended.",
+                      {
+                        count: count(leftover.cards, "card"),
+                        faces: leftover.faces.length === 1 ? t("a face") : t("faces"),
+                        faceList: leftover.faces.map((f) => f.face).join(", "),
+                        history: leftover.reviews ? t(", with {count} of history", { count: count(leftover.reviews, "review") }) : "",
+                      }
+                    )}
                   </span>
                   <div className="flex shrink-0 gap-1.5 self-start sm:self-auto">
-                    <Button variant="ghost" size="sm" onClick={() => go(`/browse?q=${encodeURIComponent(`is:leftover type:${id}`)}`)}>View</Button>
-                    <Button variant="outline" size="sm" onClick={() => setAskPrune(leftover)}>Delete them</Button>
+                    <Button variant="ghost" size="sm" onClick={() => go(`/browse?q=${encodeURIComponent(`is:leftover type:${id}`)}`)}>{t("View")}</Button>
+                    <Button variant="outline" size="sm" onClick={() => setAskPrune(leftover)}>{t("Delete them")}</Button>
                   </div>
                 </div>
               )}
@@ -475,9 +485,9 @@ export function TypeEditor({ id }: { id: string }) {
                 <Select value={draft.titleField ?? AUTO_TITLE} onValueChange={(v) => set({ titleField: v === AUTO_TITLE ? undefined : v })}>
                   <SelectTrigger className="h-10 w-full sm:w-72"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={AUTO_TITLE}>Automatic</SelectItem>
+                    <SelectItem value={AUTO_TITLE}>{t("Automatic")}</SelectItem>
                     {draft.fields.filter((f) => TITLE_KINDS.has(f.kind) && f.name).map((f) => (
-                      <SelectItem key={f.name} value={f.name}>{f.label || f.name}{f.private ? " (private)" : ""}</SelectItem>
+                      <SelectItem key={f.name} value={f.name}>{f.label || f.name}{f.private ? t(" (private)") : ""}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -486,7 +496,7 @@ export function TypeEditor({ id }: { id: string }) {
                 <Select value={draft.scheduler ?? DECK_SCHEDULER} onValueChange={(v) => set({ scheduler: v === DECK_SCHEDULER ? undefined : v, schedulerOptions: undefined })}>
                   <SelectTrigger className="h-10 w-full sm:w-72"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={DECK_SCHEDULER}>The deck's</SelectItem>
+                    <SelectItem value={DECK_SCHEDULER}>{t("The deck's")}</SelectItem>
                     {schedulers.filter((x) => x.id !== "fsrs").map((x) => (
                       <SelectItem key={x.id} value={x.id}>{x.name}</SelectItem>
                     ))}
@@ -536,7 +546,7 @@ export function TypeEditor({ id }: { id: string }) {
             <TabsContent value="prepare" className="mt-5 flex flex-col gap-4">
               <label className="flex min-h-10 items-center gap-3 text-sm">
                 <Switch checked={draft.prepare !== undefined} onCheckedChange={(v) => set({ prepare: v ? (draft.prepare ?? PREPARE_EXAMPLE) : undefined })} />
-                Use a prepare script
+                {t("Use a prepare script")}
               </label>
               {draft.prepare === undefined ? (
                 <p className="text-sm text-muted-foreground">
@@ -563,14 +573,14 @@ export function TypeEditor({ id }: { id: string }) {
               />
               {(grader.kind === "script" || grader.kind === "hybrid") && (
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-sm font-medium">Grade script</span>
+                  <span className="text-sm font-medium">{t("Grade script")}</span>
                   <code className="font-mono text-xs text-muted-foreground">function (answer, view, key, fields) {"{"}</code>
                   <CodeEditor lang="js" value={grader.code ?? ""} onChange={(code) => setGrader({ code })} minHeight={200} />
                   <code className="font-mono text-xs text-muted-foreground">{"}"} → {"{ score, details?, feedback? }"}</code>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {grader.kind === "hybrid"
-                      ? "Return a score to decide here, or { defer: true } (or score: null) to hand the answer to the AI grader."
-                      : "Score from 0 to 1. Try it in the preview: answer the card and press Check answer or Ctrl Enter."}
+                      ? t("Return a score to decide here, or { defer: true } (or score: null) to hand the answer to the AI grader.")
+                      : t("Score from 0 to 1. Try it in the preview: answer the card and press Check answer or Ctrl Enter.")}
                   </p>
                 </div>
               )}
@@ -578,40 +588,40 @@ export function TypeEditor({ id }: { id: string }) {
                 <>
                   <label className="flex min-h-10 items-center gap-3 text-sm">
                     <Switch checked={!!grader.vision} onCheckedChange={(v) => setGrader({ vision: v || undefined })} />
-                    <span>Needs a vision model <span className="text-muted-foreground">(drawings, images)</span></span>
+                    <span>{t("Needs a vision model")} <span className="text-muted-foreground">{t("(drawings, images)")}</span></span>
                   </label>
                 </>
               )}
               <label className="flex min-h-10 items-start gap-3 text-sm">
                 <Switch className="mt-0.5" checked={draft.showVerdict !== false} onCheckedChange={(v) => set({ showVerdict: v ? undefined : false })} />
                 <span>
-                  Show the verdict and feedback after an answer
-                  <span className="block text-xs text-muted-foreground">"Correct", "Not quite" and the grader's comments. Turn it off when the card's own result says it all, like a typing test. The score is still recorded.</span>
+                  {t("Show the verdict and feedback after an answer")}
+                  <span className="block text-xs text-muted-foreground">{t("\"Correct\", \"Not quite\" and the grader's comments. Turn it off when the card's own result says it all, like a typing test. The score is still recorded.")}</span>
                 </span>
               </label>
               <Field
                 label="AI grading instructions"
                 hint="The most general layer: the item's rubric, its tags' and its deck's instructions come first and win on conflict."
               >
-                <AutoTextarea value={draft.instructions ?? ""} onChange={(v) => set({ instructions: v || undefined })} placeholder="What counts as correct for this kind of card." />
+                <AutoTextarea value={draft.instructions ?? ""} onChange={(v) => set({ instructions: v || undefined })} placeholder={t("What counts as correct for this kind of card.")} />
               </Field>
             </TabsContent>
 
             <TabsContent value="sample" className="mt-5 flex flex-col gap-4">
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span>The preview uses these values. Nothing here is saved{sampleFrom ? `; loaded from ${sampleFrom}` : ""}.</span>
+                <span>{t("The preview uses these values. Nothing here is saved{sample}.", { sample: sampleFrom ? t("; loaded from {name}", { name: sampleFrom }) : "" })}</span>
                 <div className="flex-1" />
                 <Button variant="ghost" size="sm" className="h-9" onClick={async () => {
-                  const s = isNew && draft.id === id && readPending(id)?.def ? { fields: { ...BLANK_SAMPLE }, from: "starter sample" } : await pickSample(id, draft);
+                  const s = isNew && draft.id === id && readPending(id)?.def ? { fields: { ...BLANK_SAMPLE }, from: t("starter sample") } : await pickSample(id, draft);
                   setSample(s.fields);
                   setSampleFrom(s.from);
-                }}>Reload</Button>
-                <Button variant="ghost" size="sm" className="h-9" onClick={() => { setSample(fieldDefaults(draft)); setSampleFrom("field defaults"); }}>Use defaults</Button>
+                }}>{t("Reload")}</Button>
+                <Button variant="ghost" size="sm" className="h-9" onClick={() => { setSample(fieldDefaults(draft)); setSampleFrom("field defaults"); }}>{t("Use defaults")}</Button>
               </div>
               {draft.fields.length ? (
                 <FieldEditor fields={draft.fields.filter((f) => /^[A-Za-z_]\w*$/.test(f.name))} value={sample} onChange={setSample} />
               ) : (
-                <p className="text-sm text-muted-foreground">Add fields first.</p>
+                <p className="text-sm text-muted-foreground">{t("Add fields first.")}</p>
               )}
             </TabsContent>
           </Tabs>
@@ -620,14 +630,14 @@ export function TypeEditor({ id }: { id: string }) {
         {/* preview */}
         <aside className={cn("min-w-0 px-4 pb-6 pt-4 sm:px-6 lg:sticky lg:top-0 lg:block lg:max-h-dvh lg:self-start lg:overflow-y-auto lg:px-0 lg:pt-6", view === "preview" ? "block" : "hidden")}>
           <div className="mb-3 flex items-baseline gap-2">
-            <h2 className="text-sm font-medium">Live preview</h2>
-            <span className="text-xs text-muted-foreground">{dirty ? "unsaved draft" : "saved version"}</span>
+            <h2 className="text-sm font-medium">{t("Live preview")}</h2>
+            <span className="text-xs text-muted-foreground">{dirty ? t("unsaved draft") : t("saved version")}</span>
           </div>
           {(fatal.length > 0 || cardError || warnings.length > 0) && (
             <div className="mb-3 flex flex-col gap-2">
-              {fatal.length > 0 && <Problem tone="error" title="The preview can't run" lines={fatal} />}
-              {cardError && <Problem tone="error" title="card.js threw an error" lines={[cardError]} />}
-              {warnings.length > 0 && <Problem tone="warn" title="Sample data doesn't fit the fields" lines={warnings} />}
+              {fatal.length > 0 && <Problem tone="error" title={t("The preview can't run")} lines={fatal} />}
+              {cardError && <Problem tone="error" title={t("card.js threw an error")} lines={[cardError]} />}
+              {warnings.length > 0 && <Problem tone="warn" title={t("Sample data doesn't fit the fields")} lines={warnings} />}
             </div>
           )}
           <div ref={previewPane}>
@@ -668,14 +678,14 @@ export function TypeEditor({ id }: { id: string }) {
       <AlertDialog open={confirmBuiltin} onOpenChange={setConfirmBuiltin}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Make {saved?.name} your own?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Make {name} your own?", { name: saved?.name ?? "" })}</AlertDialogTitle>
             <AlertDialogDescription>
-              Saving replaces the built-in version for every item that uses it{items ? ` (${items} item${items === 1 ? "" : "s"})` : ""}. Later Etude updates won't change your version. You can reset to the shipped version at any time.
+              {t("Saving replaces the built-in version for every item that uses it{items}. Later Etude updates won't change your version. You can reset to the shipped version at any time.", { items: items ? ` (${t(items === 1 ? "{n} item" : "{n} items", { n: items })})` : "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={doSave}>Save my version</AlertDialogAction>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={doSave}>{t("Save my version")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -683,16 +693,24 @@ export function TypeEditor({ id }: { id: string }) {
       <AlertDialog open={!!askPrune} onOpenChange={(open) => !open && setAskPrune(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {cardCount(askPrune?.cards ?? 0)} this type no longer makes?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete {n} cards this type no longer makes?", { n: askPrune?.cards ?? 0 })}</AlertDialogTitle>
             <AlertDialogDescription>
               {askPrune?.cards === 1
-                ? `It's on a face you removed, or that the faces script no longer returns for its item. ${askPrune.reviews ? `Its ${askPrune.reviews.toLocaleString()} review${askPrune.reviews === 1 ? "" : "s"} of history go with it.` : "It has no review history."} Kept, it still comes up in study unless suspended, and Settings → Clean up can delete it later.`
-                : `They're on faces you removed, or that the faces script no longer returns for their items. ${askPrune?.reviews ? `Their ${askPrune.reviews.toLocaleString()} review${askPrune.reviews === 1 ? "" : "s"} of history go with them.` : "None of them has review history."} Kept, they still come up in study unless suspended, and Settings → Clean up can delete them later.`}
+                ? t("It's on a face you removed, or that the faces script no longer returns for its item. {reviews} Kept, it still comes up in study unless suspended, and Settings → Clean up can delete it later.", {
+                    reviews: askPrune.reviews
+                      ? t(askPrune.reviews === 1 ? "Its {n} review of history goes with it." : "Its {n} reviews of history go with it.", { n: askPrune.reviews.toLocaleString() })
+                      : t("It has no review history."),
+                  })
+                : t("They're on faces you removed, or that the faces script no longer returns for their items. {reviews} Kept, they still come up in study unless suspended, and Settings → Clean up can delete them later.", {
+                    reviews: askPrune?.reviews
+                      ? t("Their {n} reviews of history go with them.", { n: askPrune.reviews.toLocaleString() })
+                      : t("None of them has review history."),
+                  })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{askPrune?.cards === 1 ? "Keep it" : "Keep them"}</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={prune}>Delete {cardCount(askPrune?.cards ?? 0)}</AlertDialogAction>
+            <AlertDialogCancel>{t(askPrune?.cards === 1 ? "Keep it" : "Keep them")}</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={prune}>{t("Delete {n} cards", { n: askPrune?.cards ?? 0 })}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -700,12 +718,12 @@ export function TypeEditor({ id }: { id: string }) {
       <AlertDialog open={confirmReset} onOpenChange={setConfirmReset}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Reset {saved?.name} to the shipped version?</AlertDialogTitle>
-            <AlertDialogDescription>Your changes to the template, fields and scripts are replaced by the built-in version. Items and their review history aren't touched.</AlertDialogDescription>
+            <AlertDialogTitle>{t("Reset {name} to the shipped version?", { name: saved?.name ?? "" })}</AlertDialogTitle>
+            <AlertDialogDescription>{t("Your changes to the template, fields and scripts are replaced by the built-in version. Items and their review history aren't touched.")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={reset}>Reset</AlertDialogAction>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={reset}>{t("Reset")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -713,26 +731,37 @@ export function TypeEditor({ id }: { id: string }) {
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{usage?.items ? `Delete ${saved?.name} and its ${count(usage.items, "item")}?` : `Delete ${saved?.name}?`}</AlertDialogTitle>
+            <AlertDialogTitle>{usage?.items
+              ? t("Delete {name} and its {count}?", { name: saved?.name ?? "", count: count(usage.items, "item") })
+              : t("Delete {name}?", { name: saved?.name ?? "" })}</AlertDialogTitle>
             <AlertDialogDescription>
               {usage?.items
-                ? `${count(usage.items, "item")} ${usage.items === 1 ? "uses" : "use"} this type${usage.archived === usage.items ? (usage.items === 1 ? " (archived)" : " (all archived)") : usage.archived ? ` (${usage.archived} archived)` : ""}, with ${count(usage.cards, "card")} and ${count(usage.reviews, "review")} of history. Deleting the type deletes ${usage.items === 1 ? "it" : "them"} too, and that can't be undone. Export the type first if you might want it back.`
-                : "No items use this type. Export it first if you might want it back."}
+                ? t(usage.items === 1
+                    ? "{items}{archived} uses this type, with {cards} and {reviews} of history. Deleting the type deletes it too, and that can't be undone. Export the type first if you might want it back."
+                    : "{items}{archived} use this type, with {cards} and {reviews} of history. Deleting the type deletes them too, and that can't be undone. Export the type first if you might want it back.", {
+                    items: count(usage.items, "item"),
+                    archived: usage.archived === usage.items
+                      ? t(usage.items === 1 ? " (archived)" : " (all archived)")
+                      : usage.archived ? t(" ({n} archived)", { n: usage.archived }) : "",
+                    cards: count(usage.cards, "card"),
+                    reviews: count(usage.reviews, "review"),
+                  })
+                : t("No items use this type. Export it first if you might want it back.")}
             </AlertDialogDescription>
             {!!usage?.items && (
               <div className="flex flex-wrap gap-2 pt-1">
                 {usage.items > usage.archived && (
-                  <Button variant="outline" size="sm" onClick={() => viewItems(`type:${id}`)}>{usage.archived ? `View ${count(usage.items - usage.archived, "active item")}` : "View them"}</Button>
+                  <Button variant="outline" size="sm" onClick={() => viewItems(`type:${id}`)}>{usage.archived ? t("View {n} active items", { n: usage.items - usage.archived }) : t("View them")}</Button>
                 )}
                 {usage.archived > 0 && (
-                  <Button variant="outline" size="sm" onClick={() => viewItems(`type:${id} is:archived`)}>{usage.items > usage.archived ? `View ${usage.archived.toLocaleString()} archived` : "View them"}</Button>
+                  <Button variant="outline" size="sm" onClick={() => viewItems(`type:${id} is:archived`)}>{usage.items > usage.archived ? t("View {n} archived", { n: usage.archived.toLocaleString() }) : t("View them")}</Button>
                 )}
               </div>
             )}
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={del}>{usage?.items ? `Delete type and ${count(usage.items, "item")}` : "Delete"}</AlertDialogAction>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={del}>{usage?.items ? t(usage.items === 1 ? "Delete type and {n} item" : "Delete type and {n} items", { n: usage.items }) : t("Delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -740,12 +769,12 @@ export function TypeEditor({ id }: { id: string }) {
       <AlertDialog open={!!leaveTo} onOpenChange={(open) => !open && setLeaveTo(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Leave without saving?</AlertDialogTitle>
-            <AlertDialogDescription>{isNew ? "This type hasn't been created yet." : "Your changes to this type will be lost."}</AlertDialogDescription>
+            <AlertDialogTitle>{t("Leave without saving?")}</AlertDialogTitle>
+            <AlertDialogDescription>{t(isNew ? "This type hasn't been created yet." : "Your changes to this type will be lost.")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep editing</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (isNew) clearPending(id); navigate(leaveTo ?? home); }}>Leave</AlertDialogAction>
+            <AlertDialogCancel>{t("Keep editing")}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (isNew) clearPending(id); navigate(leaveTo ?? home); }}>{t("Leave")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -765,16 +794,16 @@ function fits(kind: string, v: unknown): boolean {
 
 export function Kind({ summary }: { summary: TypeSummary | null }) {
   if (!summary) return null;
-  if (summary.edited) return <Badge variant="outline" className="border-highlight/40 font-normal text-highlight">edited built-in</Badge>;
-  if (summary.shipped) return <Badge variant="outline" className="font-normal text-muted-foreground">built-in</Badge>;
-  return <Badge variant="outline" className="font-normal text-muted-foreground">custom</Badge>;
+  if (summary.edited) return <Badge variant="outline" className="border-highlight/40 font-normal text-highlight">{t("edited built-in")}</Badge>;
+  if (summary.shipped) return <Badge variant="outline" className="font-normal text-muted-foreground">{t("built-in")}</Badge>;
+  return <Badge variant="outline" className="font-normal text-muted-foreground">{t("custom")}</Badge>;
 }
 
 /** The type's asset files. Read-only: they come from packs, the market and `etude type import`. */
 function AssetList({ files }: { files: { name: string; size: number }[] }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-sm font-medium">Assets</div>
+      <div className="text-sm font-medium">{t("Assets")}</div>
       <ul className="divide-y rounded-lg border text-sm">
         {files.map((f) => (
           <li key={f.name} className="flex items-center justify-between gap-3 px-3 py-2">
@@ -783,7 +812,7 @@ function AssetList({ files }: { files: { name: string; size: number }[] }) {
           </li>
         ))}
       </ul>
-      <p className="text-xs text-muted-foreground">Cards load these with <code className="font-mono">etude.asset(name)</code>. They're kept when you save here; change them with <code className="font-mono">etude type import</code>.</p>
+      <p className="text-xs text-muted-foreground">{t("Cards load these with {code1}. They're kept when you save here; change them with {code2}.", { code1: "etude.asset(name)", code2: "etude type import" })}</p>
     </div>
   );
 }
@@ -812,7 +841,7 @@ function SavedPrefs({ typeId }: { typeId: string }) {
             </Fragment>
           ))}
         </dl>
-        <Button variant="outline" size="sm" onClick={reset}>Reset</Button>
+        <Button variant="outline" size="sm" onClick={reset}>{t("Reset")}</Button>
       </div>
     </Field>
   );
@@ -831,9 +860,9 @@ const TITLE_KINDS = new Set<FieldSpec["kind"]>(["markdown", "text", "html", "cod
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-sm font-medium">{t(label)}</span>
       {children}
-      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+      {hint && <span className="text-xs text-muted-foreground">{t(hint)}</span>}
     </div>
   );
 }
@@ -842,7 +871,7 @@ function Problem({ tone, title, lines }: { tone: "error" | "warn"; title: string
   return (
     <div className={cn("rounded-lg border px-3 py-2.5", tone === "error" ? "border-destructive/50 bg-destructive/5" : "border-warning/40 bg-warning/5")}>
       <div className={cn("mb-1 flex items-center gap-1.5 text-sm font-medium", tone === "error" ? "text-destructive" : "text-warning")}>
-        <AlertTriangle className="size-4" />{title}
+        <AlertTriangle className="size-4" />{t(title)}
       </div>
       {lines.map((l, i) => <pre key={i} className="whitespace-pre-wrap break-words font-mono text-[12px] text-foreground/90">{l}</pre>)}
     </div>
@@ -851,25 +880,25 @@ function Problem({ tone, title, lines }: { tone: "error" | "warn"; title: string
 
 function TemplateTabs({ draft, set }: { draft: CardType; set(p: Partial<CardType>): void }) {
   const [lang, setLang] = useState<"html" | "css" | "js">("html");
-  const t = draft.template;
-  const sizes = { html: t.html.length, css: (t.css ?? "").length, js: (t.js ?? "").length };
+  const tmpl = draft.template;
+  const sizes = { html: tmpl.html.length, css: (tmpl.css ?? "").length, js: (tmpl.js ?? "").length };
   return (
     <div className="flex flex-col gap-2">
       <ToggleGroup type="single" variant="outline" value={lang} onValueChange={(v) => v && setLang(v as typeof lang)}>
         {(["html", "css", "js"] as const).map((l) => (
           <ToggleGroupItem key={l} value={l} className="h-9 gap-1.5 px-4 text-xs">
             {l === "html" ? "HTML" : l === "css" ? "CSS" : "JS"}
-            {!sizes[l] && <span className="text-muted-foreground">empty</span>}
+            {!sizes[l] && <span className="text-muted-foreground">{t("empty")}</span>}
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
-      {lang === "html" && <CodeEditor key="html" lang="html" value={t.html} onChange={(html) => set({ template: { ...t, html } })} minHeight={300} />}
-      {lang === "css" && <CodeEditor key="css" lang="css" value={t.css ?? ""} onChange={(css) => set({ template: { ...t, css } })} minHeight={300} placeholder="/* Styles scoped to this card's frame */" />}
-      {lang === "js" && <CodeEditor key="js" lang="js" value={t.js ?? ""} onChange={(js) => set({ template: { ...t, js } })} minHeight={300} placeholder="// Runs in the card frame with `etude` in scope" />}
+      {lang === "html" && <CodeEditor key="html" lang="html" value={tmpl.html} onChange={(html) => set({ template: { ...tmpl, html } })} minHeight={300} />}
+      {lang === "css" && <CodeEditor key="css" lang="css" value={tmpl.css ?? ""} onChange={(css) => set({ template: { ...tmpl, css } })} minHeight={300} placeholder={t("/* Styles scoped to this card's frame */")} />}
+      {lang === "js" && <CodeEditor key="js" lang="js" value={tmpl.js ?? ""} onChange={(js) => set({ template: { ...tmpl, js } })} minHeight={300} placeholder={t("// Runs in the card frame with `etude` in scope")} />}
       <p className="text-xs text-muted-foreground">
-        {lang === "html" && "Rendered with the card's view. Put what appears only after grading inside <template data-on=\"result\">."}
-        {lang === "css" && "Applies only inside this card's frame. Theme variables and the classes from card.css are available."}
-        {lang === "js" && "The body of an async function that receives etude. Read the answer with etude.getAnswer, react to grading with etude.onResult."}
+        {lang === "html" && t("Rendered with the card's view. Put what appears only after grading inside <template data-on=\"result\">.")}
+        {lang === "css" && t("Applies only inside this card's frame. Theme variables and the classes from card.css are available.")}
+        {lang === "js" && t("The body of an async function that receives etude. Read the answer with etude.getAnswer, react to grading with etude.onResult.")}
       </p>
     </div>
   );
@@ -893,8 +922,8 @@ function GraderPicker({ kind, onChange }: { kind: string; onChange(k: CardType["
           onClick={() => onChange(g.kind)}
           className={cn("flex min-h-16 flex-col gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-accent/40", kind === g.kind && "border-foreground/70 bg-accent/50")}
         >
-          <span className="text-sm font-medium">{g.title}</span>
-          <span className="text-xs text-muted-foreground">{g.text}</span>
+          <span className="text-sm font-medium">{t(g.title)}</span>
+          <span className="text-xs text-muted-foreground">{t(g.text)}</span>
         </button>
       ))}
     </div>
@@ -914,16 +943,17 @@ function FacesEditor({ faces, onChange }: { faces?: string[]; onChange(f: string
   const effective = list.length ? list : ["main"];
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium">Faces</span>
+      <span className="text-sm font-medium">{t("Faces")}</span>
       <p className="text-xs text-muted-foreground">
-        Each face is its own scheduled card from the same item, like forward and reverse. Prepare receives the face name. Without faces, every item makes one card called <code className="font-mono">main</code>.
+        {t("Each face is its own scheduled card from the same item, like forward and reverse. Prepare receives the face name. Without faces, every item makes one card called")}{" "}
+        <code className="font-mono">main</code>.
       </p>
       <div className="flex flex-wrap items-center gap-1.5">
         {effective.map((f) => (
           <span key={f} className={cn("flex h-8 items-center gap-1 rounded-md border px-2.5 font-mono text-xs", !list.length && "border-dashed text-muted-foreground")}>
             {f}
             {list.length > 0 && (
-              <button className="-mr-1 flex size-6 items-center justify-center text-muted-foreground hover:text-foreground" onClick={() => onChange(list.length > 1 ? list.filter((x) => x !== f) : undefined)} aria-label={`Remove face ${f}`}>
+              <button className="-mr-1 flex size-6 items-center justify-center text-muted-foreground hover:text-foreground" onClick={() => onChange(list.length > 1 ? list.filter((x) => x !== f) : undefined)} aria-label={t("Remove face {name}", { name: f })}>
                 <X className="size-3.5" />
               </button>
             )}
@@ -940,12 +970,12 @@ function FacesEditor({ faces, onChange }: { faces?: string[]; onChange(f: string
               add();
             }
           }}
-          placeholder={list.length ? "Another face" : "e.g. forward"}
+          placeholder={list.length ? t("Another face") : t("e.g. forward")}
           className="h-9 max-w-56 font-mono text-[13px]"
         />
-        <Button variant="outline" size="sm" className="h-9 gap-1.5" disabled={!valid || list.includes(text.trim())} onClick={add}><Plus className="size-4" />Add face</Button>
+        <Button variant="outline" size="sm" className="h-9 gap-1.5" disabled={!valid || list.includes(text.trim())} onClick={add}><Plus className="size-4" />{t("Add face")}</Button>
       </div>
-      {list.length === 1 && <p className="text-xs text-muted-foreground">With one face, items still make one card; add a second to schedule both directions.</p>}
+      {list.length === 1 && <p className="text-xs text-muted-foreground">{t("With one face, items still make one card; add a second to schedule both directions.")}</p>}
     </div>
   );
 }

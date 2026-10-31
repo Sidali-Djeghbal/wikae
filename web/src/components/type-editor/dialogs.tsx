@@ -239,7 +239,7 @@ export function ImportTypesDialog({ open, onOpenChange, types, onDone }: { open:
       }
     }
     setBusy(false);
-    if (ok) toast.success(`Imported ${ok} type${ok === 1 ? "" : "s"}`);
+    if (ok) toast.success(t(ok === 1 ? "Imported {n} type" : "Imported {n} types", { n: ok }));
     onDone();
     if (failed.length) setError(failed.join("\n"));
     else onOpenChange(false);
@@ -284,7 +284,7 @@ export function ImportTypesDialog({ open, onOpenChange, types, onDone }: { open:
                   <div className="truncate font-mono text-xs text-muted-foreground">{c.def.id}</div>
                 </div>
                 <span className={cn("shrink-0 text-xs", c.exists ? "text-warning" : "text-muted-foreground")}>
-                  {c.exists ? (c.exists.shipped ? "replaces built-in" : "replaces existing") : "new"}
+                  {c.exists ? (c.exists.shipped ? t("replaces built-in") : t("replaces existing")) : t("new")}
                 </span>
               </label>
             ))}
@@ -294,7 +294,7 @@ export function ImportTypesDialog({ open, onOpenChange, types, onDone }: { open:
         <DialogFooter>
           <Button onClick={run} disabled={!chosen || busy} className="h-10 gap-1.5 sm:h-9">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-            Import {chosen ? `${chosen} type${chosen === 1 ? "" : "s"}` : ""}
+            {chosen ? t(chosen === 1 ? "Import {n} type" : "Import {n} types", { n: chosen }) : t("Import")}
           </Button>
         </DialogFooter>
       </DialogContent>

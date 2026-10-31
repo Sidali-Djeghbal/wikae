@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CardFrame, type CardFrameHandle, type CardResult } from "@/components/card-frame";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { Grade } from "@/lib/api";
+import { t } from "@/lib/i18n";
 
 export interface PreviewData {
   view: Record<string, unknown>;
@@ -75,21 +76,21 @@ export function CardPreview({
           </ToggleGroup>
         )}
         <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { setReveal(!reveal); setTested(null); }}>
-          {reveal ? <EyeOff className="size-4" /> : <Eye className="size-4" />} {reveal ? "Hide answer" : "Show answer"}
+          {reveal ? <EyeOff className="size-4" /> : <Eye className="size-4" />} {reveal ? t("Hide answer") : t("Show answer")}
         </Button>
         {generated && (
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSeed(Math.floor(Math.random() * 1e9))}>
-            <Dices className="size-4" /> New variant
+            <Dices className="size-4" /> {t("New variant")}
           </Button>
         )}
         <div className="flex-1" />
         {grade && !result && data && !error && (
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => frame.current?.collect()} title="Grade a test answer (Ctrl Enter)">
-            <Check className="size-4" /> Check answer
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => frame.current?.collect()} title={t("Grade a test answer (Ctrl Enter)")}>
+            <Check className="size-4" /> {t("Check answer")}
           </Button>
         )}
         {onTry && (
-          <Button variant="ghost" size="sm" className="gap-1.5" onClick={onTry}><Play className="size-4" /> Practice this card</Button>
+          <Button variant="ghost" size="sm" className="gap-1.5" onClick={onTry}><Play className="size-4" /> {t("Practice this card")}</Button>
         )}
       </div>
       <div className="rounded-xl border bg-background p-3 sm:p-5">
@@ -118,7 +119,7 @@ export function CardPreview({
       </div>
       {tested && (
         <div className="text-sm text-muted-foreground">
-          Test answer scored <span className="tabular text-foreground">{tested.grade.score == null ? "n/a (AI or self graded)" : `${Math.round(tested.grade.score * 100)}%`}</span>. Nothing was saved.
+          {t("Test answer scored")} <span className="tabular text-foreground">{tested.grade.score == null ? t("n/a (AI or self graded)") : `${Math.round(tested.grade.score * 100)}%`}</span>{t(". Nothing was saved.")}
         </div>
       )}
     </div>
