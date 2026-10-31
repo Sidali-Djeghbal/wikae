@@ -17,4 +17,3 @@ jobs:
         id: release
         with:
           release-type: node
-          package-name: wikae
