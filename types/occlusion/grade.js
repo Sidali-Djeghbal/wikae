@@ -1,6 +1,6 @@
 // Names are compared without case, accents or punctuation, with a typo allowance that grows
 // with length. A name that belongs to another box is never accepted for this one.
-const norm = (s) => String(s ?? "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+const norm = (s) => std.normalize(s).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 const allowed = (n) => (n <= 4 ? 0 : n <= 8 ? 1 : 2);
 function dist(a, b) {
   // Optimal string alignment (Damerau-Levenshtein with adjacent transpositions).
