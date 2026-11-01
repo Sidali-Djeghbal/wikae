@@ -22,6 +22,11 @@ etude.onResult(({ grade, key }) => {
   inputs.forEach((el, i) => {
     el.disabled = true;
     el.classList.add(marks[i] ? "is-correct" : "is-wrong");
-    if (!marks[i]) el.nextElementSibling.textContent = key.answers[i][0];
+    const canonical = key.answers[i]?.[0] ?? "";
+    if (!marks[i]) {
+      el.nextElementSibling.textContent = canonical;
+    } else if (canonical && el.value.trim().toLowerCase() !== canonical.toLowerCase()) {
+      el.nextElementSibling.textContent = canonical;
+    }
   });
 });

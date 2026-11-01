@@ -1,8 +1,24 @@
 const blanks = [];
 const text = String(fields.text).replace(/\{\{([\s\S]+?)\}\}/g, (_, inner) => {
-  const [ans, hint] = inner.split("::");
+  const parts = inner.split("::");
+  let ans, hint;
+  if (/^c\d+$/i.test(parts[0]?.trim()) && parts.length > 1) {
+    // Anki-style cloze: {{c1::answer}} or {{c1::answer::hint}}
+    ans = parts[1];
+    hint = parts.slice(2).join("::");
+  } else {
+    // Standard Etude cloze: {{answer}} or {{answer::hint}}
+    ans = parts[0];
+    hint = parts.slice(1).join("::");
+  }
+  const answers = ans.split("|").map((s) => s.trim()).filter(Boolean);
+  let cleanHint = (hint ?? "").trim();
+  // Ensure the hint never accidentally leaks any of the accepted answers
+  if (answers.some((a) => std.looseEqual(a, cleanHint))) {
+    cleanHint = "";
+  }
   const i = blanks.length;
-  blanks.push({ answers: ans.split("|").map((s) => s.trim()).filter(Boolean), hint: hint?.trim() ?? "" });
+  blanks.push({ answers, hint: cleanHint });
   return `⟦${i}⟧`;
 });
 return {

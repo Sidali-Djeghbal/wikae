@@ -2,8 +2,11 @@
    Spaced-repetition practice for Quran, Mutashabihat and knowledge.
    Clean Islamic typography, emerald accents, and responsive light/dark themes. */
 
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Reem+Kufi:wght@700&family=Marhey:wght@700&family=Cairo:wght@600;700;800;900&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
+@font-face { font-family: "Aref Ruqaa"; src: url("fonts/aref-ruqaa-bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Reem Kufi"; src: url("fonts/reem-kufi-bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Marhey"; src: url("fonts/marhey-bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
 @font-face { font-family: "Inter"; src: url("fonts/inter.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
 @font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
 @font-face { font-family: "KaTeX_Main"; src: url("../runtime/vendor/fonts/KaTeX_Main-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
@@ -12,6 +15,7 @@
 @font-face { font-family: "Caveat"; src: url("fonts/caveat.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
 
 :root {
+  --nav-height: 4rem;
   --radius: 0.75rem;
   --background: oklch(0.145 0.004 85);
   --foreground: oklch(0.95 0.008 85);
@@ -480,7 +484,7 @@ html[dir="rtl"] .textlink:hover span {
 .nav::before { content: ""; position: absolute; inset: 0 0 -1.5rem; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 0.35s;
   background: linear-gradient(var(--background) 0%, color-mix(in oklab, var(--background) 88%, transparent) 55%, transparent 100%); }
 .nav.scrolled::before { opacity: 1; }
-.nav .wrap { display: flex; align-items: center; gap: 2rem; height: 4rem; }
+.nav .wrap { display: flex; align-items: center; gap: 2rem; height: var(--nav-height, 4rem); }
 .nav .wordmark { font-size: 1.6rem; }
 .nav-links { display: none; gap: 1.75rem; font-size: 0.875rem; color: var(--muted-foreground); }
 .nav-links a { transition: color 0.2s; }
@@ -524,7 +528,16 @@ html[data-theme="dark"] .btn-primary:hover { background: oklch(1 0 0); }
 .note { font-family: var(--font-hand); color: var(--highlight); font-size: 1.35rem; line-height: 1.05; font-weight: 500; margin: 0; }
 
 /* -------------------------------------------------------------------- hero */
-.hero { position: relative; padding: 4.5rem 0 5.5rem; }
+.hero {
+  position: relative;
+  min-height: calc(100vh - var(--nav-height, 4rem));
+  min-height: calc(100dvh - var(--nav-height, 4rem));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3.5rem 0;
+}
 .hero-grid { max-width: 56rem; margin-inline: auto; display: block; }
 .hero-copy { width: 100%; }
 .hero h1 {
@@ -605,14 +618,17 @@ html[dir="rtl"] .hero h1,
   line-height: 1.35;
 }
 
-/* "وأتقن المتشابهات." emphasis element */
+/* "وأتقن المتشابهات." curved calligraphic emphasis */
 .hero [data-lang="ar"] h1 em,
 [data-lang="ar"] .hero h1 em,
 html[dir="rtl"] .hero h1 em {
-  font-family: "Cairo", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  font-weight: 850;
-  letter-spacing: -0.015em;
+  font-family: "Aref Ruqaa", "Reem Kufi", "Marhey", "Amiri", cursive, serif;
+  font-weight: 700;
+  font-size: 1.15em;
+  letter-spacing: 0;
   font-style: normal;
+  display: inline-block;
+  line-height: 1.25;
 }
 
 /* English hero typography: crisp, modern, high-tier UI/UX */
@@ -1543,7 +1559,14 @@ html[dir="rtl"] .suite-list button > div { text-align: right !important; }
    under the hero and flies the hero off it as you scroll; --lift (0 to 1) brings in the card
    the hero turns out to be printed on: rounded corners, a light edge and a shadow. */
 .deal { position: relative; }
-.deal > .hero { position: relative; z-index: 2; background: var(--background); }
+.deal > .hero {
+  position: relative;
+  z-index: 2;
+  background: var(--background);
+  min-height: calc(100vh - var(--nav-height, 4rem));
+  min-height: calc(100dvh - var(--nav-height, 4rem));
+  box-sizing: border-box;
+}
 .deal.on > .hero { will-change: transform; transform-origin: 50% 50%; }
 .deal.on > .film { position: sticky; z-index: 1; }
 .deal-room { pointer-events: none; }
@@ -1576,6 +1599,7 @@ html[dir="rtl"] .suite-list button > div { text-align: right !important; }
 .ph-only { display: none !important; }
 .dock, .programme-back { display: none; }
 @media (max-width: 640px) {
+  :root { --nav-height: 3.5rem; }
   .ph-only { display: revert !important; }
   .ph-hide { display: none !important; }
   .btn.ph-only { display: inline-flex !important; }

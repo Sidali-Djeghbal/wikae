@@ -1350,11 +1350,25 @@ if (rep && GALLERY?.length) {
     };
     const frame = () => {
       ticking = false;
-      if (!layout()) { hero.style.transform = ""; hero.classList.remove("lifting"); return; }
+      if (!layout()) {
+        hero.style.transform = "";
+        hero.classList.remove("lifting");
+        film.style.opacity = "";
+        film.style.pointerEvents = "";
+        return;
+      }
       const raw = clamp((scrollY - start) / T), p = ease(raw);
       window.__deal = { start, T };
       hero.style.setProperty("--lift", clamp(raw * 5).toFixed(3));
-      if (raw === 0) { hero.style.transform = ""; hero.classList.remove("lifting"); return; }
+      if (raw === 0) {
+        hero.style.transform = "";
+        hero.classList.remove("lifting");
+        film.style.opacity = "0";
+        film.style.pointerEvents = "none";
+        return;
+      }
+      film.style.opacity = "";
+      film.style.pointerEvents = "";
       hero.classList.add("lifting");
       const vw = innerWidth, vh = innerHeight;
       const tx = -p * vw * 0.95, ty = -p * vh * 0.75, rot = -28 * ease(clamp(raw * 1.4)), sc = 1 - 0.12 * clamp(raw * 2);

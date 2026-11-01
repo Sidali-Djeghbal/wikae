@@ -52,9 +52,24 @@ function __makeRng(seed) {
   return rng;
 }
 const std = {
-  /** Lowercase, trim, collapse whitespace, drop trailing punctuation. */
+  /** Normalizes Arabic script: strips Tashkeel, Tanween, Tatweel, annotations, and normalizes letter forms. */
+  normalizeArabic(s) {
+    return String(s ?? "")
+      .replace(/\u0670/g, "ا")
+      .replace(/\u0640/g, "")
+      .replace(/[\u0610-\u061A\u061C\u064B-\u065F\u0670\u06D6-\u06ED\u06DD\u06DE\u08D4-\u08ED\u08EF-\u08F3]/g, "")
+      .replace(/[أإآٱٲٳ]/g, "ا")
+      .replace(/ءا/g, "ا")
+      .replace(/ا{2,}/g, "ا")
+      .replace(/ى/g, "ي")
+      .replace(/ة/g, "ه")
+      .replace(/[\u200B-\u200D\uFEFF]/g, "");
+  },
+  /** Lowercase, trim, collapse whitespace, drop trailing punctuation, with intelligent Arabic normalization. */
   normalize(s) {
-    return String(s ?? "").normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim().replace(/[.!?;:,]+$/, "").trim();
+    const raw = String(s ?? "").normalize("NFKC").toLowerCase();
+    const clean = std.normalizeArabic(raw);
+    return clean.replace(/\s+/g, " ").trim().replace(/[.!?;:,؟،؛۝۞]+$/, "").trim();
   },
   looseEqual(a, b) { return std.normalize(a) === std.normalize(b); },
   /** Parses "1.5", "1,5", "3e-3", "1/8", "2*10^3", "(1+2)/4". Returns NaN when it can't. */
