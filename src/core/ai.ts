@@ -189,7 +189,7 @@ async function decide(p: DecisionProvider, ctx: GradingContext): Promise<AiVerdi
 }
 
 const FEEDBACK_STYLE = (lang: string) =>
-  `Write feedback for a student who just answered a practice card. Write in ${lang}. Talk to the student directly, in two to four short sentences of markdown (use $...$ for math). Start with whether the answer is right. Then name exactly what was missing or wrong, and the fix. If it is right, add the one thing that would make it exam-perfect, or say nothing more. No praise filler, no headings, no restating the question.`;
+  `Write feedback for a student who just answered a practice card. Write in ${lang}. Talk to the student directly, in two to four short sentences of markdown (use $...$ for math). Start with whether the answer is right. Then name exactly what was missing or wrong, and the fix. If it is right, add the one thing that would make it exam-perfect, or say nothing more. For Arabic text (Quran, Mutun, Hadith), unvocalized answers without Tashkeel/Tanween/Harakat (تشكيل وتنوين وحركات) or hamza variations are fully acceptable and valid; never penalize or criticize the student for omitting Tashkeel or Tanween, and provide the vocalized text purely as an educational reference. No praise filler, no headings, no restating the question.`;
 
 async function chat(p: ChatProvider, system: string, user: string, image: string | null, json: boolean, home?: string) {
   const t0 = Date.now();
@@ -252,6 +252,7 @@ Then reply {"verdict":"retry","hint":"a short hint for the next try"}, with no s
     : "";
   const system = `You grade practice answers. Reply with JSON only: {"verdict": "correct" | "partial" | "incorrect", "score": number from 0 to 1, "feedback": string}.
 Verdict meanings: ${LEVELS.map((l) => l.label).join("; ")}.
+For Arabic text, unvocalized answers without Tashkeel/Tanween/Harakat (تشكيل وتنوين وحركات) or hamza variations are completely acceptable and must be graded as correct when the letters match; never penalize the student for lacking Tashkeel or Tanween.
 For "feedback": ${FEEDBACK_STYLE(lang)}${retry}`;
   const out = await chat(p, system, contextText(ctx), ctx.answerImage, true, home);
   const j = parseJson(out.text);
