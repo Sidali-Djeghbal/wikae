@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.8.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.7.0...v2.8.0) (2026-11-01)
+
+
+### Features
+
+* add internationalization support and language toggle to site ([26381c4](https://github.com/Sidali-Djeghbal/wikae/commit/26381c49565fb26ba2c29f792dcb7354262e12af))
+* enhance feedback generation for Arabic text by allowing unvocalized answers and providing educational references ([83d8d1d](https://github.com/Sidali-Djeghbal/wikae/commit/83d8d1d7d743429d021a338e52a8dc4ead13f596))
+* update showcase content with Quranic examples and add logo assets ([3109899](https://github.com/Sidali-Djeghbal/wikae/commit/310989937b7b0f8992a9b7ccb10d20f51bdba2e6))
+
+
+### Bug Fixes
+
+* improve normalization function for name comparison ([ab1c6ab](https://github.com/Sidali-Djeghbal/wikae/commit/ab1c6abbb670aee930e8a744f1528297a7b5ed57))
+
 ## [2.7.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.6.0...v2.7.0) (2026-10-31)
 
 
