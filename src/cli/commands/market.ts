@@ -50,7 +50,7 @@ command({
     return index.entries
       .filter((x) => !ctx.flags.kind || x.kind === ctx.flags.kind)
       .filter((x) => words.every((w) => [x.name, x.description, x.author, ...x.tags].join(" ").toLowerCase().includes(w)))
-      .map(({ summary: _s, path: _p, ...x }) => ({ ...x, installed: installState(ctx.e, x, installed) }));
+      .map(({ summary: _s, path: _p, sha256: _h, ...x }) => ({ ...x, installed: installState(ctx.e, x, installed) }));
   },
 });
 

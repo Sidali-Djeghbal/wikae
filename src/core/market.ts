@@ -7,6 +7,7 @@
 //   entries/decks/<id>.json            { ..., kind: "deck", content: pack/1 }
 //   entries/types/<id>.json            { ..., kind: "type", content: pack/1 with types (+ example items) }
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -70,6 +71,8 @@ const samplesOf = (items: any[]) => [...new Set(items.map(sampleOf).filter(Boole
 export interface IndexEntry extends MarketMeta {
   path: string;
   bytes: number;
+  /** SHA-256 (hex) of the entry file, checked when installing. */
+  sha256: string;
   /** Optional picture of the entry in use, `covers/<kind>s/<id>.<webp|png|jpg>`. */
   cover?: string;
   /** Ordered screenshots and optional silent preview clips, discovered by market index. */
@@ -117,7 +120,7 @@ async function pinnedUrl(url: string): Promise<string> {
 }
 
 /** Reads one file of the market, from a URL or a folder. */
-function tryReadLocalFallback(path: string): { text: string; bytes: number } | null {
+function tryReadLocalFallback(path: string): { text: string; bytes: number; body: Buffer } | null {
   const candidates = [
     join(dirname(fileURLToPath(import.meta.url)), "../../market", path),
     join(process.env.HOME || "", "market", path),
@@ -126,19 +129,19 @@ function tryReadLocalFallback(path: string): { text: string; bytes: number } | n
   for (const c of candidates) {
     if (existsSync(c)) {
       const buf = readFileSync(c);
-      return { text: buf.toString("utf8"), bytes: buf.length };
+      return { text: buf.toString("utf8"), bytes: buf.length, body: buf };
     }
   }
   return null;
 }
 
-async function readMarketFile(url: string, path: string, opts: { fresh?: boolean } = {}): Promise<{ text: string; bytes: number }> {
+async function readMarketFile(url: string, path: string, opts: { fresh?: boolean } = {}): Promise<{ text: string; bytes: number; body: Buffer }> {
   if (!isRemote(url)) {
     const p = join(localDir(url), path);
     if (!existsSync(p)) throw new MarketError(`the market has no ${path}`, 404);
     const buf = readFileSync(p);
     if (buf.length > MAX_ENTRY_BYTES) throw new MarketError(`${path} is larger than ${MAX_ENTRY_BYTES} bytes`);
-    return { text: buf.toString("utf8"), bytes: buf.length };
+    return { text: buf.toString("utf8"), bytes: buf.length, body: buf };
   }
   const full = `${(opts.fresh ? await pinnedUrl(url) : url).replace(/\/+$/, "")}/${path}`;
   let res: Response;
@@ -157,7 +160,7 @@ async function readMarketFile(url: string, path: string, opts: { fresh?: boolean
   }
   const buf = Buffer.from(await res.arrayBuffer());
   if (buf.length > MAX_ENTRY_BYTES) throw new MarketError(`${path} is larger than ${MAX_ENTRY_BYTES} bytes`);
-  return { text: buf.toString("utf8"), bytes: buf.length };
+  return { text: buf.toString("utf8"), bytes: buf.length, body: buf };
 }
 
 function parseJson(text: string, what: string): any {
@@ -308,10 +311,15 @@ export async function fetchIndex(url: string, opts: { refresh?: boolean } = {}):
   return index;
 }
 
-export async function fetchEntry(url: string, entry: Pick<IndexEntry, "kind" | "id" | "path">): Promise<MarketFile> {
+export async function fetchEntry(url: string, entry: Pick<IndexEntry, "kind" | "id" | "path"> & Partial<Pick<IndexEntry, "bytes" | "sha256">>): Promise<MarketFile> {
   const path = entry.path || entryPath(entry.kind, entry.id);
   if (!/^entries\/(themes|decks|types)\/[a-z0-9-]+\.json$/.test(path)) throw new MarketError(`unexpected entry path ${path}`);
-  const { text } = await readMarketFile(url, path);
+  const { text, bytes, body } = await readMarketFile(url, path);
+  if (typeof entry.bytes === "number" && entry.bytes !== bytes) throw new MarketError(`${path} is ${bytes} bytes; the index says ${entry.bytes}`);
+  if (entry.sha256) {
+    const digest = createHash("sha256").update(body).digest("hex");
+    if (digest !== entry.sha256) throw new MarketError(`${path} doesn't match the index (sha256 ${digest}, expected ${entry.sha256})`);
+  }
   const file = parseJson(text, path);
   const errors = checkEntry(file);
   if (errors.length) throw new MarketError(`${path} is invalid: ${errors.join("; ")}`);
@@ -614,8 +622,10 @@ export async function buildIndex(dir: string, opts: { repo?: string; dryRunInto?
       const full = join(sub, f);
       const errors: string[] = [];
       let file: any;
+      let body: Buffer;
       try {
-        file = JSON.parse(readFileSync(full, "utf8"));
+        body = readFileSync(full);
+        file = JSON.parse(body.toString("utf8"));
       } catch (e) {
         problems.push({ path, errors: [`not valid JSON: ${(e as Error).message}`] });
         continue;
@@ -629,7 +639,8 @@ export async function buildIndex(dir: string, opts: { repo?: string; dryRunInto?
         seen.set(file.id, path);
         void key;
       }
-      const bytes = statSync(full).size;
+      const bytes = body.length;
+      const sha256 = createHash("sha256").update(body).digest("hex");
       if (bytes > MAX_ENTRY_BYTES) errors.push(`file is larger than ${MAX_ENTRY_BYTES} bytes`);
       if (!errors.length && opts.dryRunInto && (file.kind === "deck" || file.kind === "type")) {
         const scratch = await opts.dryRunInto();
@@ -658,7 +669,7 @@ export async function buildIndex(dir: string, opts: { repo?: string; dryRunInto?
         problems.push({ path: `media/${kind}s/${file.id}`, errors: ["Use at most 12 images/videos, lowercase slug filenames, at most 12 MB each."] });
         continue;
       }
-      entries.push({ ...metaOf(file), path, bytes, ...(cover ? { cover } : {}), ...(media.length ? { media } : {}), summary: summarize(file) });
+      entries.push({ ...metaOf(file), path, bytes, sha256, ...(cover ? { cover } : {}), ...(media.length ? { media } : {}), summary: summarize(file) });
     }
   }
   entries.sort((a, b) => (b.updated || "").localeCompare(a.updated || "") || a.name.localeCompare(b.name));

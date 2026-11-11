@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -138,4 +139,20 @@ test("publish opens a pull request through a fork when you can't push", async ()
   const pr = calls.find((c) => c.args.at(-2) === `repos/${MARKET_REPO}/pulls` || c.args.includes(`repos/${MARKET_REPO}/pulls`))!;
   assert.match(pr.input.head, /^ana:theme-sea-/);
   assert.equal(pr.input.base, "main");
+});
+
+test("index records sha256 and install rejects a tampered entry", async () => {
+  const src = await source();
+  const url = await market([buildSubmission(src, { kind: "theme", ref: "sea", author: "ana" })]);
+  const entry = (await fetchIndex(url, { refresh: true })).entries[0];
+  assert.match(entry.sha256, /^[0-9a-f]{64}$/);
+  assert.equal(entry.sha256, createHash("sha256").update(readFileSync(join(url, entry.path))).digest("hex"));
+
+  // Same length, so the byte count still matches and only the hash catches it.
+  const file = JSON.parse(readFileSync(join(url, entry.path), "utf8"));
+  file.author = "anb";
+  writeFileSync(join(url, entry.path), entryJson(file));
+
+  const e = await Etude.open(":memory:");
+  await assert.rejects(() => installEntry(e, "sea", { url }), /doesn't match the index/);
 });
