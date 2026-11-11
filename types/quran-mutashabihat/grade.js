@@ -1,27 +1,5 @@
-// Mirrors src/core/arabicNormalizer.ts; keep the two in step (QuickJS can't import TS).
-function normAr(text) {
-  if (!text) return "";
-  let s = String(text);
-  // Convert dagger alef to standard alef for Uthmani comparison
-  s = s.replace(/\u0670/g, "ا");
-  // Strip tatweel
-  s = s.replace(/\u0640/g, "");
-  // Strip Tashkeel & Quranic annotations
-  s = s.replace(/[\u0610-\u061A\u061C\u064B-\u065F\u0670\u06D6-\u06ED\u06DD\u06DE\u08D4-\u08ED\u08EF-\u08F3]/g, "");
-  // Normalize Alef variants
-  s = s.replace(/[أإآٱٲٳ]/g, "ا");
-  // Handle isolated Hamza + Alef
-  s = s.replace(/ءا/g, "ا");
-  s = s.replace(/ا{2,}/g, "ا");
-  // Normalize Alef Maksura
-  s = s.replace(/ى/g, "ي");
-  // Normalize Teh Marbuta
-  s = s.replace(/ة/g, "ه");
-  // Strip zero-width & punctuation
-  s = s.replace(/[\u200B-\u200D\uFEFF]/g, "");
-  s = s.replace(/[.,/#!$%^&*;:{}=\-_`~()؟،؛۝۞]/g, " ");
-  return s.replace(/\s+/g, " ").trim();
-}
+// std.normalize (prelude) applies std.normalizeArabic; strip punctuation and collapse spaces.
+const normAr = (text) => std.normalize(text).replace(/[.,/#!$%^&*;:{}=\-_`~()؟،؛۝۞]+/g, " ").replace(/\s+/g, " ").trim();
 
 const ans = typeof answer === "string" ? { chosenOptionId: answer, typedText: answer } : answer || {};
 const mode = ans.mode || view.mode || "pivotal_completion";

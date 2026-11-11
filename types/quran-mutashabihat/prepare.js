@@ -39,18 +39,8 @@ function findSurah(val) {
 }
 
 function normalizeArabicSimple(text) {
-  return String(text || "")
-    .replace(/\u0670/g, "ا")
-    .replace(/\u0640/g, "")
-    .replace(/[\u0610-\u061A\u061C\u064B-\u065F\u0670\u06D6-\u06ED\u06DD\u06DE\u08D4-\u08ED\u08EF-\u08F3]/g, "")
-    .replace(/[أإآٱٲٳ]/g, "ا")
-    .replace(/ءا/g, "ا")
-    .replace(/ا{2,}/g, "ا")
-    .replace(/ى/g, "ي")
-    .replace(/ة/g, "ه")
-    .replace(/[.,/#!$%^&*;:{}=\-_`~()؟،؛۝۞]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  // std.normalize (prelude) applies std.normalizeArabic; strip punctuation and collapse spaces.
+  return std.normalize(text).replace(/[.,/#!$%^&*;:{}=\-_`~()؟،؛۝۞]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function parseSibling(input, index) {
