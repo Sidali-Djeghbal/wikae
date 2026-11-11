@@ -56,7 +56,7 @@ export function MorePage() {
       {behind > 0 && st && (
         <button onClick={() => navigate("/settings")} className="mx-5 mt-8 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-2xl border bg-card px-4 py-3.5 text-left rtl:text-right">
           <CircleArrowUp className="size-5 shrink-0 text-highlight" />
-          <span className="min-w-0 flex-1 text-[15px]">{st.kind === "git" ? `Update Wikae · ${behind} new` : `Wikae ${st.latest} is out`}</span>
+          <span className="min-w-0 flex-1 text-[15px]">{st.kind === "git" ? t("Update Wikae · {behind} new", { behind }) : t("Wikae {version} is out", { version: st.latest ?? "" })}</span>
           <ChevronRight className="size-4 text-muted-foreground rtl-flip" />
         </button>
       )}

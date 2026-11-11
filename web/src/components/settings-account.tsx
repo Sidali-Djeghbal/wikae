@@ -64,7 +64,7 @@ export function AccountSection() {
     <Section
       id="account"
       title="Account"
-      description="Optional. A Wikae account is only needed for Sync and decks from the paid Market. Everything else works without one."
+      description={t("Optional. A Wikae account is only needed for Sync and decks from the paid Market. Everything else works without one.")}
     >
       {!st && !loadError && (
         <Block>
@@ -74,9 +74,9 @@ export function AccountSection() {
       )}
       {loadError && !st && (
         <Block>
-          <Notice>Couldn't read the account: {loadError}</Notice>
+          <Notice>{t("Couldn't read the account: {error}", { error: loadError })}</Notice>
           <div>
-            <Button variant="outline" size="sm" className="h-10 md:h-8" onClick={() => void load()}>Try again</Button>
+            <Button variant="outline" size="sm" className="h-10 md:h-8" onClick={() => void load()}>{t("Try again")}</Button>
           </div>
         </Block>
       )}

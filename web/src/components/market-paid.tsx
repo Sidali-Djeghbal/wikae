@@ -18,8 +18,8 @@ import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
 
-const msg = (e: unknown) => (e instanceof Error ? e.message : "The request failed.");
-const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const msg = (e: unknown) => (e instanceof Error ? e.message : t("The request failed."));
+const cards = (n: number) => (n === 1 ? t("1 card") : t("{n} cards", { n }));
 
 function SignInFirst({ what }: { what: string }) {
   const label = what === "your library" ? t("Sign in to see your library") : what === "selling" ? t("Sign in to see selling") : t("Sign in to see {what}", { what: t(what) });
@@ -53,7 +53,7 @@ export function PaidCover({ entry, large }: { entry: PaidEntry; large?: boolean 
 }
 
 export function PriceMark({ entry }: { entry: PaidEntry }) {
-  if (entry.owned) return <span className="inline-flex items-center gap-1 rounded-full bg-success/12 px-2 py-0.5 text-[11px] font-medium text-success"><BadgeCheck className="size-3" />Owned</span>;
+  if (entry.owned) return <span className="inline-flex items-center gap-1 rounded-full bg-success/12 px-2 py-0.5 text-[11px] font-medium text-success"><BadgeCheck className="size-3" />{t("Owned")}</span>;
   if (!canShowPurchases()) return null;
   return <span className="rounded-full bg-highlight/15 px-2 py-0.5 text-[11px] font-medium text-highlight tabular-nums" data-price>{money(entry.price, entry.currency)}</span>;
 }
@@ -67,11 +67,11 @@ export function PaidTile({ entry, onOpen }: { entry: PaidEntry; onOpen(): void }
           <span className="min-w-0 flex-1 truncate text-sm font-medium">{entry.name}</span>
           <PriceMark entry={entry} />
         </div>
-        <div className="line-clamp-2 min-h-[2.5em] text-[13px] leading-snug text-muted-foreground">{entry.description || "Deck"}</div>
+        <div className="line-clamp-2 min-h-[2.5em] text-[13px] leading-snug text-muted-foreground">{entry.description || t("Deck")}</div>
         <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="truncate">Deck · {plural(entry.summary?.items ?? 0, "card")}</span>
+          <span className="truncate">{t("Deck")} · {cards(entry.summary?.items ?? 0)}</span>
           <span aria-hidden="true">·</span>
-          <span className="truncate">by {entry.author}</span>
+          <span className="truncate">{t("by {author}", { author: entry.author })}</span>
         </div>
       </div>
     </button>
@@ -85,9 +85,9 @@ export function PaidDialog({ entry, signedIn, onClose, onChanged }: { entry: Pai
     setBusy("buy");
     try {
       openOutside((await account.buy(entry.listing)).url);
-      toast("Finish the purchase in your browser", { description: "The deck shows up in your Library once it's paid." });
+      toast(t("Finish the purchase in your browser"), { description: t("The deck shows up in your Library once it's paid.") });
     } catch (e) {
-      toast.error("Couldn't start the purchase", { description: msg(e) });
+      toast.error(t("Couldn't start the purchase"), { description: msg(e) });
     } finally {
       setBusy(null);
     }
@@ -96,10 +96,11 @@ export function PaidDialog({ entry, signedIn, onClose, onChanged }: { entry: Pai
     setBusy("install");
     try {
       const r = await account.install(entry.listing);
-      toast.success(r.result === "unchanged" ? "You already have the latest version" : `${r.result === "updated" ? "Updated" : "Installed"} ${entry.name}`, { description: `${r.report.items.created} new, ${r.report.items.updated} updated.` });
+      const done = r.result === "unchanged" ? t("Already up to date: {name}", { name: entry.name }) : t(r.result === "updated" ? "Updated {name}" : "Installed {name}", { name: entry.name });
+      toast.success(done, { description: `${r.report.items.created} ${t("new")}, ${r.report.items.updated} ${t("updated")}.` });
       onChanged();
     } catch (e) {
-      toast.error("Install failed", { description: msg(e) });
+      toast.error(t("Install failed"), { description: msg(e) });
     } finally {
       setBusy(null);
     }
@@ -111,25 +112,25 @@ export function PaidDialog({ entry, signedIn, onClose, onChanged }: { entry: Pai
         <div className="market-detail-scroll">
           <DialogHeader className="text-left rtl:text-right">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pr-8 rtl:pr-0 rtl:pl-8 text-xs text-muted-foreground [&>span]:whitespace-nowrap">
-              <span>Deck</span><span aria-hidden="true">·</span><span>by {entry.author}</span><span aria-hidden="true">·</span><span>v{entry.version}</span>
+              <span>{t("Deck")}</span><span aria-hidden="true">·</span><span>{t("by {author}", { author: entry.author })}</span><span aria-hidden="true">·</span><span>v{entry.version}</span>
               <PriceMark entry={entry} />
             </div>
             <DialogTitle className="pr-6 rtl:pr-0 rtl:pl-6 text-2xl leading-tight tracking-tight sm:text-3xl">{entry.name}</DialogTitle>
           </DialogHeader>
           <div className="market-facts">
-            <div className="market-fact"><span>Includes</span><strong>{plural(s.items ?? 0, "card")}</strong></div>
-            <div className="market-fact"><span>Updates</span><strong>Included</strong></div>
-            <div className="market-fact"><span>Download</span><strong>{bytes(entry.bytes)}</strong></div>
-            <div className="market-fact"><span>Creator</span><strong>{entry.author}</strong></div>
+            <div className="market-fact"><span>{t("Includes")}</span><strong>{cards(s.items ?? 0)}</strong></div>
+            <div className="market-fact"><span>{t("Updates")}</span><strong>{t("Included")}</strong></div>
+            <div className="market-fact"><span>{t("Download")}</span><strong>{bytes(entry.bytes)}</strong></div>
+            <div className="market-fact"><span>{t("Creator")}</span><strong>{entry.author}</strong></div>
           </div>
           <div className="mb-6"><PaidCover entry={entry} large /></div>
           <section id="paid-about" className="market-description mb-6">
-            <h3 className="mb-3 text-base font-semibold">About this deck</h3>
-            <div className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">{entry.description || "No description yet."}</div>
+            <h3 className="mb-3 text-base font-semibold">{t("About this deck")}</h3>
+            <div className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">{entry.description || t("No description yet.")}</div>
           </section>
           {entry.preview.length > 0 && (
             <section className="mb-6">
-              <h3 className="mb-3 text-base font-semibold">Sample cards</h3>
+              <h3 className="mb-3 text-base font-semibold">{t("Sample cards")}</h3>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {entry.preview.map((p: any, i: number) => (
                   <li key={i} className="rounded-lg border bg-card px-3 py-2 text-sm">
@@ -141,18 +142,18 @@ export function PaidDialog({ entry, signedIn, onClose, onChanged }: { entry: Pai
               </ul>
             </section>
           )}
-          {canShowPurchases() && !entry.owned && <p className="text-xs text-muted-foreground">Prices in US dollars before tax. Sold to buyers in Canada and the United States. Buying gives you every future version.</p>}
+          {canShowPurchases() && !entry.owned && <p className="text-xs text-muted-foreground">{t("Prices in US dollars before tax. Sold to buyers in Canada and the United States. Buying gives you every future version.")}</p>}
         </div>
         <DialogFooter className="flex-row items-center justify-end gap-2 border-t bg-background px-5 py-4">
           {entry.owned ? (
             <Button className="gap-1.5" disabled={!!busy || entry.installed === "installed"} onClick={install}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : entry.installed === "installed" ? <Check className="size-4" /> : <Download className="size-4" />}
-              {entry.installed === "installed" ? "Installed" : entry.installed === "update" ? "Update" : "Install"}
+              {entry.installed === "installed" ? t("Installed") : entry.installed === "update" ? t("Update") : t("Install")}
             </Button>
           ) : canShowPurchases() ? (
             <Button className="gap-1.5" disabled={!!busy} onClick={buy} data-buy>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <ExternalLink className="size-4" />}
-              {signedIn ? `Buy on etude.study · ${money(entry.price, entry.currency)}` : "Sign in to buy"}
+              {signedIn ? t("Buy on etude.study · {price}", { price: money(entry.price, entry.currency) }) : t("Sign in to buy")}
             </Button>
           ) : null}
         </DialogFooter>
@@ -206,17 +207,18 @@ export function LibraryView() {
   if (!lib.length)
     return (
       <div className="rounded-xl border px-5 py-10 text-center text-sm text-muted-foreground" data-library-empty>
-        Decks you buy appear here, on every device signed in to your account.
+        {t("Decks you buy appear here, on every device signed in to your account.")}
       </div>
     );
   const install = async (l: LibraryItem) => {
     setBusy(l.listing);
     try {
       const r = await account.install(l.listing);
-      toast.success(`${r.result === "updated" ? "Updated" : r.result === "unchanged" ? "Already up to date:" : "Installed"} ${l.name}`, { description: `${r.report.items.created} new, ${r.report.items.updated} updated.` });
+      const done = t(r.result === "updated" ? "Updated {name}" : r.result === "unchanged" ? "Already up to date: {name}" : "Installed {name}", { name: l.name });
+      toast.success(done, { description: `${r.report.items.created} ${t("new")}, ${r.report.items.updated} ${t("updated")}.` });
       await load();
     } catch (e) {
-      toast.error("Install failed", { description: msg(e) });
+      toast.error(t("Install failed"), { description: msg(e) });
     } finally {
       setBusy(null);
     }
@@ -230,16 +232,16 @@ export function LibraryView() {
             <div className="truncate text-sm font-medium">{l.name}</div>
             <div className="text-xs text-muted-foreground">
               v{l.version}
-              {l.installed === "update" && <span className="text-highlight"> · update from v{l.installedVersion}</span>}
+              {l.installed === "update" && <span className="text-highlight"> · {t("Update from v{version}", { version: l.installedVersion ?? "" })}</span>}
               {l.installed === "update" && l.changelog && <span> · {l.changelog}</span>}
               {l.bytes ? ` · ${bytes(l.bytes)}` : ""}
             </div>
           </div>
           <div className="flex shrink-0 gap-2">
-            {l.installed && <Button variant="outline" size="sm" className="h-10 md:h-8" onClick={() => navigate("/")}>Open</Button>}
+            {l.installed && <Button variant="outline" size="sm" className="h-10 md:h-8" onClick={() => navigate("/")}>{t("Open")}</Button>}
             <Button size="sm" className="h-10 gap-1.5 md:h-8" disabled={busy === l.listing || l.installed === "installed"} onClick={() => void install(l)} data-install={l.slug}>
               {busy === l.listing ? <Loader2 className="size-4 animate-spin" /> : l.installed === "installed" ? <Check className="size-4" /> : l.installed === "update" ? <RefreshCw className="size-4" /> : <Download className="size-4" />}
-              {l.installed === "installed" ? "Installed" : l.installed === "update" ? "Update" : "Install"}
+              {l.installed === "installed" ? t("Installed") : l.installed === "update" ? t("Update") : t("Install")}
             </Button>
           </div>
         </li>
@@ -285,7 +287,7 @@ export function SellingView() {
       if (done) toast.success(done);
       await load();
     } catch (e) {
-      toast.error("That didn't work", { description: msg(e) });
+      toast.error(t("That didn't work"), { description: msg(e) });
     } finally {
       setBusy(null);
     }
@@ -298,11 +300,11 @@ export function SellingView() {
     <div className="flex flex-col gap-6" data-selling>
       {!c ? (
         <div className="rounded-xl border p-5">
-          <h3 className="text-base font-semibold">Sell your decks</h3>
-          <p className="mt-1 max-w-prose text-sm text-muted-foreground">Set a price of US$5 or more. Wikae keeps 20% and handles sales tax; you get the rest every month through Stripe once it reaches US$25. Payouts reach the US, Canada, the UK, the EEA and Switzerland.</p>
+          <h3 className="text-base font-semibold">{t("Sell your decks")}</h3>
+          <p className="mt-1 max-w-prose text-sm text-muted-foreground">{t("Set a price of US$5 or more. Wikae keeps 20% and handles sales tax; you get the rest every month through Stripe once it reaches US$25. Payouts reach the US, Canada, the UK, the EEA and Switzerland.")}</p>
           <div className="mt-4 flex flex-wrap items-end gap-2">
             <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-              Where you get paid
+              {t("Where you get paid")}
               <Select value={country} onValueChange={setCountry}>
                 <SelectTrigger className="h-10 w-56 md:h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>{COUNTRIES.map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
@@ -311,25 +313,25 @@ export function SellingView() {
             <Button className="h-10 gap-1.5 md:h-9" disabled={!!busy} onClick={() => void act("start", async () => {
               await account.becomeCreator(country);
               openOutside((await account.onboarding()).url);
-            }, "Finish setting up payouts with Stripe")}>
-              {busy === "start" ? <Loader2 className="size-4 animate-spin" /> : <ExternalLink className="size-4" />} Set up payouts
+            }, t("Finish setting up payouts with Stripe"))}>
+              {busy === "start" ? <Loader2 className="size-4 animate-spin" /> : <ExternalLink className="size-4" />} {t("Set up payouts")}
             </Button>
           </div>
         </div>
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-3" data-sales>
-            <Stat label="Payouts" value={c.payoutsEnabled ? "Ready" : c.detailsSubmitted ? "Under review by Stripe" : "Setup not finished"} tone={c.payoutsEnabled ? "ok" : "warn"} />
-            <Stat label="Sales" value={String(state.sales?.totals.count ?? 0)} />
-            <Stat label="Your earnings" value={money(state.sales?.totals.earnings ?? 0)} sub={state.sales?.totals.gross ? `of ${money(state.sales.totals.gross)} gross` : undefined} />
+            <Stat label={t("Payouts")} value={c.payoutsEnabled ? t("Ready") : c.detailsSubmitted ? t("Under review by Stripe") : t("Setup not finished")} tone={c.payoutsEnabled ? "ok" : "warn"} />
+            <Stat label={t("Sales")} value={String(state.sales?.totals.count ?? 0)} />
+            <Stat label={t("Your earnings")} value={money(state.sales?.totals.earnings ?? 0)} sub={state.sales?.totals.gross ? t("of {amount} gross", { amount: money(state.sales.totals.gross) }) : undefined} />
           </div>
           <div className="flex flex-wrap gap-2">
-            {!c.chargesEnabled && <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" onClick={() => void act("onb", async () => openOutside((await account.onboarding()).url))}><ExternalLink className="size-4" />Finish Stripe setup</Button>}
-            {c.detailsSubmitted && <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" onClick={() => void act("dash", async () => openOutside((await account.dashboard()).url))}><ExternalLink className="size-4" />Payouts and tax forms</Button>}
-            <Button size="sm" className="h-10 gap-1.5 md:h-8" onClick={() => setCreating(true)} data-new-listing><Upload className="size-4" />List a deck</Button>
+            {!c.chargesEnabled && <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" onClick={() => void act("onb", async () => openOutside((await account.onboarding()).url))}><ExternalLink className="size-4" />{t("Finish Stripe setup")}</Button>}
+            {c.detailsSubmitted && <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" onClick={() => void act("dash", async () => openOutside((await account.dashboard()).url))}><ExternalLink className="size-4" />{t("Payouts and tax forms")}</Button>}
+            <Button size="sm" className="h-10 gap-1.5 md:h-8" onClick={() => setCreating(true)} data-new-listing><Upload className="size-4" />{t("List a deck")}</Button>
           </div>
           {state.listings.length === 0 ? (
-            <div className="rounded-xl border px-5 py-8 text-center text-sm text-muted-foreground">No listings yet.</div>
+            <div className="rounded-xl border px-5 py-8 text-center text-sm text-muted-foreground">{t("No listings yet.")}</div>
           ) : (
             <ul className="flex flex-col gap-3" data-listings>
               {state.listings.map((l) => (
@@ -338,17 +340,17 @@ export function SellingView() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-sm font-medium">{l.name}</span>
-                      <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", STATUS[l.status].cls)} data-status={l.status}>{STATUS[l.status].label}</span>
+                      <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", STATUS[l.status].cls)} data-status={l.status}>{t(STATUS[l.status].label)}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {money(l.price, l.currency)} · {l.version ? `v${l.version} on sale` : "not on sale yet"}{l.pending?.length ? ` · v${l.pending.join(", v")} waiting for review` : ""}
+                      {money(l.price, l.currency)} · {l.version ? t("v{version} on sale", { version: l.version }) : t("not on sale yet")}{l.pending?.length ? ` · ${t("v{versions} waiting for review", { versions: l.pending.join(", v") })}` : ""}
                     </div>
-                    {l.reviewNotes && <div className="mt-1 text-xs text-foreground/80">Reviewer: {l.reviewNotes}</div>}
+                    {l.reviewNotes && <div className="mt-1 text-xs text-foreground/80">{t("Reviewer")}: {l.reviewNotes}</div>}
                   </div>
                   <div className="flex shrink-0 flex-wrap gap-2">
-                    {(l.status === "draft" || l.status === "rejected" || l.status === "hidden") && <Button size="sm" className="h-10 md:h-8" disabled={!!busy} onClick={() => void act("submit" + l.id, () => account.submit(l.id), "Sent for review")} data-submit={l.slug}>Submit for review</Button>}
-                    {(l.status === "live" || l.status === "review") && <Button variant="outline" size="sm" className="h-10 md:h-8" disabled={!!busy} onClick={() => setVersioning(l)} data-new-version={l.slug}>Upload new version</Button>}
-                    {l.status !== "hidden" && <Button variant="ghost" size="sm" className="h-10 text-muted-foreground md:h-8" disabled={!!busy} onClick={() => void act("hide" + l.id, () => account.hide(l.id), "Taken off sale")}>Hide</Button>}
+                    {(l.status === "draft" || l.status === "rejected" || l.status === "hidden") && <Button size="sm" className="h-10 md:h-8" disabled={!!busy} onClick={() => void act("submit" + l.id, () => account.submit(l.id), t("Sent for review"))} data-submit={l.slug}>{t("Submit for review")}</Button>}
+                    {(l.status === "live" || l.status === "review") && <Button variant="outline" size="sm" className="h-10 md:h-8" disabled={!!busy} onClick={() => setVersioning(l)} data-new-version={l.slug}>{t("Upload new version")}</Button>}
+                    {l.status !== "hidden" && <Button variant="ghost" size="sm" className="h-10 text-muted-foreground md:h-8" disabled={!!busy} onClick={() => void act("hide" + l.id, () => account.hide(l.id), t("Taken off sale"))}>{t("Hide")}</Button>}
                   </div>
                 </li>
               ))}
@@ -357,7 +359,7 @@ export function SellingView() {
           {state.sales && state.sales.sales.length > 0 && (
             <div className="overflow-hidden rounded-xl border">
               <table className="w-full text-sm">
-                <thead className="bg-muted/40 text-xs text-muted-foreground"><tr><th className="px-3 py-2 text-left font-medium">Date</th><th className="px-3 py-2 text-left font-medium">Deck</th><th className="px-3 py-2 text-right font-medium">Price</th><th className="px-3 py-2 text-right font-medium">You get</th></tr></thead>
+                <thead className="bg-muted/40 text-xs text-muted-foreground"><tr><th className="px-3 py-2 text-left font-medium">{t("Date")}</th><th className="px-3 py-2 text-left font-medium">{t("Deck")}</th><th className="px-3 py-2 text-right font-medium">{t("Price")}</th><th className="px-3 py-2 text-right font-medium">{t("You get")}</th></tr></thead>
                 <tbody>
                   {state.sales.sales.map((s) => (
                     <tr key={s.order} className="border-t">
@@ -408,7 +410,7 @@ function NewListingDialog({ onClose, onCreated }: { onClose(): void; onCreated()
     input.onchange = async () => {
       const f = input.files?.[0];
       if (!f) return;
-      if (f.size > 600 * 1024) return setError("The cover must be 600 KB or less.");
+      if (f.size > 600 * 1024) return setError(t("The cover must be 600 KB or less."));
       const buf = new Uint8Array(await f.arrayBuffer());
       let s = "";
       for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode(...buf.subarray(i, i + 0x8000));
@@ -421,7 +423,7 @@ function NewListingDialog({ onClose, onCreated }: { onClose(): void; onCreated()
     setError(null);
     try {
       await account.createListing({ deck, name: name.trim() || undefined, description, price: cents, cover: cover ? { type: cover.type, data: cover.data } : undefined });
-      toast.success("Listing created", { description: "Submit it for review when you're ready." });
+      toast.success(t("Listing created"), { description: t("Submit it for review when you're ready.") });
       onCreated();
     } catch (e) {
       setError(msg(e));
@@ -433,35 +435,35 @@ function NewListingDialog({ onClose, onCreated }: { onClose(): void; onCreated()
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>List a deck</DialogTitle>
-          <DialogDescription>Wikae exports the deck as it is now. Buyers get later versions you upload, after review.</DialogDescription>
+          <DialogTitle>{t("List a deck")}</DialogTitle>
+          <DialogDescription>{t("Wikae exports the deck as it is now. Buyers get later versions you upload, after review.")}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-            Deck
+            {t("Deck")}
             <Select value={deck} onValueChange={(v) => (setDeck(v), name || setName(v))}>
-              <SelectTrigger className="h-10" data-deck-select><SelectValue placeholder="Choose a deck" /></SelectTrigger>
+              <SelectTrigger className="h-10" data-deck-select><SelectValue placeholder={t("Choose a deck")} /></SelectTrigger>
               <SelectContent>{decks.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
             </Select>
           </label>
-          <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">Name<Input className="h-10" value={name} onChange={(e) => setName(e.target.value)} /></label>
-          <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">Description<Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's in it, who it's for, where the material comes from." /></label>
+          <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">{t("Name")}<Input className="h-10" value={name} onChange={(e) => setName(e.target.value)} /></label>
+          <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">{t("Description")}<Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("What's in it, who it's for, where the material comes from.")} /></label>
           <div className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-              Price (US$)
+              {t("Price (US$)")}
               <Input className="h-10 w-32 tabular-nums" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} data-price-input />
             </label>
-            <div className="pb-2.5 text-xs text-muted-foreground">{ok ? <>You get {money(cents - Math.round(cents * 0.2))} per sale</> : "At least US$5"}</div>
+            <div className="pb-2.5 text-xs text-muted-foreground">{ok ? t("You get {amount} per sale", { amount: money(cents - Math.round(cents * 0.2)) }) : t("At least US$5")}</div>
           </div>
           <div className="flex items-center gap-3">
-            <Button type="button" variant="outline" size="sm" className="h-10 md:h-8" onClick={pick}>{cover ? "Change cover" : "Add a cover"}</Button>
-            <span className="truncate text-xs text-muted-foreground">{cover ? cover.name : "16:10 image, webp, png or jpg"}</span>
+            <Button type="button" variant="outline" size="sm" className="h-10 md:h-8" onClick={pick}>{cover ? t("Change cover") : t("Add a cover")}</Button>
+            <span className="truncate text-xs text-muted-foreground">{cover ? cover.name : t("16:10 image, webp, png or jpg")}</span>
           </div>
           {error && <div className="rounded-lg border border-destructive/40 px-3 py-2 text-sm text-destructive">{error}</div>}
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button disabled={!ok || busy} onClick={() => void submit()} data-create-listing>{busy && <Loader2 className="size-4 animate-spin" />}Create listing</Button>
+          <Button variant="ghost" onClick={onClose}>{t("Cancel")}</Button>
+          <Button disabled={!ok || busy} onClick={() => void submit()} data-create-listing>{busy && <Loader2 className="size-4 animate-spin" />}{t("Create listing")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -489,35 +491,35 @@ function NewVersionDialog({ listing, onClose, onDone }: { listing: Listing; onCl
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New version of {listing.name}</DialogTitle>
-          <DialogDescription>The deck is exported again as it is now. Buyers get it after review; the current version stays on sale meanwhile.</DialogDescription>
+          <DialogTitle>{t("New version of {name}", { name: listing.name })}</DialogTitle>
+          <DialogDescription>{t("The deck is exported again as it is now. Buyers get it after review; the current version stays on sale meanwhile.")}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-            Deck
+            {t("Deck")}
             <Select value={deck} onValueChange={setDeck}>
-              <SelectTrigger className="h-10"><SelectValue placeholder="Choose a deck" /></SelectTrigger>
+              <SelectTrigger className="h-10"><SelectValue placeholder={t("Choose a deck")} /></SelectTrigger>
               <SelectContent>{decks.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
             </Select>
           </label>
-          <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">What changed<Textarea rows={3} value={changelog} onChange={(e) => setChangelog(e.target.value)} placeholder="Shown to buyers with the update." data-changelog /></label>
+          <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">{t("What changed")}<Textarea rows={3} value={changelog} onChange={(e) => setChangelog(e.target.value)} placeholder={t("Shown to buyers with the update.")} data-changelog /></label>
           {error && <div className="rounded-lg border border-destructive/40 px-3 py-2 text-sm text-destructive">{error}</div>}
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose}>{t("Cancel")}</Button>
           <Button disabled={!deck || busy} data-upload-version onClick={async () => {
             setBusy(true);
             setError(null);
             try {
               await account.newVersion(listing.id, { deck, changelog });
-              toast.success("New version sent for review");
+              toast.success(t("New version sent for review"));
               onDone();
             } catch (e) {
               setError(msg(e));
             } finally {
               setBusy(false);
             }
-          }}>{busy && <Loader2 className="size-4 animate-spin" />}Upload</Button>
+          }}>{busy && <Loader2 className="size-4 animate-spin" />}{t("Upload")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -536,27 +538,27 @@ function ReviewQueue() {
       toast.success(done);
       await load();
     } catch (e) {
-      toast.error("That didn't work", { description: msg(e) });
+      toast.error(t("That didn't work"), { description: msg(e) });
     }
   };
   const count = useMemo(() => queue?.length ?? 0, [queue]);
   return (
     <section className="rounded-xl border p-4" data-review>
-      <h3 className="text-base font-semibold">Review queue <span className="text-sm font-normal text-muted-foreground">{count}</span></h3>
-      <p className="mt-1 text-xs text-muted-foreground">Check rights to the material, quality, and that the preview is honest. Approving publishes every pending version.</p>
-      {!queue ? <Skeleton className="mt-3 h-16" /> : queue.length === 0 ? <p className="mt-3 text-sm text-muted-foreground">Nothing waiting.</p> : (
+      <h3 className="text-base font-semibold">{t("Review queue")} <span className="text-sm font-normal text-muted-foreground">{count}</span></h3>
+      <p className="mt-1 text-xs text-muted-foreground">{t("Check rights to the material, quality, and that the preview is honest. Approving publishes every pending version.")}</p>
+      {!queue ? <Skeleton className="mt-3 h-16" /> : queue.length === 0 ? <p className="mt-3 text-sm text-muted-foreground">{t("Nothing waiting.")}</p> : (
         <ul className="mt-3 flex flex-col gap-3">
           {queue.map((l) => (
             <li key={l.id} className="flex flex-col gap-2 rounded-lg border p-3" data-review-item={l.slug}>
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-medium">{l.name}</span>
-                <span className="text-muted-foreground">{money(l.price)} · {l.pending?.length ? `pending v${l.pending.join(", v")}` : "no new version"} · {l.versions?.at(-1) ? bytes(l.versions.at(-1)!.bytes) : ""}</span>
+                <span className="text-muted-foreground">{money(l.price)} · {l.pending?.length ? t("pending v{versions}", { versions: l.pending.join(", v") }) : t("no new version")} · {l.versions?.at(-1) ? bytes(l.versions.at(-1)!.bytes) : ""}</span>
               </div>
               {l.description && <p className="line-clamp-3 text-xs text-muted-foreground">{l.description}</p>}
-              <Input className="h-9" placeholder="Note to the creator (needed to reject)" value={notes[l.id] ?? ""} onChange={(e) => setNotes({ ...notes, [l.id]: e.target.value })} />
+              <Input className="h-9" placeholder={t("Note to the creator (needed to reject)")} value={notes[l.id] ?? ""} onChange={(e) => setNotes({ ...notes, [l.id]: e.target.value })} />
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => void act(() => account.approve(l.id, notes[l.id]), `Approved ${l.name}`)} data-approve={l.slug}>Approve</Button>
-                <Button size="sm" variant="outline" disabled={!notes[l.id]?.trim()} onClick={() => void act(() => account.reject(l.id, notes[l.id]), `Sent back ${l.name}`)}>Request changes</Button>
+                <Button size="sm" onClick={() => void act(() => account.approve(l.id, notes[l.id]), t("Approved {name}", { name: l.name }))} data-approve={l.slug}>{t("Approve")}</Button>
+                <Button size="sm" variant="outline" disabled={!notes[l.id]?.trim()} onClick={() => void act(() => account.reject(l.id, notes[l.id]), t("Sent back {name}", { name: l.name }))}>{t("Request changes")}</Button>
               </div>
             </li>
           ))}
