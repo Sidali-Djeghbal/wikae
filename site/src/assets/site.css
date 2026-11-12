@@ -872,13 +872,18 @@ html[dir="rtl"] .textlink:hover span {
 /* Ensure code and commands are strictly LTR regardless of page direction */
 .cmd,
 .code,
+.term,
 .term-body,
+pre[data-term],
+.t-line,
+.t-cmd,
 pre code,
 .tok-keyword,
 .tok-string,
 .cm-editor {
   direction: ltr !important;
   text-align: left !important;
+  unicode-bidi: isolate !important;
 }
 
 /* -------------------------------------------------------------------- nav */

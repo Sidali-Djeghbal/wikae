@@ -512,19 +512,36 @@ if (term) {
   fetch("assets/terminal.json").then((r) => r.json()).then(async ({ steps }) => {
     await new Promise((r) => whenVisible(term, r, "0px"));
     for (;;) {
-      const isAr = getCurrentLang() === "ar";
-      out.innerHTML = `<span class="dim">${isAr ? "# وكيل ذكي يستورد حزمة المتشابهات ويختبر حفظك عبر سطر الأوامر" : "# an agent imports your Mutashabihat pack and quizzes you via CLI"}</span>\n`;
+      out.innerHTML = `<span class="dim notranslate" translate="no" lang="en" dir="ltr"># an agent imports your Mutashabihat pack and quizzes you via CLI</span>\n`;
       for (const s of steps) {
         while (!vis.on) await sleep(300);
         const line = document.createElement("span");
-        line.className = "t-line";
-        line.innerHTML = `<span class="ps">$</span><span class="t-cmd"></span>`;
+        line.className = "t-line notranslate";
+        line.setAttribute("translate", "no");
+        line.setAttribute("lang", "en");
+        line.setAttribute("dir", "ltr");
+        line.innerHTML = `<span class="ps" translate="no">$</span> <span class="t-cmd notranslate" translate="no" lang="en" dir="ltr"></span>`;
         out.appendChild(line);
         const cmd = $(".t-cmd", line);
+        const desc = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
+        Object.defineProperty(cmd, "textContent", {
+          get() { return desc.get.call(this); },
+          set(val) {
+            console.log("SET textContent TO:", val, new Error().stack);
+            desc.set.call(this, val);
+          }
+        });
         const body = out.parentElement;
-        for (const ch of s.cmd) { cmd.textContent += ch; body.scrollTop = body.scrollHeight; await sleep(reduced ? 0 : 16); }
+        const text = s.cmd.trim();
+        console.log("FIRST CHAR OF TEXT:", text[0], text.charCodeAt(0));
+        for (const ch of text) {
+          cmd.textContent += ch;
+          console.log("APPENDED:", ch, "cmd.textContent IS:", cmd.textContent);
+          body.scrollTop = body.scrollHeight;
+          await sleep(reduced ? 0 : 16);
+        }
         await sleep(420);
-        out.insertAdjacentHTML("beforeend", `\n${colorJson(s.out)}\n\n`);
+        out.insertAdjacentHTML("beforeend", `\n<span class="notranslate" translate="no" lang="en" dir="ltr">${colorJson(s.out)}</span>\n\n`);
         body.scrollTo({ top: body.scrollHeight, behavior: reduced ? "auto" : "smooth" });
         await sleep(1500);
       }
