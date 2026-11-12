@@ -1,14 +1,15 @@
-// Captures real Etude screens for the website over CDP.
+// Captures real Wikae screens for the website over CDP.
 // Usage: node site/tools/shoot.mjs <base-url> <outdir> <spec.json>
 // spec: [{ name, url, width, height, scale, mobile, wait, steps: [js], clip: {x,y,width,height} | "selector" }]
 import { spawn } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 const [BASE, OUT, SPEC] = process.argv.slice(2);
 const specs = JSON.parse(readFileSync(SPEC, "utf8"));
 mkdirSync(OUT, { recursive: true });
-const profile = `${process.env.TMPDIR ?? "/tmp"}/etude-site-shoot-${process.pid}`;
+const profile = `${process.env.TMPDIR ?? "/tmp"}/wikae-site-shoot-${process.pid}`;
 const port = 9400 + (process.pid % 50);
-const chrome = spawn(process.env.CHROME ?? "chromium", ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--no-first-run", "--hide-scrollbars", "--force-color-profile=srgb", "about:blank"], { stdio: "ignore" });
+const findChrome = () => [process.env.CHROME, "/usr/bin/google-chrome-stable", "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/chromium-browser"].find((p) => p && existsSync(p)) ?? "chromium";
+const chrome = spawn(findChrome(), ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--no-first-run", "--hide-scrollbars", "--force-color-profile=srgb", "about:blank"], { stdio: "ignore" });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let ws;
 for (let i = 0; i < 80; i++) {

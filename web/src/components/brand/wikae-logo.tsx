@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/useLocale";
 
 export interface WikaeLogoProps {
   /** Display style: 'mark' (icon only), 'wordmark' (text only), or 'full' (mark + text) */
@@ -144,17 +145,15 @@ export function WikaeLogo({
   markClassName,
   textClassName,
 }: WikaeLogoProps) {
+  const { locale: activeLocale } = useLocale();
   const cfg = SIZE_CONFIG[size];
 
   // Resolve active locale
   const isArabic = React.useMemo(() => {
     if (locale === "ar") return true;
     if (locale === "en") return false;
-    if (typeof document !== "undefined") {
-      return document.documentElement.dir === "rtl" || document.documentElement.lang === "ar";
-    }
-    return false;
-  }, [locale]);
+    return activeLocale === "ar";
+  }, [locale, activeLocale]);
 
   if (variant === "mark") {
     return <WikaeMark size={cfg.mark} className={markClassName} color={color} />;

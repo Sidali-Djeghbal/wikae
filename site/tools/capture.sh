@@ -3,7 +3,7 @@
 # site/tools/capture.sh   (needs chromium, ImageMagick and a built web app: npm run build)
 set -euo pipefail
 cd "$(dirname "$0")/../.."
-tmp="${TMPDIR:-/tmp}/etude-site-capture"
+tmp="${TMPDIR:-/tmp}/wikae-site-capture"
 mkdir -p "$tmp"
 node site/tools/demo-db.ts "$tmp/demo.db"
 port=4697

@@ -59,6 +59,7 @@
     "prepack": "npm run build",
     "site": "node site/build.ts",
     "site:serve": "node site/tools/serve.mjs",
+    "site:dev": "node site/tools/dev.mjs",
     "test:wasm": "ETUDE_SQL=wasm node --test \"test/**/*.test.ts\"",
     "build:browser": "node src/browser/tools/build-frame.mjs && vite build --config src/browser/vite.config.ts",
     "app:sync": "npm run build:browser && cap sync",

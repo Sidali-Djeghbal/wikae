@@ -8,6 +8,7 @@ import { api, relative, type DeckNode } from "@/lib/api";
 import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
 import { useLongPress } from "@/lib/phone";
+import { t as tr } from "@/lib/i18n";
 import { useLocale } from "@/lib/useLocale";
 import { childrenOf, clashes, leafOf, moveDeck, MoveDeckDialog, parentOf } from "@/components/move-deck";
 import { ActionSheet, Mark, PhoneIconButton, PhoneTitle, Tally, type SheetAction } from "@/components/phone-shell";
@@ -16,7 +17,7 @@ import { DeckMenu, useDeckActions } from "@/components/deck-actions";
 
 const enc = encodeURIComponent;
 const work = (d: DeckNode) => d.new + d.learning + d.review;
-const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const plural = (n: number, w: string) => `${n} ${tr(n === 1 ? w : `${w}s`)}`;
 
 export function practiceUrl(d: DeckNode) {
   if (d.mode === "watch") return `/watch?deck=${enc(d.name)}`;
@@ -101,7 +102,7 @@ function TodayCard({ due, n, l, r, done }: { due: number; n: number; l: number; 
     <section className="score-rise mx-5 rounded-[1.75rem] border bg-card p-5" aria-label={t("Today")}>
       <div className="flex items-baseline justify-between">
         <span className="score-kicker">{t("Today")}</span>
-        {done > 0 && <span className="text-[12px] text-muted-foreground tabular">{plural(done, "review")} {t("reviews done")}</span>}
+        {done > 0 && <span className="text-[12px] text-muted-foreground tabular">{t(done === 1 ? "{n} review done" : "{n} reviews done", { n: done })}</span>}
       </div>
       {due ? (
         <>

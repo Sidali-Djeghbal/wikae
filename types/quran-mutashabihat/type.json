@@ -1,7 +1,7 @@
 {
   "id": "quran-mutashabihat",
-  "name": "Quranic Mutashabihat",
-  "description": "Complete a verse's pivotal wording and tell similar verses apart. Built for Quran memorizers.",
+  "name": "متشابهات القرآن الكريم",
+  "description": "أكمل الموضع المفصلي للآية الكريمة وميّز بين الآيات المتشابهة بالرسم العثماني مع القواعد الضابطة.",
   "fields": [
     {
       "name": "titleAr",

@@ -706,23 +706,37 @@ export interface ThemeData {
 export const STATE_NAMES = ["New", "Learning", "Review", "Relearning"];
 export const RATING_LABEL: Record<Rating, string> = { 1: "Again", 2: "Hard", 3: "Good", 4: "Easy" };
 
+function isAr(): boolean {
+  return typeof document !== "undefined" && (document.documentElement.lang === "ar" || document.documentElement.dir === "rtl");
+}
+
 /** "3m", "2h", "4d", "1.5mo" until the given date. */
 export function humanInterval(toIso: string, from = new Date()): string {
+  const ar = isAr();
   const ms = new Date(toIso).getTime() - from.getTime();
   const m = Math.max(1, Math.round(ms / 60000));
-  if (m < 60) return `${m}m`;
+  if (m < 60) return ar ? `${m} د` : `${m}m`;
   const h = m / 60;
-  if (h < 24) return `${Math.round(h)}h`;
+  if (h < 24) return ar ? `${Math.round(h)} س` : `${Math.round(h)}h`;
   const d = h / 24;
-  if (d < 30) return `${d < 10 ? Math.round(d * 10) / 10 : Math.round(d)}d`.replace(".0d", "d");
+  if (d < 30) {
+    const val = `${d < 10 ? Math.round(d * 10) / 10 : Math.round(d)}`.replace(".0", "");
+    return ar ? `${val} ي` : `${val}d`;
+  }
   const mo = d / 30.4;
-  if (mo < 12) return `${Math.round(mo * 10) / 10}mo`.replace(".0mo", "mo");
-  return `${Math.round((d / 365) * 10) / 10}y`.replace(".0y", "y");
+  if (mo < 12) {
+    const val = `${Math.round(mo * 10) / 10}`.replace(".0", "");
+    return ar ? `${val} ش` : `${val}mo`;
+  }
+  const y = `${Math.round((d / 365) * 10) / 10}`.replace(".0", "");
+  return ar ? `${y} سنة` : `${y}y`;
 }
 
 export function relative(iso: string, from = new Date()): string {
+  const ar = isAr();
   const ms = new Date(iso).getTime() - from.getTime();
   const past = ms < 0;
   const s = humanInterval(new Date(from.getTime() + Math.abs(ms)).toISOString(), from);
+  if (ar) return past ? `منذ ${s}` : `خلال ${s}`;
   return past ? `${s} ago` : `in ${s}`;
 }

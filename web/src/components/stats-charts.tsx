@@ -110,6 +110,7 @@ export function Heatmap({ days, weeks: maxWeeks, today }: { days: { day: string;
         <svg
           width={W}
           height={H}
+          direction="ltr"
           viewBox={`0 0 ${W} ${H}`}
           className="max-w-full"
           role="img"
@@ -223,7 +224,7 @@ export function BarChart({
   const labelled = (i: number) => (tickAt ? tickAt.includes(i) && (bw >= 9 || i === 0 || i === n - 1 || i % 14 === 0) : i === 0 || (i % every === 0 && i >= every));
   return (
     <div ref={ref} className="relative w-full">
-      <svg width={W} height={H} className="block max-w-full" role="img" aria-label={label} onMouseLeave={() => { setTip(null); setHover(null); }}>
+      <svg width={W} height={H} direction="ltr" className="block max-w-full" role="img" aria-label={label} onMouseLeave={() => { setTip(null); setHover(null); }}>
         <title>{label}</title>
         {ticks.map((t) => (
           <g key={t}>

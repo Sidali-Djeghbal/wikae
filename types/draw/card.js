@@ -2,7 +2,7 @@ const canvas = etude.$(".canvas");
 const ctx = canvas.getContext("2d");
 const bg = etude.view.background || "grid";
 const css = getComputedStyle(document.documentElement);
-const COLORS = [css.getPropertyValue("--foreground").trim() || "#fafafa", "#f472b6", "#60a5fa", "#4ade80", "#facc15"];
+const COLORS = [css.getPropertyValue("--foreground").trim() || "#fafafa", "#10b981", "#d4af37", "#60a5fa", "#facc15"];
 let color = COLORS[0], size = 3.5, tool = "pen";
 const strokes = [];
 let redo = [];

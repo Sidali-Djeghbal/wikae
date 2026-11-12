@@ -20,9 +20,10 @@ const out = join(here, "dist");
 const require = createRequire(import.meta.url);
 const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 
+const quick = process.argv.includes("--quick") && existsSync(join(out, "live/stats.js"));
 checkPublicContent(here);
 if (!existsSync(join(root, "web/dist/kit/kit.js"))) throw new Error("web/dist/kit is missing: run `npm run build` first");
-rmSync(out, { recursive: true, force: true });
+if (!quick) rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 
 // Pages and assets. {{VERSION}} is filled in from package.json.
@@ -135,7 +136,7 @@ if (!prelude) throw new Error("couldn't find PRELUDE in src/core/sandbox.ts");
 // Demo cards and repertoire items.
 const pack = JSON.parse(readFileSync(join(root, "examples/showcase.pack.json"), "utf8"));
 const typeDir = (id: string) => [join(root, "examples/showcase/types", id), join(root, "types", id)].find((d) => existsSync(join(d, "type.json")))!;
-const fontFace = `<style>@font-face{font-family:"Inter";src:url("assets/fonts/inter.woff2") format("woff2");font-weight:100 900;font-display:swap}@font-face{font-family:"JetBrains Mono";src:url("assets/fonts/jetbrains-mono.woff2") format("woff2");font-weight:100 800;font-display:swap}</style>`;
+const fontFace = `<style>@font-face{font-family:"Inter";src:url("assets/fonts/inter.woff2") format("woff2");font-weight:100 900;font-display:swap}@font-face{font-family:"JetBrains Mono";src:url("assets/fonts/jetbrains-mono.woff2") format("woff2");font-weight:100 800;font-display:swap}@font-face{font-family:"Cairo";src:url("assets/fonts/cairo-400-700-arabic.woff2") format("woff2");font-weight:400 700;font-display:swap}@font-face{font-family:"Amiri Quran";src:url("assets/fonts/amiri-quran.woff2") format("woff2");font-weight:400;font-display:swap}</style>`;
 const demos: never[] = [];
 // The repertoire: every card type in the box, live, for the visitor's own hands. Items come from
 // the showcase pack (one per type) plus site/variants.json, more items of the same types that the
@@ -151,10 +152,10 @@ const REPERTOIRE: [string, [string, string, string, string[]][]][] = [
       "showcase.quran.shafaa_adl",
       "showcase.quran.sariou_sabiqu",
     ]],
-    ["basic", "Flip a card", "The classic: think of the answer, turn the card over, and be honest with yourself.", ["showcase.basic.sky"]],
-    ["typed", "Type the answer", "A short answer typed from memory, checked against the accepted spellings.", ["showcase.typed.capital"]],
-    ["mcq", "Pick the answer", "Options shuffled every time, so you remember the answer, not its position.", ["showcase.mcq.day"]],
-    ["cloze", "Fill the blanks", "A sentence with holes in it. Each blank is checked on its own.", ["showcase.cloze.haiku"]],
+    ["basic", "Flip a card", "The classic: think of the answer, turn the card over, and be honest with yourself.", ["wikae.basic.tuhfah", "wikae.basic.jazariyyah", "wikae.basic.nawawi1"]],
+    ["typed", "Type the answer", "A short answer typed from memory, checked against the accepted spellings.", ["wikae.typed.iqlab", "wikae.typed.madd", "wikae.typed.suwar"]],
+    ["mcq", "Pick the answer", "Options shuffled every time, so you remember the answer, not its position.", ["wikae.mcq.qalqalah", "wikae.mcq.makki", "wikae.mcq.maddtabii"]],
+    ["cloze", "Fill the blanks", "A verse or a hadith with holes in it. Each blank is checked on its own.", ["wikae.cloze.nawawi1", "wikae.cloze.tuhfah", "wikae.cloze.jazariyyah"]],
     ["match", "Match the pairs", "Wire each item to its partner. The right side comes shuffled.", [
       "showcase.match.quran",
       "showcase.match.naba",
@@ -165,12 +166,8 @@ const REPERTOIRE: [string, [string, string, string, string[]][]][] = [
     ]],
   ]],
   ["Calculate", [
-    ["numeric", "Compute, with units", "New numbers every review. Units are fine, and the answer gets a tolerance.", ["showcase.numeric.train"]],
-    ["math", "Write the expression", "Type it however you like: any equivalent form is accepted, and it renders as you type.", ["showcase.math.derivative", "showcase.math.factor", "showcase.math.roots", "showcase.math.exact", "showcase.math.line"]],
-    ["estimate", "Estimate it", "Slide to your best guess. Close is full credit, near is partial.", ["showcase.estimate.everest", "showcase.estimate.heartbeats"]],
-    ["balance", "Balance the equation", "Step the coefficients until every atom balances. The tally updates as you go.", ["showcase.balance.combustion", "showcase.balance.rust", "showcase.balance.aluminium-acid"]],
-    ["unit-circle", "Find the angle", "Put the angle where it belongs, in degrees, radians or both.", ["showcase.unit-circle.mixed", "showcase.unit-circle.radians"]],
-    ["plot", "Mark the points", "Tap the points that matter on the grid: roots, vertices, intersections.", ["showcase.plot.parabola", "showcase.plot.lines"]],
+    ["numeric", "Compute, with units", "Figures from fiqh and from your own hifz plan, with a tolerance on the answer.", ["wikae.numeric.zakat", "wikae.numeric.salat", "wikae.numeric.hifz"]],
+    ["estimate", "Estimate it", "Slide to your best guess. Close is full credit, near is partial.", ["wikae.estimate.baqarah", "wikae.estimate.ayat"]],
   ]],
   ["Arrange", [
     ["order", "Put them in order", "Drag the blocks, or move them with the keyboard. Partial credit for what's already in order.", [
@@ -181,27 +178,7 @@ const REPERTOIRE: [string, [string, string, string, string[]][]][] = [
       "showcase.order.naba",
       "showcase.order.tin",
     ]],
-    ["timeline", "Place it in time", "Drag each event to its year. Graded on order and on how many years off.", ["showcase.timeline.computing", "showcase.timeline.physics"]],
-    ["graph-walk", "Walk the graph", "Tap the nodes in the order the algorithm would visit them, on a graph made for this review.", ["showcase.graph-walk.bfs", "showcase.graph-walk.dfs"]],
-  ]],
-  ["Code", [
-    ["code", "Write a function", "A real editor. The answer runs against hidden tests in a sandbox.", ["showcase.code.roman"]],
-    ["regex", "Write the regex", "The visible tests light up as you type; hidden ones decide the grade.", ["showcase.regex.hex-color", "showcase.regex.iso-date"]],
-    ["bug-hunt", "Find the bug", "Point at the line that's wrong. The fix appears afterwards.", ["showcase.bug-hunt.moving-average", "showcase.bug-hunt.closure-retry"]],
-    ["bits", "Flip the bits", "Flip switches until the binary makes the number.", ["showcase.bits.unsigned", "showcase.bits.twos-complement"]],
-  ]],
-  ["Play & listen", [
-    ["chess", "Mate in one", "Find the mate on a real board. Tap, or drag the piece.", ["showcase.chess.smothered", "showcase.chess.queen-f2"]],
-    ["chord", "Build the chord", "Play it on the keyboard. Any voicing or inversion counts.", ["showcase.chord.triads", "showcase.chord.sevenths"]],
-    ["staff", "Read the note", "Read the note off the staff and play it.", ["showcase.staff.treble", "showcase.staff.bass"]],
-    ["interval", "Name the interval", "Ear training: listen to two notes and name the distance between them. Turn your sound on.", ["showcase.interval.basic", "showcase.interval.all"]],
-    ["color", "Mix the color", "Build the color from its hex code with hue, saturation and lightness.", ["showcase.color.hex"]],
-    ["sprint", "Beat the clock", "Thirty seconds of mental arithmetic. It submits itself when the time is up.", ["showcase.sprint.mixed"]],
-    ["typing", "Type fast", "A Monkeytype-style typing test. The clock starts on your first key, and the result is your WPM.", ["showcase.typing.english", "showcase.typing.python"]],
-  ]],
-  ["Draw & write", [
-    ["free", "Prove it", "A proof in your own words, with math that renders as you type.", ["showcase.free.induction"]],
-    ["draw", "Write it by hand", "Draw or write it with your finger or mouse. A vision model reads the strokes.", ["showcase.draw.kanji-water", "showcase.draw.parabola"]],
+    ["timeline", "Place it in time", "Drag each event to its year. Graded on order and on how many years off.", ["wikae.timeline.seerah"]],
   ]],
 ];
 // The new Market decks (site/tools/new-decks.mjs copies their types and a few real items into
@@ -210,11 +187,6 @@ type DeckFile = { type: any; items: { id: string; type: string; deck: string; fi
 const deckFiles = new Map<string, DeckFile>(
   readdirSync(join(here, "decks")).filter((f) => f.endsWith(".json")).map((f) => [f.replace(/\.json$/, ""), JSON.parse(readFileSync(join(here, "decks", f), "utf8"))]),
 );
-REPERTOIRE.find(([g]) => g === "Play & listen")![1].push(["flippy", "Shoot the invaders", "Flippy Bit: flip eight bits until they spell the hex number falling at you. A drill, measured in invaders.", ["flippy.hex"]]);
-REPERTOIRE.splice(REPERTOIRE.findIndex(([g]) => g === "Code"), 0, ["Explore", [
-  ["country-map", "Find it on the map", "Name the country that's lit up, or find the one that's named. Zoom and pan like a real map.", ["geo.country.can", "geo.country.jpn", "geo.country.ita", "geo.country.egy", "geo.country.per", "geo.country.mng"]],
-  ["element", "Read the table", "Tap an element on a blank periodic table, name a lit cell, or give its family and configuration.", ["pt.locate.fe", "pt.identify.ne", "pt.name.au", "pt.family.w", "pt.config.c", "pt.numbers.c"]],
-]]);
 const deckItem = (id: string) => [...deckFiles.values()].flatMap((d) => d.items).find((i) => i.id === id);
 // A type from the examples folder or from site/decks/, with the asset hashes its frame needs.
 function loadSiteType(type: string): { def: any; assets?: { type: string; files: { name: string; hash: string }[] } } {
@@ -319,10 +291,6 @@ const gallery = REPERTOIRE.flatMap(([group, entries]) => entries.map(([type, lab
     items,
   };
 }));
-const allTypes = [join(root, "types"), join(root, "examples/showcase/types")].flatMap((d) => readdirSync(d).filter((t: string) => existsSync(join(d, t, "type.json"))));
-const missing = allTypes.filter((t) => !gallery.some((e) => e.type === t));
-// A new type should get a place in REPERTOIRE; until then the build says so instead of failing.
-if (missing.length) console.warn(`site: the repertoire is missing types: ${missing.join(", ")}`);
 
 // Highlighted source for the "card types are code" section and the generator example, using the
 // same highlighter classes (tok-*) as the app, styled by runtime/code.css.
@@ -371,7 +339,9 @@ writeFileSync(
 );
 
 // The live Stats panels: the app's own React components with the demo snapshots, into dist/live/.
-execFileSync(process.execPath, [join(root, "node_modules/vite/bin/vite.js"), "build", "--config", join(here, "stats-embed/vite.config.ts")], { cwd: root, stdio: "inherit" });
+if (!quick) {
+  execFileSync(process.execPath, [join(root, "node_modules/vite/bin/vite.js"), "build", "--config", join(here, "stats-embed/vite.config.ts")], { cwd: root, stdio: "inherit" });
+}
 
 const BASE_URL = "https://sidali-djeghbal.github.io/wikae";
 const sitemapPages = ["", "download.html", "sync.html", "support.html", "terms.html", "privacy.html"];

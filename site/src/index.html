@@ -41,22 +41,59 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="وِكَاء — تطبيق مجاني ومفتوح المصدر لتثبيت حفظ القرآن وضبط المتشابهات">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="وِكَاء — اضبط المتشابهات وثبّت المحفوظات">
+  <meta name="twitter:description" content="منصة مفتوحة المصدر لحفظ القرآن الكريم وتثبيت المتشابهات اللفظية بخوارزمية FSRS-6 والتقييم الذكي.">
+  <meta name="twitter:image" content="https://sidali-djeghbal.github.io/wikae/assets/og.png">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "Wikae (وِكَاء)",
-    "operatingSystem": "macOS, Windows, Linux",
-    "applicationCategory": "EducationalApplication",
-    "license": "https://www.gnu.org/licenses/agpl-3.0.html",
-    "url": "https://sidali-djeghbal.github.io/wikae/",
-    "downloadUrl": "https://sidali-djeghbal.github.io/wikae/download.html",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-    "description": "Open-source, offline-first desktop application for memorizing the Quran and mastering Mutashabihat using active recall and FSRS-6 spaced repetition."
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Wikae (وِكَاء)",
+        "alternateName": "وِكَاء",
+        "operatingSystem": "macOS, Windows, Linux",
+        "applicationCategory": "EducationalApplication",
+        "inLanguage": ["ar", "en"],
+        "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+        "url": "https://sidali-djeghbal.github.io/wikae/",
+        "downloadUrl": "https://sidali-djeghbal.github.io/wikae/download.html",
+        "screenshot": "https://sidali-djeghbal.github.io/wikae/assets/og.png",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "تطبيق مجاني ومفتوح المصدر لحفظ القرآن الكريم وضبط المتشابهات اللفظية والعلوم الشرعية بخوارزمية FSRS-6 للتكرار المتباعد. Open-source, offline-first desktop application for memorizing the Quran and mastering Mutashabihat using FSRS-6 spaced repetition."
+      },
+      {
+        "@type": "WebSite",
+        "name": "وِكَاء (Wikae)",
+        "url": "https://sidali-djeghbal.github.io/wikae/",
+        "inLanguage": ["ar", "en"]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "ما هو تطبيق وِكَاء وكيف يضبط متشابهات القرآن الكريم؟",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "وِكَاء هو تطبيق سطح مكتب مجاني ومفتوح المصدر يعمل دون اتصال بالإنترنت، يجمع بين الاستدعاء النشط للمواضع المتشابهة بالرسم العثماني المعتمد وخوارزمية FSRS-6 العلمية لجدولة المراجعة قبيل لحظة النسيان."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "هل يمكنني استيراد حزم Anki مع سجل المراجعات السابق؟",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "نعم، يستورد وِكَاء ملفات .apkg من Anki مباشرة مع الحفاظ الكامل على البطاقات والوسائط وسجل المراجعات التاريخي لتكمل جدولك دون البدء من الصفر."
+            }
+          }
+        ]
+      }
+    ]
   }
   </script>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="preload" href="assets/fonts/cairo-400-700-arabic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/ibm-plex-sans-arabic-700-arabic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/amiri-quran.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="modulepreload" href="data.js">
   <link rel="stylesheet" href="runtime/vendor/katex.css">
@@ -139,8 +176,8 @@
           <div class="hero-copy">
             <div data-lang="ar">
               <p class="opus fade-up">وِكَاء <span>تطبيق مكتبي مجاني ومفتوح المصدر · يعمل دون اتصال · متوافق مع Anki</span></p>
-              <h1 class="fade-up" style="animation-delay:.08s"><span class="l">اضبط المتشابهات.</span> <span
-                  class="l"><em>وثبّت المحفوظات.</em></span></h1>
+              <h1 class="fade-up" style="animation-delay:.08s"><span class="l">رِباطٌ وثيقٌ للمحفوظ.</span> <span
+                  class="l"><em>وإتقانٌ راسخٌ للمتشابهات.</em></span></h1>
               <p class="lede fade-up" style="animation-delay:.18s">بيئة علمية متكاملة لتثبيت حفظ القرآن الكريم وضبط المتشابهات اللفظية والمتون والحديث. يجمع «وِكَاء» بين تمارين الاستدعاء النشط بالرسم العثماني وخوارزمية FSRS-6 التي تحسب موعد المراجعة الدقيق لكل آية قبل تفلّتها—مع بقاء كامل بياناتك محلياً على جهازك.</p>
               <div class="hero-cta fade-up" style="animation-delay:.26s">
                 <a class="btn btn-primary btn-lg" href="download.html"><span class="ph-hide">حمّل وِكَاء مجاناً</span><span
@@ -156,7 +193,7 @@
 
             <div data-lang="en">
               <p class="opus fade-up">Wikae <span>Free, open-source desktop app · 100% offline · Full Anki import</span></p>
-              <h1 class="fade-up" style="animation-delay:.08s"><span class="l">Memorize the Quran.</span> <span
+              <h1 class="fade-up" style="animation-delay:.08s"><span class="l">Anchor Your Memorization.</span> <span
                   class="l"><em>Master the Mutashabihat.</em></span></h1>
               <p class="lede fade-up" style="animation-delay:.18s">A scholarly workspace for Quran retention, Mutashabihat mastery, matn, and hadith. Wikae pairs active-recall exercises in Uthmani script with FSRS-6 scheduling calculated per verse—keeping all your data locally on your device.</p>
               <div class="hero-cta fade-up" style="animation-delay:.26s">
@@ -189,14 +226,14 @@
                   <span lang="ar" dir="rtl">﴿فَارْهَبُونِ﴾ — البقرة ٤٠</span>
                 </button>
               </div>
-              <p class="hero-proof-feedback" id="hero-proof-feedback" hidden>
+              <p class="hero-proof-feedback" id="hero-proof-feedback" data-hero-feedback aria-live="polite" hidden>
                 <span data-lang="ar">أحسنت! ﴿وَلَا تَشْتَرُوا﴾ مقترنة بـ ﴿فَاتَّقُونِ﴾ (الآية ٤١)، بينما ﴿وَأَوْفُوا بِعَهْدِي﴾ في الآية ٤٠ خُتمت بـ ﴿فَارْهَبُونِ﴾.</span>
                 <span data-lang="en">Exact match! "Wa la tashtaru" (2:41) closes with "fattaqun", whereas "Wa awfu bi'ahdi" (2:40) closes with "farhabun".</span>
               </p>
             </div>
 
             <p class="colophon fade-up" style="animation-delay:.36s">
-              <span data-lang="ar">متشابهات القرآن بالرسم العثماني · خوارزمية FSRS-6 · استيراد Anki كامل · مفتوح المصدر لـ macOS و Windows و Linux · بياناتك ملكك على جهازك</span>
+              <span data-lang="ar">متشابهات القرآن بالرسم العثماني · خوارزمية FSRS-6 · استيراد Anki كامل · مفتوح المصدر لأنظمة ماك (macOS) وويندوز (Windows) ولينكس (Linux) · بياناتك ملكك على جهازك</span>
               <span data-lang="en">Quranic Mutashabihat in Uthmani script · FSRS-6 algorithm · Full Anki import · Open source for macOS, Windows &amp; Linux · 100% offline &amp; private</span>
             </p>
           </div>
@@ -419,7 +456,7 @@
               <span data-lang="en">Read more</span>
             </button>
           </div>
-          <blockquote class="pull" data-reveal style="--d:.1s" aria-hidden="true">
+          <blockquote class="pull" data-reveal style="--d:.2s" aria-hidden="true">
             <span data-lang="ar">«تَعَاهَدُوا هذا القُرْآنَ...» حفظٌ راسخ بنظام علمي <em>مُتقن.</em></span>
             <span data-lang="en">"Commit yourselves to this Quran..." Lasting retention through a <em>scientific
                 system.</em></span>
@@ -452,7 +489,7 @@
               <div class="flip-card">
                 <div class="index-card front">
                   <span data-lang="ar">﴿وَإِذْ نَجَّيْنَاكُم مِّنْ آلِ فِرْعَوْنَ يَسُومُونَكُمْ سُوءَ الْعَذَابِ...﴾ ما
-                    اللفظ التالي في البقرة؟</span>
+                    اللفظ التالي في سورة البقرة؟</span>
                   <span data-lang="en">Complete in Al-Baqarah: ﴿وَإِذْ نَجَّيْنَاكُم مِّنْ آلِ فِرْعَوْنَ...﴾?</span>
                 </div>
                 <div class="index-card back">
@@ -661,7 +698,7 @@
             </div>
             <div class="hw-grade"><span class="stamp" data-verdict></span><span class="tabular hw-score"
                 data-score></span><span class="meter"><i data-meter></i></span></div>
-            <div class="feedback-text" data-feedback></div>
+            <div class="feedback-text" data-feedback aria-live="polite"></div>
             <figcaption class="fineprint" data-model></figcaption>
           </figure>
         </div>
@@ -1012,8 +1049,8 @@
               updates in place without duplicating cards or losing progress made in Wikae.</p>
           </div>
           <figure class="anki-shot" data-reveal style="--d:.1s">
-            <div class="anki-card"><img src="assets/anki/ultimate-geography.webp" alt="بطاقة مستوردة من Anki في وِكَاء"
-                width="1100" height="1252" loading="lazy"></div>
+            <div class="anki-card"><img src="assets/shots/card-anki.webp" alt="بطاقة مستوردة من Anki في وِكَاء"
+                width="1100" height="840" loading="lazy"></div>
             <figcaption class="fineprint" data-lang="ar">نموذج لبطاقة مستوردة من Anki تعمل داخل وِكَاء بكامل تنسيقها
               ومحتواها الأصلي.</figcaption>
             <figcaption class="fineprint" data-lang="en">An imported Anki card running inside Wikae with its original
@@ -1208,7 +1245,7 @@
                   width="2400" height="1500" loading="lazy">
               </div>
             </div>
-            <div class="phone"><img class="screen" src="assets/shots/phone-chess.webp" alt="تطبيق وِكَاء على الهاتف"
+            <div class="phone"><img class="screen" src="assets/shots/phone-study.webp" alt="تطبيق وِكَاء على الهاتف"
                 loading="lazy" width="804" height="1748"><img class="frame"
                 src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true"></div>
           </div>
@@ -1223,21 +1260,21 @@
             <figcaption data-lang="en"><b>Deck tree:</b> shows what's new, learning, and due today.</figcaption>
           </figure>
           <figure class="phone-slide">
-            <div class="phone"><img class="screen" src="assets/shots/phone-chess.webp" alt="جلسة الحفظ على الهاتف"
+            <div class="phone"><img class="screen" src="assets/shots/phone-study.webp" alt="جلسة الحفظ على الهاتف"
                 loading="lazy" width="804" height="1748"><img class="frame"
                 src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div>
             <figcaption data-lang="ar"><b>مراجعة تفاعلية:</b> تركز على بطاقة واحدة مع تصحيح مباشر.</figcaption>
             <figcaption data-lang="en"><b>Interactive study:</b> one card at a time with instant grading.</figcaption>
           </figure>
           <figure class="phone-slide">
-            <div class="phone"><img class="screen" src="assets/shots/phone-circle.webp" alt="واجهة لمسية متوافقة"
+            <div class="phone"><img class="screen" src="assets/shots/phone-order.webp" alt="واجهة لمسية متوافقة"
                 loading="lazy" width="804" height="1748"><img class="frame"
                 src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div>
             <figcaption data-lang="ar"><b>واجهة لمسية:</b> تجربة سلسة مصممة خصيصاً للهاتف.</figcaption>
             <figcaption data-lang="en"><b>Touch-optimized:</b> swipe or tap designed for mobile screens.</figcaption>
           </figure>
           <figure class="phone-slide">
-            <div class="phone"><img class="screen" src="assets/shots/phone-staff.webp" alt="تمارين متنوعة"
+            <div class="phone"><img class="screen" src="assets/shots/phone-match.webp" alt="تمارين متنوعة"
                 loading="lazy" width="804" height="1748"><img class="frame"
                 src="assets/device/iphone-16-pro-black-titanium.webp" alt="" aria-hidden="true" loading="lazy"></div>
             <figcaption data-lang="ar"><b>تمارين متنوعة:</b> استحضار سريع واستجابة فورية.</figcaption>

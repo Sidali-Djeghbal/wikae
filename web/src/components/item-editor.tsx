@@ -105,7 +105,7 @@ export function ItemRow({ row: r, active, checked, onOpen, onToggle, className, 
         <div className={cn("line-clamp-2 text-sm leading-snug max-md:text-[15px]", active && "font-medium text-highlight")} aria-current={active || undefined}>{r.title || <span className="text-muted-foreground">{r.itemId}</span>}</div>
         <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
           {!hideDeck && <><span className="truncate">{r.deck.split("::").slice(-1)[0]}</span><span>·</span></>}
-          <span className="shrink-0">{r.type}</span>
+          <span className="shrink-0">{t(r.type)}</span>
           {r.generated && <Dices className="size-3 shrink-0" />}
           {r.faces > 1 && <span className="shrink-0">· {r.faces} {t("cards")}</span>}
           <div className="flex-1" />
@@ -344,40 +344,40 @@ export function ItemEditor({ id, decks, tags, onSaved, onDeleted, onDuplicate, o
         faces={type.facesWhen ? item.cards.map((c) => c.face) : type.faces}
         generated={typeof item.fields.generator === "string"}
       />
-      {dirty && <p className="-mt-3 text-xs text-muted-foreground">The preview shows the saved version. Save to see your edits.</p>}
+      {dirty && <p className="-mt-3 text-xs text-muted-foreground">{t("The preview shows the saved version. Save to see your edits.")}</p>}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="edit">Edit</TabsTrigger>
-          <TabsTrigger value="schedule">Scheduling</TabsTrigger>
-          <TabsTrigger value="history">History <span className="ml-1 tabular text-muted-foreground">{item.reviews.length + item.attempts.length}</span></TabsTrigger>
+          <TabsTrigger value="edit">{t("Edit")}</TabsTrigger>
+          <TabsTrigger value="schedule">{t("Scheduling")}</TabsTrigger>
+          <TabsTrigger value="history">{t("History")} <span className="ml-1 tabular text-muted-foreground">{item.reviews.length + item.attempts.length}</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="edit" className="mt-5 flex flex-col gap-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">Deck</label>
+              <label className="text-sm font-medium">{t("Deck")}</label>
               <DeckInput value={draft.deck} decks={decks} onChange={(deck) => setDraft({ ...draft, deck })} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">Source</label>
-              <Input value={draft.source} onChange={(e) => setDraft({ ...draft, source: e.target.value })} placeholder="Where this comes from" />
+              <label className="text-sm font-medium">{t("Source")}</label>
+              <Input value={draft.source} onChange={(e) => setDraft({ ...draft, source: e.target.value })} placeholder={t("Where this comes from")} />
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Tags</label>
+            <label className="text-sm font-medium">{t("Tags")}</label>
             <TagInput value={draft.tags} known={tags} onChange={(t) => setDraft({ ...draft, tags: t })} />
           </div>
           <div className="border-t pt-5">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h3 className="text-sm font-medium">Content</h3>
+              <h3 className="text-sm font-medium">{t("Content")}</h3>
               <ItemAiEdit key={item.id} id={item.id} fields={draft.fields} specs={type.fields} onApply={(fields) => setDraft((current) => current && { ...current, fields })} />
             </div>
             <FieldEditor key={item.id} fields={type.fields} value={draft.fields} onChange={(fields) => setDraft((current) => current && { ...current, fields })} onMediaPendingChange={setMediaPending} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">Notes</label>
-            <Input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} placeholder="Private notes, not shown on the card" />
+            <label className="text-sm font-medium">{t("Notes")}</label>
+            <Input value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} placeholder={t("Private notes, not shown on the card")} />
           </div>
         </TabsContent>
 

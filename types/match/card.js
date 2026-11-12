@@ -1,7 +1,7 @@
 const { view } = etude;
 if (document.documentElement.lang === "ar" || document.documentElement.dir === "rtl") {
   const help = etude.$(".help");
-  if (help) help.textContent = "اختر عنصراً من اليسار، ثم شريكه. انقر على عنصر متصل للتراجع.";
+  if (help) help.textContent = "اختر عنصراً من اليمين، ثم شريكه. انقر على عنصر متصل للتراجع.";
 }
 const L = etude.$(".left"), R = etude.$(".right"), svg = etude.$(".wires"), board = etude.$(".board");
 const chip = (side, o, i) => `<button type="button" class="e-option chip" data-side="${side}" data-id="${o.id}"><span class="e-key">${side === "l" ? i + 1 : String.fromCharCode(97 + i)}</span><span class="prose">${etude.md(o.text)}</span></button>`;
@@ -10,7 +10,7 @@ R.innerHTML = view.right.map((o, i) => chip("r", o, i)).join("");
 const links = new Map(Object.entries(etude.answer && typeof etude.answer === "object" ? etude.answer : {}));
 let picked = null;
 const el = (id) => board.querySelector(`[data-id="${id}"]`);
-const COLORS = ["#f472b6", "#60a5fa", "#facc15", "#4ade80", "#c084fc", "#fb923c", "#2dd4bf", "#f87171", "#a3e635", "#e879f9"];
+const COLORS = ["#10b981", "#60a5fa", "#facc15", "#4ade80", "#d4af37", "#fb923c", "#2dd4bf", "#f87171", "#a3e635", "#38bdf8"];
 const colorOf = (lid) => COLORS[view.left.findIndex((o) => o.id === lid) % COLORS.length];
 
 function draw(marks) {
@@ -21,11 +21,14 @@ function draw(marks) {
   let paths = "";
   for (const [l, r] of links) {
     const a = el(l).getBoundingClientRect(), b = el(r).getBoundingClientRect();
+    const rtl = a.left + a.width / 2 > b.left + b.width / 2;
     const y1 = a.top + a.height / 2 - sb.top, y2 = b.top + b.height / 2 - sb.top, w = sb.width;
+    const x1 = rtl ? w : 0, x2 = rtl ? 0 : w;
+    const c1x = rtl ? w - 1.5 : 1.5, c2x = rtl ? 1.5 : w - 1.5;
     const wrong = marks && !marks[l];
     const stroke = wrong ? "var(--danger)" : colorOf(l);
-    paths += `<path d="M0 ${y1} C ${w / 2} ${y1}, ${w / 2} ${y2}, ${w} ${y2}" stroke="${stroke}" stroke-width="2" fill="none" stroke-linecap="round"${wrong ? ' stroke-dasharray="4 4"' : ""}/>`;
-    paths += `<circle cx="1.5" cy="${y1}" r="3" fill="${stroke}"/><circle cx="${w - 1.5}" cy="${y2}" r="3" fill="${stroke}"/>`;
+    paths += `<path d="M${x1} ${y1} C ${w / 2} ${y1}, ${w / 2} ${y2}, ${x2} ${y2}" stroke="${stroke}" stroke-width="2" fill="none" stroke-linecap="round"${wrong ? ' stroke-dasharray="4 4"' : ""}/>`;
+    paths += `<circle cx="${c1x}" cy="${y1}" r="3" fill="${stroke}"/><circle cx="${c2x}" cy="${y2}" r="3" fill="${stroke}"/>`;
   }
   svg.innerHTML = paths;
   board.querySelectorAll(".chip").forEach((c) => {
@@ -73,7 +76,8 @@ etude.onResult(({ grade, key }) => {
     if (!ok) {
       const fix = document.createElement("span");
       fix.className = "e-why fix";
-      fix.innerHTML = "→ " + etude.mdInline(key.text[key.pairs[l]]);
+      const arrow = document.documentElement.dir === "rtl" ? "← " : "→ ";
+      fix.innerHTML = arrow + etude.mdInline(key.text[key.pairs[l]]);
       el(l).querySelector(".prose").append(fix);
     }
   }

@@ -469,7 +469,8 @@ if (term) {
   fetch("assets/terminal.json").then((r) => r.json()).then(async ({ steps }) => {
     await new Promise((r) => whenVisible(term, r, "0px"));
     for (;;) {
-      out.innerHTML = `<span class="dim"># an agent builds a deck from your notes and quizzes you</span>\n`;
+      const isAr = getCurrentLang() === "ar";
+      out.innerHTML = `<span class="dim">${isAr ? "# وكيل ذكي يستورد حزمة المتشابهات ويختبر حفظك عبر سطر الأوامر" : "# an agent imports your Mutashabihat pack and quizzes you via CLI"}</span>\n`;
       for (const s of steps) {
         while (!vis.on) await sleep(300);
         const line = document.createElement("span");
@@ -611,12 +612,12 @@ if (rep && GALLERY?.length) {
         if (e.group !== group) return;
         const lbl = isAr ? (e.labelAr ?? e.label) : e.label;
         const current = cur?.i === i ? "true" : "false";
-        html += `<li><button type="button" class="rep-item" data-i="${i}" data-type="${esc(e.type)}" aria-controls="rep-panel" aria-current="${current}" tabindex="${cur?.i === i ? 0 : -1}"><span class="rep-n tabular">${++n}</span><span class="rep-l">${esc(lbl)}</span>${e.grader === "ai" ? `<span class="rep-dag" aria-label="${isAr ? "مصحح بالذكاء الاصطناعي" : "graded by AI"}">†</span>` : ""}</button></li>`;
+        html += `<li><button type="button" class="rep-item" data-i="${i}" data-type="${esc(e.type)}" aria-controls="rep-panel" aria-current="${current}" tabindex="${cur?.i === i ? 0 : -1}"><span class="rep-n tabular">${++n}</span><span class="rep-l">${esc(lbl)}</span>${e.grader === "ai" ? `<span class="rep-dag" aria-label="${isAr ? "مصحح بالذكاء الاصطناعي" : "graded by AI"}">✦</span>` : ""}</button></li>`;
       });
       html += `</ol></div>`;
     }
     const footText = isAr ? "مصحح بالذكاء الاصطناعي في التطبيق" : "graded by AI in the app";
-    list.innerHTML = html + `<p class="rep-foot-note"><span aria-hidden="true">†</span> ${footText}</p>`;
+    list.innerHTML = html + `<p class="rep-foot-note"><span aria-hidden="true">✦</span> ${footText}</p>`;
     items = $$(".rep-item", list);
   }
   buildRepList();
@@ -1113,6 +1114,15 @@ if (rep && GALLERY?.length) {
 
 // ----------------------------------------------------------------- stats
 {
+  let statsLoaded = false;
+  const loadLiveStats = () => {
+    if (statsLoaded) return;
+    statsLoaded = true;
+    import("../live/stats.js").catch(() => {});
+  };
+  whenVisible($("#tempo"), loadLiveStats, "600px 0px");
+  whenVisible($("#stats"), loadLiveStats, "600px 0px");
+
   const box = $("[data-plates]");
   if (box) {
     const btns = $$("[data-plate]", box), panes = $$("[data-plate-pane]", box);
@@ -1152,10 +1162,10 @@ if (rep && GALLERY?.length) {
     const themeTile = (t) => {
       const isAr = getCurrentLang() === "ar";
       const s = [["--t-bg", v(t, "--background", "#111")], ["--t-side", v(t, "--sidebar", v(t, "--background"))], ["--t-card", v(t, "--card", "#222")], ["--t-fg", v(t, "--foreground", "#eee")],
-        ["--t-muted", v(t, "--muted-foreground", "#999")], ["--t-hl", v(t, "--highlight", v(t, "--primary", "#f6a"))], ["--t-border", v(t, "--border", "#ffffff22")]]
+        ["--t-muted", v(t, "--muted-foreground", "#999")], ["--t-hl", v(t, "--highlight", v(t, "--primary", "#10b981"))], ["--t-border", v(t, "--border", "#ffffff22")]]
         .map(([k, val]) => `${k}:${val}`).join(";");
       const rate = ["--again", "--hard", "--good", "--easy"].map((k) => `<i style="background:${v(t, k, "#888")}"></i>`).join("");
-      const chips = ["--highlight", "--chart-2", "--chart-3", "--chart-4"].map((k) => `<i style="background:${v(t, k, v(t, "--highlight", "#f6a"))}"></i>`).join("");
+      const chips = ["--highlight", "--chart-2", "--chart-3", "--chart-4"].map((k) => `<i style="background:${v(t, k, v(t, "--highlight", "#10b981"))}"></i>`).join("");
       const t1 = isAr ? "<b>وِ</b>كَاء" : "<b>W</b>ikae";
       const t2 = isAr ? "رِباط <b>المحفوظ</b>" : "Spaced <b>Practice</b>";
       return `<div class="mk-theme" style="${esc(s)}" aria-hidden="true"><div class="rail"><i></i><i></i><i></i><i></i></div><div class="pane"><div class="t1">${t1}</div><div class="t2">${t2}</div><div class="chips">${chips}</div><div class="rates">${rate}</div></div></div>`;
@@ -1285,6 +1295,8 @@ if (rep && GALLERY?.length) {
       if (e.key === "Escape") close();
       if (e.key === "Tab") {
         const links = $$("button, a[href]", back), first = links[0], last = links.at(-1);
+        if (!first) return;
+        if (!back.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
         if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
         if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       }

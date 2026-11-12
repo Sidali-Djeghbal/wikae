@@ -174,15 +174,15 @@ export function ForgettingCurve({ curve, target, height = 220 }: { curve: { days
         ) : (
           <p className="text-sm text-pretty text-muted-foreground">
             {t("Stop reviewing today and your average recall drops under {target}% in about {days}, and to {recall}% in {span}.", {
-              target: `${Math.round(target * 100)}%`,
+              target: Math.round(target * 100),
               days: cross < 1.5 ? t("a day") : t("{n} days", { n: Math.round(cross) }),
-              recall: `${Math.round(curve[curve.length - 1].recall * 100)}%`,
+              recall: Math.round(curve[curve.length - 1].recall * 100),
               span: fmtSpan(maxD),
             })}
           </p>
         )}
       </div>
-      <svg width={W} height={H} className="block max-w-full touch-none" role="img" aria-label={t("Forgetting curve: average recall falls from {from}% today to {to}% in {days} days without reviews", { from: Math.round(curve[0].recall * 100), to: Math.round(curve[curve.length - 1].recall * 100), days: maxD })} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
+      <svg width={W} height={H} direction="ltr" className="block max-w-full touch-none" role="img" aria-label={t("Forgetting curve: average recall falls from {from}% today to {to}% in {days} days without reviews", { from: Math.round(curve[0].recall * 100), to: Math.round(curve[curve.length - 1].recall * 100), days: maxD })} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
         <defs>
           <clipPath id={`${id}c`}>
             <rect x={0} y={0} width={clipW} height={H} className="viz-anim" style={{ transition: "width 1.3s cubic-bezier(.3,.7,.2,1)" }} />

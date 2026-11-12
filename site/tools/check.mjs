@@ -36,6 +36,7 @@ ws.onmessage = (m) => {
   if (d.method === "Runtime.consoleAPICalled" && ["error", "warning"].includes(d.params.type)) problems.push(`console.${d.params.type}: ` + d.params.args.map((a) => a.value ?? a.description).join(" "));
   if (d.method === "Log.entryAdded" && d.params.entry.level === "error") problems.push(`log: ${d.params.entry.text} ${d.params.entry.url ?? ""}`);
   if (d.method === "Network.responseReceived" && d.params.response.status >= 400) problems.push(`HTTP ${d.params.response.status} ${d.params.response.url}`);
+  if (d.method === "Network.responseReceived" && /fonts\.googleapis\.com|fonts\.gstatic\.com/.test(d.params.response.url)) problems.push(`third-party font request: ${d.params.response.url}`);
   if (d.method === "Network.loadingFailed" && !d.params.canceled) problems.push(`failed: ${d.params.errorText} ${d.params.requestId}`);
 };
 const send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
@@ -63,6 +64,8 @@ const ow = await evaluate("document.documentElement.scrollWidth - innerWidth");
 if (ow > 0) problems.push(`horizontal overflow ${ow}px`);
 const wide = await evaluate(`[...document.querySelectorAll('body *')].filter(e => { const r = e.getBoundingClientRect(); return r.right > innerWidth + 1 && getComputedStyle(e).position !== 'fixed' && !e.closest('.marquee, .stage-tabs, .shots-tabs, .code-tabs, .plate-list, .hero-bg, .cta .big-eps, [data-rail], .rep-programme') && !e.closest('pre'); }).slice(0, 8).map(e => e.tagName + '.' + e.className + ' ' + Math.round(e.getBoundingClientRect().right))`);
 if (wide?.length) problems.push("wider than viewport: " + wide.join(" | "));
+const missingLang = await evaluate(`[...document.querySelectorAll('main section[id]')].filter(s => !s.querySelector('[data-lang="ar"]') || !s.querySelector('[data-lang="en"]')).map(s => s.id)`);
+if (missingLang?.length) problems.push("missing bilingual [data-lang] in sections: " + missingLang.join(", "));
 const h = await evaluate("document.documentElement.scrollHeight");
 const shot = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true, clip: { x: 0, y: 0, width, height: h, scale: 1 } });
 writeFileSync(`${OUT}/full.png`, Buffer.from(shot.result.data, "base64"));

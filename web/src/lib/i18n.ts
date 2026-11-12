@@ -15,13 +15,15 @@ const RTL_LOCALES: Set<LocaleId> = new Set(["ar"]);
 
 function detect(): LocaleId {
   try {
-    const docLang = typeof document !== "undefined" && (document.documentElement?.getAttribute("lang") || document.documentElement?.lang);
-    if (docLang && docLang in locales) return docLang as LocaleId;
+    if (typeof window !== "undefined") {
+      const q = new URLSearchParams(window.location.search).get("lang")?.trim().toLowerCase();
+      if (q && q in locales) return q as LocaleId;
+    }
     const stored = localStorage.getItem("wikae-lang") || localStorage.getItem("wikae.language") || localStorage.getItem("wikaa.language") || localStorage.getItem("etude.language");
     if (stored && stored in locales) return stored as LocaleId;
+    const docLang = typeof document !== "undefined" && (document.documentElement?.getAttribute("lang") || document.documentElement?.lang);
+    if (docLang && docLang in locales) return docLang as LocaleId;
   } catch { /* storage blocked */ }
-  const nav = navigator.language?.split("-")[0]?.toLowerCase();
-  if (nav in locales) return nav as LocaleId;
   return "ar";
 }
 

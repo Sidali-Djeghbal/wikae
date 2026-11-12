@@ -333,7 +333,7 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
           <div className="flex h-14 w-full items-center gap-1">
             <button onClick={() => navigate("/")} className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-accent" aria-label={t("Back to decks")}><ChevronLeft className="size-6 rtl-flip" /></button>
             <div className="min-w-0 flex-1">
-              <div className="score-serif truncate text-[1.15rem] leading-tight">{title}</div>
+              <div className="score-serif truncate text-[1.15rem] leading-tight">{card && !scope.deck && !scope.q ? card.deck.split("::").pop() : t(title)}</div>
               {counts && <Tally n={counts.new} l={counts.learning} r={counts.review} className="mt-0.5 text-[12px]" />}
             </div>
             {card && (phase === "answer" || phase === "result") && (
@@ -350,7 +350,7 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
           <ArrowLeft className="rtl-flip" />
         </Button>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium">{title}</div>
+          <div className="truncate text-sm font-medium">{card && !scope.deck && !scope.q ? card.deck.split("::")[0] : t(title)}</div>
           {card && <div className="truncate text-xs text-muted-foreground">{card.deck.split("::").slice(1).join(" › ") || card.deck}</div>}
         </div>
         {counts && (
@@ -406,9 +406,9 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
       {card && phase !== "done" && (
         <main ref={mainRef} style={phone ? sketchTransform(sk.view, mainRef.current) : undefined} className={cn("flex flex-1 flex-col gap-5 pt-3 sm:gap-6 sm:pt-6", bare && phone && "pt-0")}>
           <div className={cn("flex flex-wrap items-center gap-2 text-xs text-muted-foreground", bare && "hidden")}>
-            <Badge variant="outline" className="font-normal">{card.type}</Badge>
-            {card.scheduler.id !== "fsrs" && <Badge variant="outline" className="font-normal">{card.scheduler.name.toLowerCase()}</Badge>}
-            {card.state === 0 && <Badge variant="outline" className="border-new/30 font-normal text-new">new</Badge>}
+            <Badge variant="outline" className="font-normal">{t(card.type)}</Badge>
+            {card.scheduler.id !== "fsrs" && <Badge variant="outline" className="font-normal">{t(card.scheduler.name.toLowerCase())}</Badge>}
+            {card.state === 0 && <Badge variant="outline" className="border-new/30 font-normal text-new">{t("new")}</Badge>}
             {card.generated && (
               <Tooltip>
                 <TooltipTrigger asChild><Badge variant="outline" className="gap-1 font-normal"><Dices className="size-3" />variant</Badge></TooltipTrigger>

@@ -1505,7 +1505,7 @@ const ar: Record<string, string> = {
   "Steps": "الخطوات",
   "Steps look like 1m, 10m, 2h or 1d.": "الخطوات تُكتب بصيغة: 1m أو 10m أو 2h أو 1d.",
   "Stop": "إيقاف",
-  "Stop reviewing today and your average recall drops under {target}% in about {days}, and to {recall}% in {span}.": "إذا توقفت عن المراجعة اليوم، سينخفض متوسط التذكر لديك إلى ما دون {target} خلال {days} تقريباً، وإلى {recall} خلال {span}.",
+  "Stop reviewing today and your average recall drops under {target}% in about {days}, and to {recall}% in {span}.": "إذا توقفت عن المراجعة اليوم، سينخفض متوسط التذكر لديك إلى ما دون {target}% خلال {days} تقريباً، وإلى {recall}% خلال {span}.",
   "Stopped.": "تم الإيقاف.",
   "Storage": "التخزين",
   "Storage used": "المساحة المستخدمة",
@@ -2397,7 +2397,8 @@ const ar: Record<string, string> = {
   "no new version": "لا يوجد إصدار جديد",
   "not on sale yet": "ليس معروضاً للبيع بعد",
   "of {amount} gross": "من أصل {amount} إجمالاً",
-  "Optional. A Wikae account is only needed for Sync and decks from the paid Market. Everything else works without one.": "اختياري. لا تحتاج حساب وِكَاء إلا للمزامنة والمجموعات من المتجر المدفوع. كل ما عدا ذلك يعمل دون حساب.",
+  "Optional. A Wikae account is only needed for Sync and decks from the paid Market. Everything else works without one.": "اختياري. لا تحتاج حساب وِكَاء إلا للمزامنة السحابية. كل ما عدا ذلك يعمل دون حساب.",
+  "Optional. A Wikae account is only needed for Sync. Everything else works without one.": "اختياري. لا تحتاج حساب وِكَاء إلا للمزامنة السحابية. كل ما عدا ذلك يعمل دون حساب.",
   "pending v{versions}": "بانتظار المراجعة v{versions}",
   "selling": "البيع",
   "Sent back {name}": "أُعيد {name}",
@@ -2408,6 +2409,10 @@ const ar: Record<string, string> = {
   "v{versions} waiting for review": "v{versions} بانتظار المراجعة",
   "You get {amount} per sale": "تحصل على {amount} لكل عملية بيع",
   "your library": "مكتبتك",
+  "quran-mutashabihat": "متشابهات القرآن",
+  "subdeck": "مجموعة فرعية",
+  "subdecks": "مجموعات فرعية",
+  "أكمل الموضع المفصلي للآية الكريمة وميّز بين الآيات المتشابهة بالرسم العثماني مع القواعد الضابطة.": "أكمل الموضع المفصلي للآية الكريمة وميّز بين الآيات المتشابهة بالرسم العثماني مع القواعد الضابطة.",
 };
 
 export default ar;

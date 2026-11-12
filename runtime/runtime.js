@@ -204,7 +204,7 @@ function applyTheme(theme) {
 }
 
 const CARD_STRINGS_AR = {
-  "Pick a left item, then its partner. Click a connected item to undo.": "اختر عنصراً من اليسار، ثم شريكه. انقر على عنصر متصل للتراجع.",
+  "Pick a left item, then its partner. Click a connected item to undo.": "اختر عنصراً من اليمين، ثم شريكه. انقر على عنصر متصل للتراجع.",
   "Select all that apply.": "اختر كل ما ينطبق.",
   "Drag to reorder, or focus a block and use <kbd>Alt</kbd>+<kbd>↑</kbd> <kbd>↓</kbd>.": "اسحب لإعادة الترتيب، أو حدد عنصراً واستخدم <kbd>Alt</kbd>+<kbd>↑</kbd> <kbd>↓</kbd>.",
   "Rate how well you knew it.": "قيّم مدى معرفتك بها.",
