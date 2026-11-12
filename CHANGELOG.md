@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.1](https://github.com/Sidali-Djeghbal/wikae/compare/v2.9.0...v2.9.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* enforce LTR direction and prevent translation on terminal elements ([a12fe1f](https://github.com/Sidali-Djeghbal/wikae/commit/a12fe1f9e4922da0e076746e6a42ff070339d755))
+
 ## [2.9.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.8.0...v2.9.0) (2026-11-12)
 
 
