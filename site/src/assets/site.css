@@ -2279,7 +2279,9 @@ html[dir="rtl"] .mini-label {
   text-align: center;
 }
 
-.slider {
+html[dir="rtl"] .slider {
+  background: linear-gradient(-90deg, var(--foreground) var(--p, 40%), var(--rule) var(--p, 40%));
+}
   -webkit-appearance: none;
   appearance: none;
   width: min(20rem, 100%);
@@ -3413,7 +3415,9 @@ html[dir="rtl"] .mini-label {
     font-size: 1.2rem;
   }
 
-  .slider {
+  html[dir="rtl"] .slider {
+  background: linear-gradient(-90deg, var(--foreground) var(--p, 40%), var(--rule) var(--p, 40%));
+}
     width: 100%;
   }
 
