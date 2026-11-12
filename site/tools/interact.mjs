@@ -52,7 +52,7 @@ await evaluate(`document.querySelector('[data-hero-answer="correct"]')?.click()`
 await sleep(300);
 report.heroChallenge = await evaluate(`(() => {
   const btn = document.querySelector('[data-hero-answer="correct"]');
-  const fb = document.querySelector('#hero-proof-feedback');
+  const fb = document.querySelector('#hero-proof-feedback-correct');
   return { answered: btn?.classList.contains('is-correct') ?? false, feedbackVisible: fb ? !fb.hidden : false };
 })()`);
 await shot("hero-answered");

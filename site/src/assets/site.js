@@ -1116,8 +1116,10 @@ if (rep && GALLERY?.length) {
       const ok = btn.dataset.heroAnswer === "correct";
       $$("[data-hero-answer]").forEach((b) => b.classList.remove("is-correct", "is-wrong"));
       btn.classList.add(ok ? "is-correct" : "is-wrong");
-      const fb = $("#hero-proof-feedback");
-      if (fb) fb.hidden = false;
+      const fbCorrect = $("#hero-proof-feedback-correct");
+      const fbWrong = $("#hero-proof-feedback-wrong");
+      if (fbCorrect) fbCorrect.hidden = !ok;
+      if (fbWrong) fbWrong.hidden = ok;
     });
   });
 }

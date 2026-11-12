@@ -303,7 +303,7 @@ etude.onResult(({ grade, key, answer }) => {
 
   if (!isCorrect) {
     suggestedRating = 1;
-    suggestedName = "أعد (Again)";
+    suggestedName = "أعد المحاولة";
   } else if (ans.usedHint || (typeof ans.timeMs === "number" && ans.timeMs > 8000)) {
     suggestedRating = 2;
     suggestedName = "صعب (Hard)";
