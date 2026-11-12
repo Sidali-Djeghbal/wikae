@@ -27,8 +27,12 @@ function runBuild(full = false) {
   child.on("exit", (code) => {
     building = false;
     const ms = Math.round(performance.now() - t0);
-    if (code === 0) console.log(`[site:dev] rebuilt in ${ms}ms (${full ? "full" : "quick"})`);
-    else console.error(`[site:dev] build failed with code ${code}`);
+    if (code === 0) {
+      console.log(`[site:dev] rebuilt in ${ms}ms (${full ? "full" : "quick"})`);
+      fetch(`http://127.0.0.1:${port}/_reload_trigger`).catch(() => {});
+    } else {
+      console.error(`[site:dev] build failed with code ${code}`);
+    }
     if (pendingFull || pendingQuick) {
       const nextFull = pendingFull;
       pendingFull = false;
@@ -47,7 +51,7 @@ const schedule = (full) => {
   timer = setTimeout(() => runBuild(full), 120);
 };
 
-for (const rel of ["site/src", "site/pages", "site/legal", "site/build.ts", "site/variants.json"]) {
+for (const rel of ["site/src", "site/pages", "site/legal", "site/build.ts", "site/variants.json", "types"]) {
   watch(join(root, rel), { recursive: true }, () => schedule(false));
 }
 watch(join(root, "site/stats-embed"), { recursive: true }, () => schedule(true));

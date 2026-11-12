@@ -518,7 +518,7 @@ if (term) {
         while (!vis.on) await sleep(300);
         const line = document.createElement("span");
         line.className = "t-line";
-        line.innerHTML = `<span class="ps">$ </span><span class="t-cmd"></span>`;
+        line.innerHTML = `<span class="ps">$</span><span class="t-cmd"></span>`;
         out.appendChild(line);
         const cmd = $(".t-cmd", line);
         const body = out.parentElement;

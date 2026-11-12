@@ -2638,6 +2638,10 @@ html[dir="rtl"] .slider {
 
 .term {
   border-top: 1.5px solid var(--foreground);
+    background-color: #1c1c1c;
+    border-radius: 10px;
+    padding: 10px;
+
 }
 
 .term-head {
@@ -2647,7 +2651,7 @@ html[dir="rtl"] .slider {
   gap: 1rem;
   padding: 0.7rem 0;
   font-size: 0.78rem;
-  color: var(--muted-foreground);
+  color: white;
   border-bottom: 1px solid var(--border);
 }
 
@@ -2655,7 +2659,6 @@ html[dir="rtl"] .slider {
   font-family: var(--font-serif);
   font-style: italic;
   font-size: 0.95rem;
-  color: var(--foreground);
 }
 
 .term-body {
