@@ -888,7 +888,7 @@ pre code,
   left: 0;
   right: 0;
   z-index: 50;
-  transition: transform 0.28s var(--ease);
+  transition: transform 0.32s var(--ease);
 }
 
 .nav.nav-hidden {
@@ -903,8 +903,9 @@ pre code,
   z-index: -1;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.35s;
+  transition: opacity 0.4s var(--ease-out);
   background: linear-gradient(var(--background) 0%, color-mix(in oklab, var(--background) 88%, transparent) 55%, transparent 100%);
+  backdrop-filter: blur(0px);
 }
 
 .nav.scrolled::before {
@@ -920,6 +921,11 @@ pre code,
 
 .nav .wordmark {
   font-size: 1.6rem;
+  transition: opacity 0.2s;
+}
+
+.nav .wordmark:hover {
+  opacity: 0.8;
 }
 
 .nav-links {
@@ -930,19 +936,39 @@ pre code,
 }
 
 .nav-links a {
-  transition: color 0.2s;
+  transition: color 0.18s var(--ease-out);
+  position: relative;
 }
 
-.nav-links a:hover,
-.nav-links a[aria-current] {
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  bottom: -0.2rem;
+  inset-inline-start: 0;
+  width: 0;
+  height: 1.5px;
+  background: var(--highlight);
+  transition: width 0.22s var(--ease);
+}
+
+.nav-links a:hover {
   color: var(--foreground);
 }
 
+.nav-links a:hover::after {
+  width: 100%;
+}
+
 .nav-links a[aria-current] {
+  color: var(--foreground);
   text-decoration: underline;
   text-decoration-color: var(--highlight);
   text-underline-offset: 0.45rem;
   text-decoration-thickness: 1.5px;
+}
+
+.nav-links a[aria-current]::after {
+  display: none;
 }
 
 .nav-end {
@@ -958,7 +984,7 @@ pre code,
   gap: 0.4rem;
   color: var(--muted-foreground);
   font-size: 0.85rem;
-  transition: color 0.2s;
+  transition: color 0.18s;
 }
 
 .nav-gh:hover {
@@ -991,7 +1017,11 @@ pre code,
   cursor: pointer;
   border: 1px solid var(--input);
   background: transparent;
-  transition: background 0.2s, border-color 0.2s, transform 0.2s var(--ease);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-spring),
+    box-shadow var(--dur-fast) var(--ease-out);
 }
 
 .btn:hover {
@@ -999,23 +1029,36 @@ pre code,
 }
 
 .btn:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 
 .btn svg {
   width: 1rem;
   height: 1rem;
   flex: none;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.btn:hover svg {
+  transform: scale(1.1);
 }
 
 .btn-primary {
   background: var(--primary);
   color: var(--primary-foreground);
   border-color: transparent;
+  box-shadow: 0 1px 3px oklch(0 0 0 / 20%), 0 1px 1px oklch(0 0 0 / 12%);
 }
 
 .btn-primary:hover {
   background: color-mix(in oklab, var(--primary) 85%, var(--highlight));
+  box-shadow: 0 4px 12px oklch(0 0 0 / 25%), 0 1px 3px oklch(0 0 0 / 15%);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 1px 3px oklch(0 0 0 / 20%);
 }
 
 html[data-theme="dark"] .btn-primary:hover {
@@ -1037,6 +1080,7 @@ html[data-theme="dark"] .btn-primary:hover {
 .btn:disabled {
   opacity: 0.4;
   cursor: default;
+  pointer-events: none;
 }
 
 .btn-ghost {
@@ -1114,6 +1158,28 @@ html[data-theme="dark"] .btn-primary:hover {
   flex-direction: column;
   justify-content: center;
   padding: 3.5rem 0;
+  overflow: hidden;
+}
+
+/* Parallax background layer: a soft radial glow that drifts on scroll */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 70% 40%, color-mix(in oklab, var(--highlight) 8%, transparent) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 20% 70%, color-mix(in oklab, var(--highlight) 5%, transparent) 0%, transparent 60%);
+  transform: translateY(var(--hero-parallax, 0px));
+  transition: transform 0.05s linear;
+  will-change: transform;
+}
+
+html[data-theme="light"] .hero::before {
+  background:
+    radial-gradient(ellipse 60% 50% at 70% 40%, color-mix(in oklab, var(--highlight) 6%, transparent) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 20% 70%, color-mix(in oklab, var(--highlight) 4%, transparent) 0%, transparent 60%);
 }
 
 .hero-grid {
@@ -2330,7 +2396,6 @@ html[dir="rtl"] .mini-label {
 }
 
 html[dir="rtl"] .slider {
-  background: linear-gradient(-90deg, var(--foreground) var(--p, 40%), var(--rule) var(--p, 40%));
   -webkit-appearance: none;
   appearance: none;
   width: min(20rem, 100%);
