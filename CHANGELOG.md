@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.9.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.8.0...v2.9.0) (2026-11-12)
+
+
+### Features
+
+* add animation timing variables and reveal variants to site styles ([9b42df5](https://github.com/Sidali-Djeghbal/wikae/commit/9b42df55fe3dae39464cdc3b443715d6bcb791fd))
+* add auto-hiding navbar and improve RTL language support across runtime and site ([66fe9c1](https://github.com/Sidali-Djeghbal/wikae/commit/66fe9c1a4732244b248bf78579e98b214f021847))
+* add live reload support and update terminal component styles ([e291acb](https://github.com/Sidali-Djeghbal/wikae/commit/e291acb56053b3aa8fe38730995b3dd2f2639c9a))
+* add RTL support for hero underline animation and update feedback handling ([e1f866f](https://github.com/Sidali-Djeghbal/wikae/commit/e1f866f47f56ce850eccf3a336b0d4f507252673))
+
+
+### Bug Fixes
+
+* reverse slider gradient direction for RTL layouts ([4c54d30](https://github.com/Sidali-Djeghbal/wikae/commit/4c54d30a948ca5e7022da181c3f119e2c285c088))
+* update heading text in index page ([a16a034](https://github.com/Sidali-Djeghbal/wikae/commit/a16a0349cbdcf7d9eec2f7e2c26cb57562c699bc))
+* use CSS variable for border-radius in quran-mutashabihat style ([12ccd52](https://github.com/Sidali-Djeghbal/wikae/commit/12ccd524a9e7bf33d3120392af645fc3d54d83bf))
+
 ## [2.8.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.7.0...v2.8.0) (2026-11-12)
 
 
