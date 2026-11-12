@@ -2,11 +2,16 @@
    Spaced-repetition practice for Quran, Mutashabihat and knowledge.
    Clean Islamic typography, emerald accents, and responsive light/dark themes. */
 
-@import url('https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Reem+Kufi:wght@700&family=Marhey:wght@700&family=Cairo:wght@600;700;800;900&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
-
-@font-face { font-family: "Aref Ruqaa"; src: url("fonts/aref-ruqaa-bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "Reem Kufi"; src: url("fonts/reem-kufi-bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "Marhey"; src: url("fonts/marhey-bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Aref Ruqaa"; src: url("fonts/aref-ruqaa-bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Amiri Quran"; src: url("fonts/amiri-quran.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Amiri"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/amiri-400-arabic.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+@font-face { font-family: "Amiri"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/amiri-400-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Amiri"; font-style: italic; font-weight: 400; font-display: swap; src: url("fonts/amiri-400-italic-arabic.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+@font-face { font-family: "Amiri"; font-style: italic; font-weight: 400; font-display: swap; src: url("fonts/amiri-400-italic-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Amiri"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/amiri-700-arabic.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+@font-face { font-family: "Amiri"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/amiri-700-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Cairo"; font-style: normal; font-weight: 400 800; font-display: swap; src: url("fonts/cairo-400-700-arabic.woff2") format("woff2"); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+@font-face { font-family: "Cairo"; font-style: normal; font-weight: 400 800; font-display: swap; src: url("fonts/cairo-400-700-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: "Inter"; src: url("fonts/inter.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
 @font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
 @font-face { font-family: "KaTeX_Main"; src: url("../runtime/vendor/fonts/KaTeX_Main-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
@@ -679,56 +684,94 @@ html[dir="rtl"] .lede {
 .fade-up { opacity: 0; translate: 0 12px; animation: up 0.9s var(--ease) forwards; }
 @keyframes up { to { opacity: 1; translate: 0 0; } }
 
-/* ------------------------------------------------------------ live card stage */
-.stage-wrap { position: relative; }
-.note-stage { margin: 1.1rem 0.25rem 0 0; text-align: right; font-size: 1.35rem; transform: rotate(-1deg); transform-origin: right; }
-@media (hover: none) and (pointer: coarse) { .note-stage { display: none; } }
+/* ------------------------------------------------------------ hero proof & card frames */
+.hero-proof {
+  margin-top: 2.2rem;
+  padding: 1.15rem 1.35rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--card) 92%, transparent);
+  box-shadow: var(--sheet-shadow);
+  max-width: 44rem;
+  text-align: start;
+}
+.hero-proof-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.82rem;
+}
+.hero-proof-badge {
+  color: var(--highlight);
+  font-weight: 600;
+}
+.hero-proof-link {
+  color: var(--muted-foreground);
+  text-decoration: none;
+  font-size: 0.82rem;
+  transition: color 0.2s;
+}
+.hero-proof-link:hover { color: var(--foreground); }
+.hero-proof-ayah {
+  margin: 0 0 0.9rem;
+  font-family: "Amiri Quran", "Amiri", serif;
+  font-size: clamp(1.18rem, 2vw, 1.4rem);
+  line-height: 2.1;
+  color: var(--foreground);
+}
+.hero-proof-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.hero-choice {
+  flex: 1 1 13rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--border);
+  background: var(--secondary);
+  color: var(--foreground);
+  font-family: "Amiri Quran", "Amiri", serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+.hero-choice:hover { border-color: var(--highlight); transform: translateY(-1px); }
+.hero-choice.is-correct {
+  border-color: var(--good);
+  background: color-mix(in oklab, var(--good) 16%, var(--card));
+}
+.hero-choice.is-wrong {
+  border-color: var(--again);
+  background: color-mix(in oklab, var(--again) 14%, var(--card));
+}
+.hero-proof-feedback {
+  margin: 0.8rem 0 0;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+}
 .sheet {
   background: var(--card); border: 1px solid var(--border); border-radius: 0.9rem; overflow: hidden;
   box-shadow: var(--sheet-shadow);
 }
-.stage { display: flex; flex-direction: column; position: relative; }
-.window-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.6rem 0.5rem 0.4rem; border-bottom: 1px solid var(--border); }
-.stage-tabs {
-  flex: 1; min-width: 0; display: flex; gap: 0.15rem; overflow-x: auto; scrollbar-width: none; scroll-padding-inline: 0.5rem;
-  mask-image: linear-gradient(90deg, transparent, #000 1.5rem, #000 calc(100% - 2.5rem), transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 1.5rem, #000 calc(100% - 2.5rem), transparent);
-}
-.stage-tabs::before { content: ""; flex: none; width: 0.75rem; }
-.stage-tabs::after { content: ""; flex: none; width: 1.5rem; }
-.stage-tabs::-webkit-scrollbar { display: none; }
-.stage-tab {
-  flex: none; cursor: pointer; padding: 0.35rem 0.7rem; border-radius: 0.4rem; border: 0; background: none;
-  font-size: 0.8rem; color: var(--muted-foreground); transition: color 0.2s, background 0.2s;
-}
-.stage-tab:hover { color: var(--foreground); }
-.stage-tab[aria-selected="true"] { color: var(--foreground); background: var(--secondary); }
 .linkish { background: none; border: 0; padding: 0.3rem 0.45rem; border-radius: 0.4rem; cursor: pointer; color: var(--muted-foreground); font-size: 0.75rem; display: inline-flex; gap: 0.35rem; align-items: center; transition: color 0.2s, background 0.2s; white-space: nowrap; flex: none; }
 .linkish:hover { color: var(--foreground); background: var(--accent); }
-.stage .demo-toggle { border-left: 1px solid var(--border); border-radius: 0; padding-left: 0.75rem; margin-left: 0.25rem; }
 .linkish svg { width: 0.8rem; height: 0.8rem; }
-.stage-body { position: relative; padding: 1.1rem 1.25rem 1rem; min-height: 22rem; max-height: min(31rem, calc(100svh - 24rem)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
-.stage-body::-webkit-scrollbar { display: none; }
-.stage-body.scrolls { mask-image: linear-gradient(#000 calc(100% - 1.2rem), transparent); -webkit-mask-image: linear-gradient(#000 calc(100% - 1.2rem), transparent); }
-.stage-body.scrolls.scrolled { mask-image: linear-gradient(transparent 0, #000 1.2rem, #000 calc(100% - 1.2rem), transparent); -webkit-mask-image: linear-gradient(transparent 0, #000 1.2rem, #000 calc(100% - 1.2rem), transparent); }
-.stage-body.scrolls.at-end { mask-image: linear-gradient(transparent 0, #000 1.2rem); -webkit-mask-image: linear-gradient(transparent 0, #000 1.2rem); }
-@media (max-width: 640px) { .stage-body, .stage-body.scrolls, .stage-body.scrolls.scrolled, .stage-body.scrolls.at-end { max-height: none; overflow: visible; mask-image: none; -webkit-mask-image: none; } }
-@media (min-width: 1000px) {
-  .stage { height: min(42rem, calc(100svh - 11.5rem)); }
-  .stage-body { flex: 1; min-height: 0; max-height: none; }
-}
-.stage-body iframe, .rep-body iframe { display: block; width: 100%; border: 0; background: transparent; transition: height 0.35s var(--ease), opacity 0.28s var(--ease), filter 0.28s var(--ease); }
-/* A card loading in: out of sight until it has mounted, then it fades in over the one it replaces. */
-.stage-body iframe.loading, .rep-body iframe.loading { opacity: 0; pointer-events: none; }
-.stage-body iframe.enter, .rep-body iframe.enter { animation: frame-in 0.32s var(--ease); }
+.rep-body iframe { display: block; width: 100%; border: 0; background: transparent; transition: height 0.35s var(--ease), opacity 0.28s var(--ease), filter 0.28s var(--ease); }
+.rep-body iframe.loading { opacity: 0; pointer-events: none; }
+.rep-body iframe.enter { animation: frame-in 0.32s var(--ease); }
 @keyframes frame-in { from { opacity: 0; translate: 0 4px; } }
-/* The card it replaces stays put, dimmed, until the new one is ready; if that takes a moment, it goes. */
-.stage-body iframe.leaving, .rep-body iframe.leaving { opacity: 0.35; filter: saturate(0.6); pointer-events: none; z-index: 0; }
-.stage-body iframe.leaving.gone, .rep-body iframe.leaving.gone { opacity: 0; }
-
-/* Skeleton of a card, shown while a card's code is still on its way. Shaped like the cards here:
-   a prompt line or two, then the thing you answer on. The sheen is slow and quiet on purpose. */
-.stage-loader, .rep-loader { position: absolute; inset: 0; padding: inherit; pointer-events: none; transition: opacity 0.25s var(--ease); }
-.stage-loader.hide, .rep-loader.hide { opacity: 0; }
+.rep-body iframe.leaving { opacity: 0.35; filter: saturate(0.6); pointer-events: none; z-index: 0; }
+.rep-body iframe.leaving.gone { opacity: 0; }
+.rep-loader { position: absolute; inset: 0; padding: inherit; pointer-events: none; transition: opacity 0.25s var(--ease); }
+.rep-loader.hide { opacity: 0; }
 .sk { display: flex; flex-direction: column; gap: 0.7rem; height: 100%; max-height: 24rem; animation: sk-in 0.4s var(--ease) 0.12s both; }
 @keyframes sk-in { from { opacity: 0; } }
 .sk i { display: block; border-radius: 0.4rem; background: color-mix(in oklab, var(--foreground) 9%, transparent); position: relative; overflow: hidden; }
@@ -738,11 +781,7 @@ html[dir="rtl"] .lede {
 .sk .sk-line.short { width: 44%; }
 .sk .sk-block { flex: 1; min-height: 9rem; margin-top: 0.6rem; border-radius: 0.6rem; background: color-mix(in oklab, var(--foreground) 6%, transparent); }
 @keyframes sk-sheen { to { translate: 100% 0; } }
-.stage-loader.hide .sk i::after, .rep-loader.hide .sk i::after { animation: none; }
-.stage-foot { border-top: 1px solid var(--border); padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
-.stage-actions { display: flex; justify-content: center; gap: 0.5rem; }
-.stage-actions .btn-primary { min-width: 12rem; }
-.stage-actions kbd { border-color: transparent; color: inherit; opacity: 0.55; }
+.rep-loader.hide .sk i::after { animation: none; }
 .verdict { display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem; min-height: 1.3rem; }
 .verdict .v { font-weight: 600; }
 .verdict .v.correct { color: var(--good); }
@@ -751,28 +790,6 @@ html[dir="rtl"] .lede {
 .verdict .m { color: var(--muted-foreground); font-size: 0.78rem; }
 .verdict.pop { animation: pop 0.5s var(--ease); }
 @keyframes pop { from { opacity: 0; translate: 0 6px; } }
-.ratings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; }
-.rate {
-  display: flex; flex-direction: column; align-items: center; gap: 0.05rem; padding: 0.5rem 0.25rem; cursor: pointer;
-  border-radius: 0.5rem; border: 1px solid; background: none; font-size: 0.85rem; font-weight: 500;
-  transition: background 0.2s, transform 0.2s var(--ease);
-}
-.rate small { font-size: 0.72rem; font-weight: 400; opacity: 0.7; font-variant-numeric: tabular-nums; }
-.rate:hover { transform: translateY(-1px); }
-.rate.r1 { color: var(--again); border-color: color-mix(in oklab, var(--again) 30%, transparent); }
-.rate.r2 { color: var(--hard); border-color: color-mix(in oklab, var(--hard) 30%, transparent); }
-.rate.r3 { color: var(--good); border-color: color-mix(in oklab, var(--good) 30%, transparent); }
-.rate.r4 { color: var(--easy); border-color: color-mix(in oklab, var(--easy) 30%, transparent); }
-.rate.suggested { box-shadow: 0 0 0 2px color-mix(in oklab, currentColor 55%, transparent); }
-
-/* autoplay cursor */
-.demo-cursor { position: absolute; left: 0; top: 0; z-index: 5; width: 22px; height: 22px; margin: -3px 0 0 -4px; pointer-events: none; opacity: 0; transition: transform 0.6s cubic-bezier(0.45, 0, 0.2, 1), opacity 0.3s; }
-.demo-cursor.on { opacity: 1; }
-.demo-cursor svg { width: 22px; height: 22px; fill: var(--foreground); stroke: oklch(0 0 0 / 70%); stroke-width: 1.4; filter: drop-shadow(0 2px 6px oklch(0 0 0 / 60%)); }
-.demo-cursor i { position: absolute; left: 4px; top: 3px; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; border: 2px solid var(--highlight); opacity: 0; }
-.demo-cursor.tap i { animation: tap 0.5s var(--ease); }
-@keyframes tap { from { opacity: 0.9; scale: 0.3; } to { opacity: 0; scale: 1.4; } }
-@media (hover: none) and (pointer: coarse) { .demo-cursor, .stage-actions kbd { display: none; } }
 
 /* ---------------------------------------------------------------- sections */
 .section { padding: 4rem 0; position: relative; }
@@ -827,7 +844,7 @@ html[dir="rtl"] .mini-label { letter-spacing: normal; }
 /* booktabs: three rules, no boxes */
 .table-wrap { margin-top: 4.5rem; overflow-x: auto; }
 .booktabs { width: 100%; border-collapse: collapse; font-size: 0.95rem; border-top: 1.5px solid var(--foreground); border-bottom: 1.5px solid var(--foreground); }
-.booktabs th, .booktabs td { text-align: left; vertical-align: baseline; padding: 0.7rem 1.25rem 0.7rem 0; }
+.booktabs th, .booktabs td { text-align: start; vertical-align: baseline; padding: 0.7rem 1.25rem 0.7rem 0; }
 .booktabs thead th { font-weight: 400; font-family: var(--font-serif); font-style: italic; font-size: 1.05rem; color: var(--muted-foreground); padding-block: 0.85rem; border-bottom: 1px solid var(--rule); }
 .booktabs thead th .wordmark { font-style: normal; font-size: 1.3rem; color: var(--foreground); }
 .booktabs tbody th { font-weight: 500; white-space: nowrap; width: 9.5rem; }
@@ -839,8 +856,10 @@ html[dir="rtl"] .mini-label { letter-spacing: normal; }
   .booktabs tr { display: grid; padding: 0.8rem 0; border-top: 1px solid var(--border); }
   .booktabs tbody tr:first-child { border-top: 0; }
   .booktabs th, .booktabs td, .booktabs tbody tr > * { padding: 0.1rem 0 !important; }
-  .booktabs td:nth-child(2)::before { content: "Classic: "; }
-  .booktabs td:nth-child(3)::before { content: "Etude: "; color: var(--highlight); }
+  .booktabs td:nth-child(2)::before { content: "Traditional: "; }
+  .booktabs td:nth-child(3)::before { content: "Wikae: "; color: var(--highlight); }
+  html[lang="ar"] .booktabs td:nth-child(2)::before { content: "التقليدية: "; }
+  html[lang="ar"] .booktabs td:nth-child(3)::before { content: "وِكَاء: "; color: var(--highlight); }
 }
 
 /* ---------------------------------------------------------- no. 3: grading */
@@ -918,8 +937,8 @@ html[dir="rtl"] .mini-label { letter-spacing: normal; }
 .slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--background); border: 2px solid var(--foreground); cursor: grab; }
 .slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px color-mix(in oklab, var(--highlight) 35%, transparent); }
 .exam-chart { margin-top: 1.75rem; position: relative; }
-.exam-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-.exam-chart text { font-family: var(--font-sans); font-size: 12px; fill: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.exam-chart svg { display: block; width: 100%; height: auto; overflow: visible; direction: ltr; }
+.exam-chart text { font-family: var(--font-sans); font-size: 12px; fill: var(--muted-foreground); font-variant-numeric: tabular-nums; direction: ltr; }
 .exam-chart text.serif { font-family: var(--font-serif); font-style: italic; font-size: 15px; }
 .exam-chart text.hand { font-family: var(--font-hand); font-size: 19px; font-weight: 600; fill: var(--highlight); }
 .exam-chart .grid { stroke: var(--border); stroke-width: 1; }
@@ -1203,9 +1222,11 @@ html[dir="rtl"] .mini-label { letter-spacing: normal; }
 .tempo-toggle { display: inline-flex; align-items: center; gap: 0.55rem; font-size: 0.88rem; color: var(--muted-foreground); cursor: pointer; user-select: none; }
 .tempo-toggle input { accent-color: var(--again); width: 1rem; height: 1rem; margin: 0; }
 .tempo-chart { margin: 1.5rem 0 1.25rem; }
-.tempo-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-.tempo-chart text { font-family: var(--font-sans); font-size: 12px; fill: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.tempo-chart svg { display: block; width: 100%; height: auto; overflow: visible; direction: ltr; }
+.tempo-chart text { font-family: var(--font-sans); font-size: 12px; fill: var(--muted-foreground); font-variant-numeric: tabular-nums; direction: ltr; }
+.lv svg, .lv text { direction: ltr; }
 .tempo-chart text.serif { font-family: var(--font-serif); font-size: 18px; fill: var(--foreground); }
+@media (max-width: 640px) { .tempo-chart text.serif { font-size: 13.5px; } .tempo-chart .dim { font-size: 11.5px; } }
 .tempo-chart text.small { font-size: 12.5px; }
 .tempo-chart .dim { fill: var(--muted-foreground); font-family: var(--font-sans); font-size: 12.5px; }
 .tempo-chart text.tag { font-size: 10.5px; fill: var(--muted-foreground); }
@@ -1289,15 +1310,6 @@ html[dir="rtl"] .suite-list button > div { text-align: right !important; }
   .hero .lede { margin-top: 1.3rem; font-size: 1.05rem; line-height: 1.85; }
   html[dir="rtl"] .hero .lede { line-height: 2; }
   .sheet { box-shadow: 0 1px 0 oklch(1 0 0 / 4%) inset; }
-
-  /* hero: the play/pause control is an icon, so the card names get the bar */
-  .stage .demo-toggle .dt-label { display: none; }
-  .stage .demo-toggle { padding: 0.35rem 0.5rem 0.35rem 0.65rem; }
-  .stage .demo-toggle svg { width: 0.95rem; height: 0.95rem; }
-  .stage-body { padding: 1rem 0.9rem 0.75rem; }
-  .stage-foot { padding: 0.7rem 0.8rem 0.8rem; }
-  .stage-actions .btn-primary { flex: 1; min-width: 0; height: 2.75rem; }
-  .rate { padding: 0.6rem 0.2rem; }
 
   /* mutashabihat */
   .mutashabih-grid { gap: 1.25rem; margin-top: 1.5rem; }

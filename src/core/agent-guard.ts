@@ -28,7 +28,7 @@ export function agentSettingRefusal(key: string): string | null {
 }
 
 /** Account commands the assistant may run: read-only views. */
-const AGENT_ACCOUNT_READS = new Set(["account status", "account library", "account market", "account listings", "account sales", "account devices", "account passkeys", "account creator"]);
+const AGENT_ACCOUNT_READS = new Set(["account status", "account devices", "account passkeys"]);
 
 /** Commands that write files somewhere even without an output flag. */
 const DEFAULT_WRITERS: Record<string, (values: Record<string, any>) => boolean> = {
@@ -85,8 +85,8 @@ export function agentRefusal({ cmd, values, named, attachmentDir }: GuardInput):
   // Another catalog or feed: the configured Market is the only one the agent reads.
   if (typeof values.url === "string" && values.url && name.startsWith("market ")) return `the assistant can't point the Market at another catalog (--url). ${user}`;
 
-  // The account holds money, devices and deletion; the assistant may only look.
-  if (name.startsWith("account ") && !AGENT_ACCOUNT_READS.has(name)) return `the assistant can't change the Etude account, buy, sell or sign in. ${user}`;
+  // The account holds devices and deletion; the assistant may only look.
+  if (name.startsWith("account ") && !AGENT_ACCOUNT_READS.has(name)) return `the assistant can't change the Etude account or sign in. ${user}`;
 
   if (name === "settings set" || name === "settings unset") {
     const keys: string[] = name === "settings set" ? (named.pairs ?? []).map((p: string) => String(p).split("=")[0].trim()) : (named.keys ?? []).map(String);

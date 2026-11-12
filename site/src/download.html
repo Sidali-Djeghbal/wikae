@@ -11,7 +11,8 @@
   <script>
     (function () {
       try {
-        var lang = localStorage.getItem('wikae-lang') || 'ar';
+        var q = new URLSearchParams(window.location.search).get('lang');
+        var lang = (q === 'ar' || q === 'en') ? q : (localStorage.getItem('wikae-lang') || 'ar');
         var theme = localStorage.getItem('wikae-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
         document.documentElement.setAttribute('lang', lang);
         document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
@@ -22,22 +23,24 @@
       } catch (e) { }
     })();
   </script>
+  <link rel="canonical" href="https://sidali-djeghbal.github.io/wikae/download.html">
+  <link rel="alternate" hreflang="ar" href="https://sidali-djeghbal.github.io/wikae/download.html?lang=ar">
+  <link rel="alternate" hreflang="en" href="https://sidali-djeghbal.github.io/wikae/download.html?lang=en">
+  <link rel="alternate" hreflang="x-default" href="https://sidali-djeghbal.github.io/wikae/download.html">
   <meta property="og:title" content="تحميل وِكَاء — لنظام Windows و macOS و Linux">
   <meta property="og:description"
     content="تحميل تطبيق وِكَاء لأنظمة ويندوز، ماك ولينكس لحفظ القرآن الكريم وتثبيت المتشابهات.">
-  <meta property="og:image" content="assets/og.png">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sidali-djeghbal.github.io/wikae/download.html">
+  <meta property="og:locale" content="ar_AR">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:image" content="https://sidali-djeghbal.github.io/wikae/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="تحميل وِكَاء — تطبيق سطح مكتب مجاني ومفتوح المصدر لحفظ القرآن وضبط المتشابهات">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&display=swap"
-    rel="stylesheet">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&family=Cairo:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet">
-  <link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/cairo-400-700-arabic.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/site.css">
   <script type="module" src="assets/download.js"></script>
 </head>
@@ -366,9 +369,9 @@ npm run build"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
                     <p data-lang="ar">بطاقات تفاعلية بالرسم العثماني لاكتشاف المتشابهات وضبط الفروق اللفظية:</p>
                     <p data-lang="en">Interactive Quranic cards with Uthmani script and pivotal distinctions:</p>
                     <div class="cmd">
-                      <pre><span class="ps" data-ps>$ </span>node src/cli/main.ts pack import examples/quran-mutashabihat.pack.json</pre>
+                      <pre><span class="ps" data-ps>$ </span>node src/cli/main.ts pack import examples/showcase.pack.json</pre>
                       <button class="copy-btn" type="button" aria-label="Copy"
-                        data-copy-text="node src/cli/main.ts pack import examples/quran-mutashabihat.pack.json"><svg
+                        data-copy-text="node src/cli/main.ts pack import examples/showcase.pack.json"><svg
                           viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                           stroke-linejoin="round">
                           <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
@@ -382,6 +385,20 @@ npm run build"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
           </div>
 
           <div class="side">
+            <div class="dl-card">
+              <h2 style="font-size:1.05rem" data-lang="ar">أول ٦٠ ثانية بعد التثبيت</h2>
+              <h2 style="font-size:1.05rem" data-lang="en">Your first 60 seconds</h2>
+              <ul class="reqs" data-lang="ar">
+                <li><span><b>١. افتح وِكَاء مباشرة</b> — لا يتطلب إنشاء حساب أو اتصالاً بالإنترنت.</span></li>
+                <li><span><b>٢. اختر رزمة البداية</b> — ثبّت <em>متشابهات القرآن</em> أو <em>جزء عمّ</em> أو <em>الأربعين النووية</em> بنقرة واحدة من المتجر المدمج، أو استورد ملف <code>.apkg</code> من Anki.</span></li>
+                <li><span><b>٣. ابدأ جلستك الأولى</b> — ١٠ دقائق يومياً تضبطها خوارزمية FSRS-6 تلقائياً.</span></li>
+              </ul>
+              <ul class="reqs" data-lang="en">
+                <li><span><b>1. Launch immediately</b> — no account, cloud sign-up, or internet required.</span></li>
+                <li><span><b>2. Pick a starter pack</b> — install <em>Quranic Mutashabihat</em>, <em>Juz' Amma</em>, or <em>An-Nawawi's Forty Hadith</em> in one click from the built-in Market, or import an Anki <code>.apkg</code>.</span></li>
+                <li><span><b>3. Start a 10-minute session</b> — FSRS-6 schedules each verse right before you forget.</span></li>
+              </ul>
+            </div>
             <a class="dl-link" href="https://github.com/Sidali-Djeghbal/wikae/archive/refs/heads/main.zip">
               <span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

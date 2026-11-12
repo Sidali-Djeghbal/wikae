@@ -12,9 +12,10 @@ const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".
 
 createServer((req, res) => {
   let path = decodeURIComponent(new URL(req.url, "http://x").pathname);
-  if (path === "/") { res.writeHead(302, { Location: "/etude/" }); return res.end(); }
-  if (!path.startsWith("/etude/")) path = "/etude/404.html";
-  let file = join(dist, normalize(path.slice("/etude/".length)));
+  if (path === "/") { res.writeHead(302, { Location: "/wikae/" }); return res.end(); }
+  const prefix = path.startsWith("/wikae/") ? "/wikae/" : path.startsWith("/etude/") ? "/etude/" : null;
+  if (!prefix) { path = "/wikae/404.html"; }
+  let file = join(dist, normalize(path.slice((prefix ?? "/wikae/").length)));
   if (file.endsWith("/") || (existsSync(file) && statSync(file).isDirectory())) file = join(file, "index.html");
   // GitHub Pages serves /sync from sync.html.
   if (!existsSync(file) && !extname(file) && existsSync(file + ".html")) file += ".html";
@@ -22,4 +23,4 @@ createServer((req, res) => {
   if (!found) file = join(dist, "404.html");
   res.writeHead(found ? 200 : 404, { "Content-Type": MIME[extname(file)] ?? "application/octet-stream", "Access-Control-Allow-Origin": "*", "Cache-Control": "no-cache" });
   res.end(readFileSync(file));
-}).listen(port, "127.0.0.1", () => console.log(`http://127.0.0.1:${port}/etude/`));
+}).listen(port, "127.0.0.1", () => console.log(`http://127.0.0.1:${port}/wikae/`));

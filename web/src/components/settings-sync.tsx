@@ -13,8 +13,8 @@ import { relative } from "@/lib/api";
 import { etudeFetch } from "@/lib/transport";
 import { cn } from "@/lib/utils";
 import { ACCOUNT_EVENT } from "@/components/settings-account";
-import { account, bytes, openOutside, type AccountStatus } from "@/lib/account";
-import { canShowPurchases, desktopApp } from "@/lib/platform";
+import { account, bytes, type AccountStatus } from "@/lib/account";
+import { desktopApp } from "@/lib/platform";
 
 const DEFAULT_SERVER = "https://sync.etude.study";
 
@@ -667,30 +667,17 @@ const REASON: Record<string, string> = {
 };
 
 function Plan({ st, onChanged }: { st: AccountStatus; onChanged(): Promise<void> }) {
-  const [busy, setBusy] = useState(false);
   const b = st.billing;
   const active = !!st.me?.sync.active;
   const reason = st.me?.sync.reason ?? "none";
   const quota = st.vault?.quotaBytes ?? st.offering?.quotaBytes ?? 1024 ** 3;
   const used = st.vault?.usedBytes ?? 0;
   const pct = Math.min(100, (used / quota) * 100);
-  const purchases = canShowPurchases();
-  const billingOn = !!st.offering?.billing;
-  const open = async (fn: () => Promise<{ url: string }>) => {
-    setBusy(true);
-    try {
-      openOutside((await fn()).url);
-    } catch (e) {
-      toast.error("Couldn't open the page", { description: errorMessage(e) });
-    } finally {
-      setBusy(false);
-    }
-  };
   const when = b?.expires ? (reason === "active" ? `Renews ${date(b.expires)}` : reason === "canceled_until_end" ? `Ends ${date(b.expires)}` : reason === "grace" ? `Syncing until ${date(b.graceUntil)}` : reason === "expired" || reason === "revoked" ? `Ended ${date(b.expires)}` : "") : "";
   return (
-    <Block title="Etude Sync" description={!billingOn ? "This server doesn't charge for Sync." : canShowPurchases() ? "US$5 a month or US$40 a year. 1 GB of end-to-end encrypted storage." : "1 GB of end-to-end encrypted storage."}>
+    <Block title="Wikae Sync" description="End-to-end encrypted storage across your devices.">
       <dl className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-sm" data-plan>
-        <dt className="text-muted-foreground">Plan</dt>
+        <dt className="text-muted-foreground">Status</dt>
         <dd className={cn(active ? "text-foreground" : "text-muted-foreground")} data-plan-state={reason}>
           {REASON[reason] ?? reason}
           {when && <span className="text-muted-foreground"> · {when}</span>}
@@ -706,19 +693,8 @@ function Plan({ st, onChanged }: { st: AccountStatus; onChanged(): Promise<void>
         </dd>
       </dl>
       <div className="flex flex-wrap items-center gap-2">
-        {billingOn && purchases && !active && (
-          <Button size="sm" className="h-10 gap-1.5 md:h-8" disabled={busy} onClick={() => void open(account.checkout)}>
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <ExternalLink className="size-4" />} Subscribe on etude.study
-          </Button>
-        )}
-        {billingOn && purchases && b?.status && (
-          <Button variant="outline" size="sm" className="h-10 gap-1.5 md:h-8" disabled={busy} onClick={() => void open(account.portal)}>
-            <ExternalLink className="size-4" /> Manage subscription
-          </Button>
-        )}
         <Button variant="ghost" size="sm" className="h-10 md:h-8" onClick={() => void onChanged()}>Refresh</Button>
       </div>
-      {billingOn && !purchases && !active && <p className="text-xs text-muted-foreground">Sync isn't active on this account.</p>}
     </Block>
   );
 }

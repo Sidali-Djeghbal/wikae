@@ -1,10 +1,8 @@
-// The Etude account on an etude-cloud server: sign-in, devices, passkeys, email, export, deletion,
-// the Sync subscription, and the paid Market (catalog, library, selling, review).
+// The Etude account on an etude-cloud server: sign-in, devices, passkeys, email, export and deletion.
 // The device token is kept per install in $ETUDE_HOME/account.json (0600); the collection never holds it.
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { EtudeError, type Etude } from "./engine.ts";
-import { installedEntries, installFile } from "./market.ts";
 
 export const DEFAULT_CLOUD = "https://sync.etude.study";
 
@@ -268,105 +266,6 @@ export class AccountClient {
     this.save({ server: this.load().server });
     return r;
   }
-
-  // ── Sync subscription (Polar, on the website) ─────────────────
-  billing = () => this.json("GET", "/v1/billing/sync");
-  syncCheckout = (plan: "monthly" | "yearly" = "monthly") => this.json("POST", "/v1/billing/sync/checkout", { plan });
-  billingPortal = () => this.json("GET", "/v1/billing/portal");
-
-  // ── paid Market ───────────────────────────────────────────────
-  async paidIndex() {
-    const idx = await this.json("GET", "/v1/market/paid-index.json", undefined, false);
-    const installed = installedEntries(this.e);
-    let owned = new Set<string>();
-    if (this.token()) owned = new Set(((await this.library().catch(() => ({ library: [] }))).library as Json[]).map((l) => l.listing));
-    return { ...idx, entries: (idx.entries as Json[]).map((x) => ({ ...x, owned: owned.has(x.listing), installed: libraryState(installed[paidId(x.id)], x.version) })) };
-  }
-  checkout = (listing: string) => this.json("POST", "/v1/market/checkout", { listing });
-
-  async library() {
-    const r = await this.json("GET", "/v1/library");
-    const installed = installedEntries(this.e);
-    return { library: (r.library as Json[]).map((l) => ({ ...l, installed: libraryState(installed[paidId(l.slug)], l.version), installedVersion: installed[paidId(l.slug)]?.version ?? null })) };
-  }
-
-  /** Downloads a purchased deck and imports it the way a free Market deck is imported. Installing again updates it in place. */
-  async install(listing: string, opts: { dryRun?: boolean } = {}) {
-    const lib = (await this.library()).library.find((l: Json) => l.listing === listing || l.slug === listing);
-    if (!lib) throw new AccountError("that deck isn't in your library", 404, "not_owned");
-    const res = await this.request("GET", `/v1/listings/${encodeURIComponent(lib.listing)}/pack`);
-    const pack = await res.json();
-    const version = res.headers.get("x-etude-version") ?? lib.version ?? "1";
-    return installFile(this.e, { etudeMarket: 1, kind: "deck", id: paidId(lib.slug), name: lib.name, author: "Etude Market", description: "", tags: [], version, updated: version, content: pack } as any, opts);
-  }
-
-  // ── selling ───────────────────────────────────────────────────
-  async creator() {
-    try {
-      return await this.json("GET", "/v1/creator");
-    } catch (e) {
-      if (e instanceof AccountError && e.code === "not_creator") return null;
-      throw e;
-    }
-  }
-  becomeCreator = (country: string, displayName?: string) => this.json("POST", "/v1/creator", { country, ...(displayName ? { displayName } : {}) });
-  onboardingLink = () => this.json("POST", "/v1/creator/onboarding-link", {});
-  dashboardLink = () => this.json("POST", "/v1/creator/dashboard-link", {});
-  sales = () => this.json("GET", "/v1/creator/sales");
-  listings = () => this.json("GET", "/v1/listings");
-
-  /** A listing from a deck in this collection: draft, cover, first version (the deck exported as a pack). */
-  async createListing(input: { deck: string; name?: string; description?: string; price: number; tags?: string[]; cover?: { type: string; data: string } }) {
-    const pack = this.packOf(input.deck, input.name);
-    if (!Number.isInteger(input.price)) throw new AccountError("the price is a whole number of US cents", 400, "invalid");
-    const preview = pack.items.slice(0, 5).map((i: Json) => ({ type: i.type, fields: i.fields }));
-    const listing = await this.json("POST", "/v1/listings", { name: input.name?.trim() || input.deck, description: input.description ?? "", tags: input.tags ?? [], price: input.price, preview });
-    if (input.cover) await this.request("PUT", `/v1/listings/${listing.id}/cover`, { raw: Buffer.from(input.cover.data, "base64"), type: input.cover.type });
-    await this.json("POST", `/v1/listings/${listing.id}/versions`, { version: "1.0.0", pack, changelog: "First version" });
-    return this.json("GET", `/v1/listings/${listing.id}`);
-  }
-
-  /** Uploads the deck again as the next version (minor bump); it waits for review before buyers get it. */
-  async newVersion(id: string, input: { deck: string; changelog?: string }) {
-    const l = await this.json("GET", `/v1/listings/${encodeURIComponent(id)}`);
-    const last = (l.versions as Json[]).map((v) => v.version).sort(semverCmp).at(-1) ?? "0.0.0";
-    const [maj, min] = last.split(".").map(Number);
-    const version = `${maj}.${min + 1}.0`;
-    await this.json("POST", `/v1/listings/${encodeURIComponent(id)}/versions`, { version, pack: this.packOf(input.deck, l.name), changelog: input.changelog ?? "" });
-    return this.json("GET", `/v1/listings/${encodeURIComponent(id)}`);
-  }
-  async setCover(id: string, cover: { type: string; data: string }) {
-    return (await this.request("PUT", `/v1/listings/${encodeURIComponent(id)}/cover`, { raw: Buffer.from(cover.data, "base64"), type: cover.type })).json();
-  }
-  updateListing = (id: string, patch: { price?: number; tags?: string[]; name?: string; description?: string }) => this.json("PATCH", `/v1/listings/${encodeURIComponent(id)}`, patch);
-  submit = (id: string) => this.json("POST", `/v1/listings/${encodeURIComponent(id)}/submit`, {});
-  hide = (id: string) => this.json("POST", `/v1/listings/${encodeURIComponent(id)}/hide`, {});
-
-  // ── review (admins) ───────────────────────────────────────────
-  reviewQueue = () => this.json("GET", "/v1/admin/review");
-  approve = (id: string, notes?: string) => this.json("POST", `/v1/admin/listings/${encodeURIComponent(id)}/approve`, notes ? { notes } : {});
-  reject = (id: string, notes: string) => this.json("POST", `/v1/admin/listings/${encodeURIComponent(id)}/reject`, { notes });
-
-  private packOf(deck: string, name?: string) {
-    if (!deck?.trim()) throw new AccountError("choose a deck", 400, "invalid");
-    const pack: Json = this.e.exportPack({ deck: deck.trim(), name: name?.trim() || deck.trim() });
-    delete pack.exported;
-    if (!pack.items.length) throw new AccountError(`the deck "${deck}" has no items`, 400, "invalid");
-    return pack;
-  }
-}
-
-/** Purchased decks are recorded among installed Market entries under their own id, apart from free entries. */
-export const paidId = (slug: string) => `paid-${slug}`.slice(0, 64);
-
-function libraryState(rec: { version: string } | undefined, version: string | null): "installed" | "update" | null {
-  if (!rec) return null;
-  return version && rec.version !== version ? "update" : "installed";
-}
-
-function semverCmp(a: string, b: string) {
-  const k = (v: string) => v.split(".").map((n) => n.padStart(8, "0")).join(".");
-  return k(a) < k(b) ? -1 : k(a) > k(b) ? 1 : 0;
 }
 
 function defaultDeviceName() {

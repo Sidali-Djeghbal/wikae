@@ -1,4 +1,4 @@
-// Client for /api/account/*: the Etude account, Sync plan, purchased decks and selling.
+// Client for /api/account/*: the Wikae account, passkeys, devices and Sync storage.
 import { etudeFetch } from "./transport";
 
 export class AccountApiError extends Error {
@@ -31,7 +31,6 @@ export interface Offering {
   market: boolean;
   quotaBytes: number;
   passkeys: { rpId: string };
-  marketRules?: { minPrice: number; feeBps: number; currency: string; buyerCountries: string[] };
 }
 export interface Me {
   id: string;
@@ -40,7 +39,6 @@ export interface Me {
   created: string;
   device?: Device;
   sync: { active: boolean; reason: string };
-  creator: { country: string; chargesEnabled: boolean; payoutsEnabled: boolean } | null;
   admin: boolean;
 }
 export interface Billing { active: boolean; reason: string; status: string | null; expires: string | null; graceUntil: string | null; billing: boolean }
@@ -48,45 +46,6 @@ export interface Vault { quotaBytes: number; usedBytes: number; events: number; 
 export interface AccountStatus { server: string; offering: Offering | null; offline: string | null; signedIn: boolean; email: string | null; me: Me | null; billing: Billing | null; vault: Vault | null }
 export interface Device { id: string; name: string; via: string; created: string; lastSeen: string; current: boolean }
 export interface Passkey { id: string; name: string; credentialId: string; deviceType: string; backedUp: boolean; created: string; lastUsed: string | null }
-export interface PaidEntry {
-  id: string;
-  kind: "deck";
-  name: string;
-  description: string;
-  author: string;
-  tags: string[];
-  version: string;
-  updated: string;
-  bytes: number;
-  cover?: string;
-  summary: any;
-  price: number;
-  currency: string;
-  listing: string;
-  preview: any[];
-  owned: boolean;
-  installed: "installed" | "update" | null;
-}
-export interface LibraryItem { listing: string; slug: string; name: string; cover: string | null; version: string | null; bytes: number | null; changelog: string; ownedSince: string; installed: "installed" | "update" | null; installedVersion: string | null }
-export interface Listing {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  tags: string[];
-  cover: string | null;
-  price: number;
-  currency: string;
-  status: "draft" | "review" | "live" | "rejected" | "hidden";
-  version: string | null;
-  updated: string;
-  reviewNotes?: string | null;
-  versions?: { version: string; status: string; bytes: number; changelog: string; created: string }[];
-  pending?: string[];
-  creator?: string;
-}
-export interface Creator { country: string; displayName: string; stripeAccount: string; chargesEnabled: boolean; payoutsEnabled: boolean; detailsSubmitted: boolean }
-export interface Sales { sales: { order: string; listing: string; amount: number; fee: number; earnings: number; currency: string; country: string; status: string; at: string }[]; totals: { count: number; gross: number; earnings: number } }
 
 export const account = {
   status: () => call<AccountStatus>("GET", "/api/account"),
@@ -110,32 +69,11 @@ export const account = {
   emailCancel: () => call<{ ok: boolean }>("DELETE", "/api/account/email"),
   exportData: () => call<unknown>("GET", "/api/account/export"),
   deleteAccount: (confirm: string) => call<{ ok: boolean }>("POST", "/api/account/delete", { confirm }),
-  checkout: (plan: "monthly" | "yearly" = "monthly") => call<{ url: string }>("POST", "/api/account/billing/checkout", { plan }),
-  portal: () => call<{ url: string }>("POST", "/api/account/billing/portal"),
-  market: () => call<{ entries: PaidEntry[]; server: string }>("GET", "/api/account/market"),
-  buy: (listing: string) => call<{ url: string; price: number; fee: number }>("POST", "/api/account/market/checkout", { listing }),
-  library: () => call<{ library: LibraryItem[] }>("GET", "/api/account/library"),
-  install: (listing: string) => call<{ result: string; ids: string[]; report: any }>("POST", "/api/account/library/install", { listing }),
-  creator: () => call<{ creator: Creator | null }>("GET", "/api/account/creator"),
-  becomeCreator: (country: string, displayName?: string) => call<Creator>("POST", "/api/account/creator", { country, displayName }),
-  onboarding: () => call<{ url: string }>("POST", "/api/account/creator/onboarding"),
-  dashboard: () => call<{ url: string }>("POST", "/api/account/creator/dashboard"),
-  sales: () => call<Sales>("GET", "/api/account/creator/sales"),
-  listings: () => call<{ listings: Listing[] }>("GET", "/api/account/listings"),
-  createListing: (b: { deck: string; name?: string; description?: string; price: number; tags?: string[]; cover?: { type: string; data: string } }) => call<Listing>("POST", "/api/account/listings", b),
-  updateListing: (id: string, b: { price?: number; tags?: string[] }) => call<Listing>("PATCH", `/api/account/listings/${encodeURIComponent(id)}`, b),
-  newVersion: (id: string, b: { deck: string; changelog?: string }) => call<Listing>("POST", `/api/account/listings/${encodeURIComponent(id)}/versions`, b),
-  submit: (id: string) => call<Listing>("POST", `/api/account/listings/${encodeURIComponent(id)}/submit`),
-  hide: (id: string) => call<Listing>("POST", `/api/account/listings/${encodeURIComponent(id)}/hide`),
-  review: () => call<{ queue: Listing[] }>("GET", "/api/account/review"),
-  approve: (id: string, notes?: string) => call<Listing>("POST", `/api/account/review/${encodeURIComponent(id)}/approve`, { notes }),
-  reject: (id: string, notes: string) => call<Listing>("POST", `/api/account/review/${encodeURIComponent(id)}/reject`, { notes }),
 };
 
-export const money = (cents: number, currency = "usd") => new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
 export const bytes = (b: number) => (b < 1024 ** 2 ? `${Math.max(0, Math.round(b / 1024))} KB` : b < 1024 ** 3 ? `${(b / 1024 ** 2).toFixed(1)} MB` : `${(b / 1024 ** 3).toFixed(2)} GB`);
 
-/** Opens a page outside Etude (checkout, billing, Stripe onboarding) in the browser. */
+/** Opens a page outside Wikae in the browser. */
 export function openOutside(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
 }

@@ -1,15 +1,22 @@
 // Loads the built site in headless Chromium, scrolls through it so every section animates in,
 // reports console errors, failed requests and horizontal overflow, and saves screenshots.
 //   node site/tools/check.mjs <base-url> <outdir> [page=index.html] [width=1440] [steps-json]
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 
 const [BASE, OUT, PAGE = "index.html", WIDTH = "1440", STEPS = "[]"] = process.argv.slice(2);
 const width = Number(WIDTH), mobile = width < 700, height = Number(process.env.H ?? (mobile ? 844 : 900));
 mkdirSync(OUT, { recursive: true });
-const profile = `${process.env.TMPDIR ?? "/tmp"}/etude-site-check-${process.pid}`;
+const profile = `${process.env.TMPDIR ?? "/tmp"}/wikae-site-check-${process.pid}`;
 const port = 9450 + (process.pid % 40);
-const chrome = spawn(process.env.CHROME ?? "chromium", ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--no-first-run", "--hide-scrollbars", "--force-color-profile=srgb", "about:blank"], { stdio: "ignore" });
+const findChrome = () => {
+  if (process.env.CHROME) return process.env.CHROME;
+  for (const bin of ["chromium", "chromium-browser", "google-chrome-stable", "google-chrome"]) {
+    try { return execFileSync("which", [bin], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim(); } catch {}
+  }
+  return "chromium";
+};
+const chrome = spawn(findChrome(), ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--no-first-run", "--hide-scrollbars", "--force-color-profile=srgb", "about:blank"], { stdio: "ignore" });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let ws;
 for (let i = 0; i < 80; i++) {

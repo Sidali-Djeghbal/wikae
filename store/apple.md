@@ -49,7 +49,7 @@ Notes for each choice:
 - **Email address.** Kept by the server to sign in (one-time links) and send account email. In-app sign-in is optional; the app works without it.
 - **Other User Content: No.** Sync uploads the collection end-to-end encrypted. The server holds only ciphertext and the key never leaves the person's devices, so Etude can't read it. Apple's definition of collecting is about data you can access; encrypted data you can't open isn't collected in that sense. If you'd rather show it, add "Other User Content, linked, App Functionality" and nothing else changes.
 - **AI grading.** When someone turns on AI grading, the card and their answer go from the device straight to OpenAI or OpenRouter under the person's own key. Etude never receives them. Apple's label covers data you or your partners collect; a provider the person picked and pays for is the person's own service, so it isn't declared. The Privacy Policy says it plainly.
-- **Purchases: No.** The apps sell nothing. Subscriptions and paid decks are bought on the website.
+- **Purchases: No.** The app and website are completely free and sell nothing.
 - **Tracking: No.** No ads, no analytics, no third-party SDKs. The privacy manifest (`ios/App/App/PrivacyInfo.xcprivacy`) says the same: email address only, no tracking domains.
 - **Security log IP addresses.** The server keeps the IP of sign-in and account events for 12 months to fight abuse. Apple's list has no IP type; it sits under App Functionality with the account. If App Review asks, point to the Privacy Policy section 3.
 
@@ -59,7 +59,7 @@ All content descriptors: **None** (violence, sexual content or nudity, profanity
 
 | Question | Answer | Why |
 |---|---|---|
-| Medical or treatment information | None | Recheck this answer if a medical deck is added to the free Market before submission. |
+| Medical or treatment information | None | Recheck this answer if a medical deck is added to the Market before submission. |
 | Unrestricted web access | No | Card types run in a sandboxed frame with no network access. Links in decks open in the system browser. |
 | User-generated content | No | The Market is a curated catalogue reviewed before it's published; users don't post to each other in the app. |
 | Messaging and chat | No | |

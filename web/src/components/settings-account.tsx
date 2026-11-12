@@ -1,5 +1,5 @@
-// Settings → Account: the optional Etude account. Sign in by email code or passkey; then passkeys,
-// devices, email, data export and deletion. Selling lives in the Market.
+// Settings → Account: the optional Wikae account. Sign in by email code or passkey; then passkeys,
+// devices, email, data export and deletion.
 import { useCallback, useEffect, useId, useState } from "react";
 import type { ReactNode } from "react";
 import { CircleAlert, Fingerprint, KeyRound, Laptop, Loader2, LogOut, Mail, Smartphone, Trash2 } from "lucide-react";
@@ -14,8 +14,6 @@ import { download } from "@/components/type-editor/starter";
 import { account, AccountApiError, createPasskey, getPasskey, passkeysHere, type AccountStatus, type Device, type Passkey } from "@/lib/account";
 import { relative } from "@/lib/api";
 import { t } from "@/lib/i18n";
-import { isNativeApp } from "@/lib/platform";
-import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : "The request failed.");
@@ -64,7 +62,7 @@ export function AccountSection() {
     <Section
       id="account"
       title="Account"
-      description={t("Optional. A Wikae account is only needed for Sync and decks from the paid Market. Everything else works without one.")}
+      description={t("Optional. A Wikae account is only needed for Sync. Everything else works without one.")}
     >
       {!st && !loadError && (
         <Block>
@@ -86,7 +84,6 @@ export function AccountSection() {
           <Profile st={st} onChanged={changed} guarded={guarded} />
           <Passkeys rpId={st.offering?.passkeys.rpId} guarded={guarded} />
           <Devices guarded={guarded} onSelfRevoked={changed} />
-          {st.offering?.market && <SellingLink />}
           <DataAndDeletion st={st} confirmFresh={(why, fn) => setReauth({ why, retry: fn })} onDeleted={changed} />
         </>
       )}
@@ -185,7 +182,7 @@ function SignIn({ st, onDone }: { st: AccountStatus; onDone(): Promise<void> }) 
             setEditServer(false);
             await onDone();
           }))}>
-            <TextInput label="Wikae server" value={server} onChange={setServer} mono placeholder="https://sync.etude.study" hint="Leave empty for sync.etude.study. Self-hosted servers have Sync without the paid Market." />
+            <TextInput label="Wikae server" value={server} onChange={setServer} mono placeholder="https://sync.etude.study" hint="Leave empty for the default Sync server, or enter your own self-hosted server." />
             <Button type="submit" size="sm" variant="outline" className="h-10 md:h-9" disabled={!!busy}>Save</Button>
           </form>
         )}
@@ -317,7 +314,7 @@ function Devices({ guarded, onSelfRevoked }: { guarded: Guarded; onSelfRevoked()
   const load = useCallback(() => account.devices().then((r) => setList(r.devices)).catch(() => setList([])), []);
   useEffect(() => void load(), [load]);
   return (
-    <Block title="Devices" description="Everything signed in to this account. Signing a device out stops its Sync and library right away.">
+    <Block title="Devices" description="Everything signed in to this account. Signing a device out stops its Sync right away.">
       {list === null ? <Skeleton className="h-8 w-full" /> : (
         <ul className="divide-y rounded-lg border" data-devices>
           {list.map((d) => {
@@ -343,16 +340,6 @@ function Devices({ guarded, onSelfRevoked }: { guarded: Guarded; onSelfRevoked()
         </ul>
       )}
     </Block>
-  );
-}
-
-function SellingLink() {
-  return (
-    <Block
-      title="Selling decks"
-      description={isNativeApp() ? "Creators manage their listings from the desktop app or etude.study." : "List a deck from your collection on the paid Market. You keep 80% of each sale."}
-      aside={isNativeApp() ? undefined : <Button variant="outline" size="sm" className="h-10 md:h-8" onClick={() => navigate("/market?tab=selling")}>Open Selling</Button>}
-    />
   );
 }
 
@@ -386,7 +373,7 @@ function DataAndDeletion({ st, confirmFresh, onDeleted }: { st: AccountStatus; c
             <AlertDialogTitle>Delete your Wikae account?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                <p>This removes the account, every signed-in device, your passkeys and the encrypted Sync copy on the server, and ends access to decks you bought. A Sync subscription should be canceled first. Orders are kept without your name for tax records.</p>
+                <p>This removes the account, every signed-in device, your passkeys and the encrypted Sync copy on the server.</p>
                 <p>The collection on this device stays.</p>
               </div>
             </AlertDialogDescription>

@@ -2,10 +2,10 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["TEAMID.study.etude.app"],
+        "appIDs": ["TEAMID.study.wikae.app"],
         "components": [
-          { "/": "/app", "comment": "Opens Etude" },
-          { "/": "/app/*", "comment": "Opens a screen in Etude: /app/study?deck=…, /app/market, …" }
+          { "/": "/app", "comment": "Opens Wikae" },
+          { "/": "/app/*", "comment": "Opens a screen in Wikae: /app/study?deck=…, /app/market, …" }
         ]
       }
     ]

@@ -1,13 +1,13 @@
 # Website
 
-The Etude website: a landing page and a download page, built into `site/dist` as plain static files for GitHub Pages.
+The Wikae website: a landing page and a download page, built into `site/dist` as plain static files for GitHub Pages.
 
-Only the free demo types listed in `public-content.ts` may ship in `decks/` and `src/type-assets/`. The build rejects other demos and assets before copying files. Keep paid content and local backups outside the public repository.
+Only the demo types listed in `public-content.ts` may ship in `decks/` and `src/type-assets/`. The build rejects other demos and assets before copying files. Keep local backups outside the public repository.
 
 ```sh
 npm run build        # the web app; the site copies its card runtime and editor kit
 npm run site         # builds site/dist
-npm run site:serve   # http://127.0.0.1:4620/etude/, served the way GitHub Pages serves it
+npm run site:serve   # http://127.0.0.1:4620/wikae/, served the way GitHub Pages serves it
 ```
 
 The hero runs real card types from `examples/showcase/`: `build.ts` turns each type into a frame document with the same `cardFrame()` the server uses, and the page runs the type's `prepare` and `grade` scripts with the sandbox's own prelude (`std`, seeded `rng`). The exam chart runs the real scheduler (ts-fsrs) with Etude's deadline rule. Nothing on the page is a mockup of a card.

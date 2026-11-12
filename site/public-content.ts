@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 export const PUBLIC_DEMO_TYPES = ["country-map", "element", "flippy"] as const;
 
-/** Only explicitly approved free demos and their assets may enter the website. */
+/** Only explicitly approved demos and their assets may enter the website. */
 export function checkPublicContent(site: string) {
   const allowed = new Set<string>(PUBLIC_DEMO_TYPES);
   for (const entry of readdirSync(join(site, "decks"), { withFileTypes: true })) {

@@ -13,7 +13,6 @@ export function setLanguage(lang) {
     localStorage.setItem(LANG_KEY, lang);
     localStorage.setItem("wikae.language", lang);
     localStorage.setItem("wikaa.language", lang);
-    localStorage.setItem("etude.language", lang);
   } catch (_) {}
 
   const titles = {
@@ -46,6 +45,10 @@ export function setLanguage(lang) {
 }
 
 export function initLanguageToggle() {
+  try {
+    const q = new URLSearchParams(window.location.search).get("lang");
+    if (q === "ar" || q === "en") setLanguage(q);
+  } catch (_) {}
   const btn = document.getElementById("lang-toggle");
   if (btn) {
     btn.addEventListener("click", () => {

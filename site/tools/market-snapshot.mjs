@@ -4,17 +4,30 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-const RAW = "https://raw.githubusercontent.com/Zibhelina/etude-market/main";
+const RAW = "https://raw.githubusercontent.com/Sidali-Djeghbal/wikae-market/main";
 const out = join(dirname(fileURLToPath(import.meta.url)), "../src/assets/market");
 mkdirSync(join(out, "covers"), { recursive: true });
 const index = await (await fetch(`${RAW}/index.json`)).json();
 const entries = [];
 for (const e of index.entries) {
-  const row = { id: e.id, kind: e.kind, name: e.name, description: e.description, tags: e.tags ?? [] };
+  const row = {
+    id: e.id,
+    kind: e.kind,
+    name: e.name,
+    ...(e.nameAr ? { nameAr: e.nameAr } : {}),
+    ...(e.nameEn ? { nameEn: e.nameEn } : {}),
+    description: e.description,
+    ...(e.descriptionAr ? { descriptionAr: e.descriptionAr } : {}),
+    ...(e.descriptionEn ? { descriptionEn: e.descriptionEn } : {}),
+    tags: e.tags ?? [],
+    ...(e.tagsAr ? { tagsAr: e.tagsAr } : {}),
+    ...(e.tagsEn ? { tagsEn: e.tagsEn } : {}),
+  };
   if (e.kind === "theme") row.theme = { scheme: e.summary.theme.scheme, vars: e.summary.theme.vars };
   if (e.cover) {
+    const ext = e.cover.endsWith(".svg") ? "svg" : "webp";
     const buf = Buffer.from(await (await fetch(`${RAW}/${e.cover}`)).arrayBuffer());
-    const file = `${e.kind}-${e.id}.webp`;
+    const file = `${e.kind}-${e.id}.${ext}`;
     writeFileSync(join(out, "covers", file), buf);
     row.cover = `assets/market/covers/${file}`;
   }

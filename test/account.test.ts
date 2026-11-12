@@ -6,17 +6,15 @@ import { mkdtempSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { AddressInfo } from "node:net";
 import { Etude } from "../src/core/engine.ts";
-import { accountFor, AccountError, checkServerUrl, paidId, signInCode } from "../src/core/account.ts";
+import { accountFor, AccountError, checkServerUrl, signInCode } from "../src/core/account.ts";
 import { syncFor } from "../src/core/sync/client.ts";
 import { agentRefusal } from "../src/core/agent-guard.ts";
 import { COMMANDS } from "../src/cli/registry.ts";
 import "../src/cli/commands/index.ts";
 
-/** Just enough of etude-cloud for the client: sign-in, me, library, pack download, deletion. */
+/** Just enough of etude-cloud for the client: sign-in, me, deletion. */
 function stub() {
   const tokens = new Set<string>();
-  let pack: any = { etude: "pack/1", name: "Pharm", decks: [{ name: "Pharm" }], items: [{ id: "p1", type: "basic", deck: "Pharm", fields: { front: "ACE inhibitor ending", back: "-pril" } }] };
-  let version = "1.0.0";
   const calls: string[] = [];
   const verifyBodies: any[] = [];
   const srv = createServer(async (req: IncomingMessage, res: ServerResponse) => {
@@ -27,7 +25,7 @@ function stub() {
     const send = (status: number, data: unknown, headers: Record<string, string> = {}) => (res.writeHead(status, { "content-type": "application/json", ...headers }), res.end(JSON.stringify(data)));
     const path = (req.url ?? "").split("?")[0];
     calls.push(`${req.method} ${path}`);
-    if (path === "/v1/server") return send(200, { billing: true, market: true, quotaBytes: 1024 ** 3, passkeys: { rpId: "localhost" } });
+    if (path === "/v1/server") return send(200, { billing: false, market: false, quotaBytes: 1024 ** 3, passkeys: { rpId: "localhost" } });
     if (path === "/v1/auth/email/start") return send(200, { ok: true });
     if (path === "/v1/auth/email/verify") {
       verifyBodies.push(body);
@@ -40,9 +38,7 @@ function stub() {
     if (!tokens.has(auth)) return send(401, { error: { code: "unauthorized", message: "Sign in first" } });
     if (path === "/v1/me" && req.method === "GET") return send(200, { id: "acc_1", email: "a@example.test", device: { id: "dev_1" }, sync: { active: false, reason: "none" }, admin: false });
     if (path === "/v1/me" && req.method === "DELETE") return tokens.delete(auth), send(200, { ok: true, deleted: "acc_1" });
-    if (path === "/v1/billing/sync") return send(200, { active: false, reason: "none", billing: true });
-    if (path === "/v1/library") return send(200, { library: [{ listing: "lst_1", slug: "pharm", name: "Pharm", version, changelog: "", pack: "/v1/listings/lst_1/pack" }] });
-    if (path === "/v1/listings/lst_1/pack") return send(200, pack, { "x-etude-version": version });
+    if (path === "/v1/billing/sync") return send(200, { active: false, reason: "none", billing: false });
     if (path === "/v1/vault/keys") return send(404, { error: { code: "no_keys", message: "none" } });
     if (path === "/v1/auth/logout") return tokens.delete(auth), send(200, { ok: true });
     return send(404, { error: { code: "not_found", message: path } });
@@ -50,10 +46,6 @@ function stub() {
   return {
     calls,
     verifyBodies,
-    bump(next: string) {
-      version = next;
-      pack = { ...pack, items: [...pack.items, { id: "p2", type: "basic", deck: "Pharm", fields: { front: "Beta blocker ending", back: "-olol" } }] };
-    },
     async start() {
       await new Promise<void>((r) => srv.listen(0, "127.0.0.1", r));
       return `http://127.0.0.1:${(srv.address() as AddressInfo).port}`;
@@ -62,7 +54,7 @@ function stub() {
   };
 }
 
-test("account: sign in, token file 0600, purchased deck installs and updates through the pack importer, delete needs the typed email", async () => {
+test("account: sign in, token file 0600, sync shares device, delete needs the typed email", async () => {
   const dir = mkdtempSync(join((process.env.TMPDIR ?? tmpdir()), "account-"));
   const s = stub();
   const url = await s.start();
@@ -84,27 +76,11 @@ test("account: sign in, token file 0600, purchased deck installs and updates thr
     assert.equal(st.signedIn, true);
     assert.equal(st.account, true);
 
-    const lib = await a.library();
-    assert.equal(lib.library[0].installed, null);
-    const r1 = await a.install("lst_1");
-    assert.equal(r1.result, "created");
-    assert.equal(e.db.get("SELECT count(*) AS n FROM items WHERE id = 'p1'")!.n, 1);
-    assert.equal((await a.library()).library[0].installed, "installed");
-
-    s.bump("1.1.0");
-    assert.equal((await a.library()).library[0].installed, "update");
-    const r2 = await a.install("pharm");
-    assert.equal(r2.result, "updated");
-    assert.equal(r2.entry.id, paidId("pharm"));
-    assert.equal(e.db.get("SELECT count(*) AS n FROM items WHERE deck_id = (SELECT id FROM decks WHERE name = 'Pharm')")!.n, 2);
-
     await assert.rejects(a.deleteAccount("someone@else.test"), /type the account's email/);
     assert.ok(!s.calls.includes("DELETE /v1/me"));
     assert.equal((await a.deleteAccount("A@example.test")).ok, true);
     assert.equal(a.token(), undefined);
     assert.equal((await a.status()).signedIn, false);
-    // Local data stays.
-    assert.equal(e.db.get("SELECT count(*) AS n FROM items WHERE id = 'p1'")!.n, 1);
   } finally {
     e.close();
     await s.stop();
@@ -163,9 +139,9 @@ test("account: server URLs need https outside localhost", () => {
   assert.throws(() => checkServerUrl("https://u:p@example.com"), /user/);
 });
 
-test("account: Ask Etude may read the account but not buy, sell, sign in or delete", () => {
+test("account: Ask Etude may read the account but not sign in or delete", () => {
   const cmd = (name: string) => COMMANDS.find((c) => c.name === name)!;
   const g = (name: string) => agentRefusal({ cmd: cmd(name), values: {}, named: {}, attachmentDir: (process.env.TMPDIR ?? tmpdir()) });
-  for (const ok of ["account status", "account library", "account sales"]) assert.equal(g(ok), null, ok);
-  for (const no of ["account delete", "account buy", "account install", "account signin", "account list-deck", "account approve", "account revoke", "account server"]) assert.match(g(no) ?? "", /can't change the Etude account/, no);
+  for (const ok of ["account status", "account devices", "account passkeys"]) assert.equal(g(ok), null, ok);
+  for (const no of ["account delete", "account signin", "account revoke", "account server"]) assert.match(g(no) ?? "", /can't change the Etude account/, no);
 });

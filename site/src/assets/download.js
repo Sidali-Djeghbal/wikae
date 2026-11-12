@@ -18,24 +18,30 @@ $$("[data-reveal]").forEach((el) => revealer.observe(el));
 const OS = {
   mac: {
     note: "With Homebrew, or the installer from <a href=\"https://nodejs.org/en/download\">nodejs.org</a>.",
+    noteAr: "عبر Homebrew، أو المثبّت الرسمي من <a href=\"https://nodejs.org/en/download\">nodejs.org</a>.",
     cmd: ["brew install node", "node --version   # v24 or newer"],
+    cmdAr: ["brew install node", "node --version   # الإصدار 24 أو أحدث"],
     ps: "$ ",
-    home: "~/.etude/etude.db",
-    env: "~/.etude/.env",
+    home: "~/.wikae/wikae.db",
+    env: "~/.wikae/.env",
   },
   windows: {
     note: "In PowerShell with winget, or the installer from <a href=\"https://nodejs.org/en/download\">nodejs.org</a>. You'll also want <a href=\"https://git-scm.com/download/win\">Git</a>.",
+    noteAr: "في PowerShell عبر winget، أو المثبّت من <a href=\"https://nodejs.org/en/download\">nodejs.org</a>، مع تثبيت <a href=\"https://git-scm.com/download/win\">Git</a>.",
     cmd: ["winget install OpenJS.NodeJS Git.Git", "node --version   # v24 or newer"],
+    cmdAr: ["winget install OpenJS.NodeJS Git.Git", "node --version   # الإصدار 24 أو أحدث"],
     ps: "> ",
-    home: "%USERPROFILE%\\.etude\\etude.db",
-    env: "%USERPROFILE%\\.etude\\.env",
+    home: "%USERPROFILE%\\.wikae\\wikae.db",
+    env: "%USERPROFILE%\\.wikae\\.env",
   },
   linux: {
     note: "With your package manager, or a version manager like <a href=\"https://mise.jdx.dev\">mise</a> or <a href=\"https://github.com/nvm-sh/nvm\">nvm</a> if your distribution ships an older Node.",
+    noteAr: "عبر مدير الحزم في توزيعتك، أو مدير إصدارات مثل <a href=\"https://mise.jdx.dev\">mise</a> أو <a href=\"https://github.com/nvm-sh/nvm\">nvm</a>.",
     cmd: ["mise use -g node@24", "node --version   # v24 or newer"],
+    cmdAr: ["mise use -g node@24", "node --version   # الإصدار 24 أو أحدث"],
     ps: "$ ",
-    home: "~/.etude/etude.db",
-    env: "~/.etude/.env",
+    home: "~/.wikae/wikae.db",
+    env: "~/.wikae/.env",
   },
 };
 
@@ -47,25 +53,37 @@ function detect() {
 }
 
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+let currentOs = "mac";
 function show(os) {
+  currentOs = os;
   const o = OS[os];
+  const isAr = document.documentElement.getAttribute("lang") === "ar";
   $$("[data-os]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.os === os)));
-  $("[data-node-note]").innerHTML = o.note;
+  const noteEl = $("[data-node-note]");
+  if (noteEl) noteEl.innerHTML = isAr ? o.noteAr : o.note;
   const pre = $("[data-node-cmd]");
-  pre.innerHTML = o.cmd.map((c) => {
-    const [cmd, comment] = c.split(/(?=\s+#)/);
-    return `<span class="ps">${o.ps}</span>${esc(cmd)}${comment ? `<span class="c">${esc(comment)}</span>` : ""}`;
-  }).join("\n");
-  pre.nextElementSibling.dataset.copyText = o.cmd[0];
+  if (pre) {
+    const cmds = isAr ? o.cmdAr : o.cmd;
+    pre.innerHTML = cmds.map((c) => {
+      const [cmd, comment] = c.split(/(?=\s+#)/);
+      return `<span class="ps">${o.ps}</span>${esc(cmd)}${comment ? `<span class="c">${esc(comment)}</span>` : ""}`;
+    }).join("\n");
+    if (pre.nextElementSibling) pre.nextElementSibling.dataset.copyText = o.cmd[0];
+  }
   $$("[data-ps]").forEach((s) => (s.textContent = o.ps));
-  $("[data-home]").textContent = o.home;
-  $("[data-env]").textContent = o.env;
+  const homeEl = $("[data-home]");
+  if (homeEl) homeEl.textContent = o.home;
+  const envEl = $("[data-env]");
+  if (envEl) envEl.textContent = o.env;
   const panel = $("[data-panel]");
-  panel.dataset.show = os;
-  panel.classList.remove("os-panel"); void panel.offsetWidth; panel.classList.add("os-panel");
+  if (panel) {
+    panel.dataset.show = os;
+    panel.classList.remove("os-panel"); void panel.offsetWidth; panel.classList.add("os-panel");
+  }
   history.replaceState(null, "", `#${os}`);
 }
 $$("[data-os]").forEach((b) => b.addEventListener("click", () => show(b.dataset.os)));
+window.addEventListener("wikae-lang-change", () => show(currentOs));
 
 // The terminal steps open on request.
 $$("[data-term-toggle]").forEach((b) =>
@@ -94,9 +112,16 @@ async function macChip() {
 macChip().then((chip) => {
   if (chip !== "intel") return;
   const main = $("[data-mac-main]"), alt = $("[data-mac-alt]");
+  if (!main || !alt) return;
   [main.href, alt.href] = [alt.href, main.href];
-  $("[data-mac-label]").textContent = "Download for Intel Mac";
-  alt.textContent = "Mac with Apple Silicon (M1 or newer)?";
+  const mainAr = main.querySelector('[data-lang="ar"]');
+  const mainEn = main.querySelector('[data-lang="en"]');
+  if (mainAr) mainAr.textContent = "تحميل لأجهزة Mac بمعالج Intel";
+  if (mainEn) mainEn.textContent = "Download for Intel Mac";
+  const altAr = alt.querySelector('[data-lang="ar"]');
+  const altEn = alt.querySelector('[data-lang="en"]');
+  if (altAr) altAr.textContent = "جهاز Mac بمعالج Apple Silicon (M1 أو أحدث)؟ اضغط هنا";
+  if (altEn) altEn.textContent = "Mac with Apple Silicon (M1 or newer)?";
 });
 show(OS[location.hash.slice(1)] ? location.hash.slice(1) : detect());
 

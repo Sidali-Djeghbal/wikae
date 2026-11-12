@@ -2,7 +2,7 @@
 // card runtime and grades them with the types' own scripts; the deadline chart runs ts-fsrs.
 import katex from "../runtime/vendor/katex.js";
 import math from "../runtime/mathexpr.js";
-import { DEMOS, PRELUDE, TYPE_FILES, GENERATOR, GALLERY, SCHEDULERS } from "../data.js";
+import { PRELUDE, TYPE_FILES, GENERATOR, GALLERY, SCHEDULERS } from "../data.js";
 import { initThemeToggle } from "./theme.js";
 import { initLanguageToggle, getCurrentLang } from "./i18n.js";
 
@@ -73,24 +73,10 @@ function frameSwapper(body, loader) {
   };
 }
 // Card frames on this site are same-origin (allow-same-origin): every card here is one of
-// Etude's own types, and a same-origin frame shares the page's HTTP cache, so KaTeX, the runtime
+// Wikae's own types, and a same-origin frame shares the page's HTTP cache, so KaTeX, the runtime
 // and the fonts download once instead of once per card. The app keeps its frames opaque-origin,
 // because there a card can come from anyone.
 const SANDBOX = "allow-scripts allow-same-origin";
-// The scheduler is small and every rating needs it: fetch it once the page is idle.
-const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500));
-let prefetched = false;
-/** Once the first card is up: the scheduler and the other hero cards, so the next ones open at once. */
-function prefetchFrames() {
-  if (prefetched || navigator.connection?.saveData) return;
-  prefetched = true;
-  loadFsrs();
-  for (const d of DEMOS) {
-    const l = document.createElement("link");
-    l.rel = "prefetch"; l.href = `frames/${d.type}.html`;
-    document.head.appendChild(l);
-  }
-}
 
 // ------------------------------------------------------------------ page chrome
 const nav = $("#nav");
@@ -194,257 +180,6 @@ const metricLine = (metrics, details) => metrics
 
 let fsrsMod = null;
 const loadFsrs = () => (fsrsMod ??= import("../vendor/ts-fsrs.js"));
-
-// ---------------------------------------------------------------- the hero stage
-const stage = $("#stage");
-if (stage) {
-  const tabs = $(".stage-tabs", stage), body = $(".stage-body", stage), loader = $(".stage-loader", stage);
-  const checkBtn = $("[data-check]", stage), verdictEl = $(".verdict", stage), ratings = $(".ratings", stage);
-  let cur = null; // { demo, prep, seed, frame, phase, result }
-  const stageVis = visibility(stage);
-  const swap = frameSwapper(body, loader);
-  let index = 0;
-
-  if (!tabs.children.length) tabs.innerHTML = DEMOS.map((d, i) => `<button class="stage-tab" role="tab" type="button" aria-selected="${i === 0}" data-i="${i}">${esc(d.label)}</button>`).join("");
-  tabs.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-i]");
-    if (b) open(Number(b.dataset.i));
-  });
-
-  const post = (msg) => cur?.frame.contentWindow?.postMessage({ etude: 1, ...msg }, "*");
-  // Fade the window's edges only where the card actually continues.
-  const edges = () => {
-    const scrolls = body.scrollHeight > body.clientHeight + 2;
-    body.classList.toggle("scrolls", scrolls);
-    body.classList.toggle("scrolled", scrolls && body.scrollTop > 4);
-    body.classList.toggle("at-end", scrolls && body.scrollTop + body.clientHeight >= body.scrollHeight - 4);
-  };
-  body.addEventListener("scroll", edges, { passive: true });
-
-  function open(i, seed = (Math.random() * 2 ** 32) >>> 0) {
-    index = i;
-    const demo = DEMOS[i];
-    $$(".stage-tab", tabs).forEach((t, j) => t.setAttribute("aria-selected", String(j === i)));
-    // Scroll the tab strip only: scrollIntoView would also scroll the page back up to the hero.
-    const t = $(`[data-i="${i}"]`, tabs);
-    if (t) tabs.scrollTo({ left: t.offsetLeft - tabs.clientWidth / 2 + t.offsetWidth / 2, behavior: reduced ? "auto" : "smooth" });
-    verdictEl.innerHTML = "";
-    ratings.hidden = true;
-    checkBtn.parentElement.hidden = false;
-    checkBtn.disabled = true;
-    let prep;
-    try { prep = prepare(demo, seed); } catch (e) { verdictEl.textContent = `Couldn't prepare the card: ${e.message}`; return; }
-    const old = cur?.frame;
-    const frame = document.createElement("iframe");
-    frame.title = `${demo.name} card`;
-    frame.setAttribute("sandbox", SANDBOX);
-    frame.className = "loading";
-    frame.style.height = old ? old.style.height : "380px";
-    frame.src = `frames/${demo.type}.html`;
-    cur = { demo, prep, seed, frame, phase: "loading", ready: true };
-    swap.add(frame);
-    body.scrollTop = 0;
-  }
-
-  addEventListener("message", (e) => {
-    if (!cur || e.source !== cur.frame.contentWindow) return;
-    const msg = e.data;
-    if (!msg || msg.etude !== 1) return;
-    switch (msg.type) {
-      case "loaded":
-        post({ type: "init", view: cur.prep.view, mode: "answer", answer: null, result: null, theme: theme() });
-        break;
-      case "mounted":
-        cur.phase = "answer";
-        swap.mounted(cur.frame);
-        checkBtn.disabled = !cur.ready;
-        idle(prefetchFrames);
-        break;
-      case "size":
-        if (typeof msg.height === "number") cur.frame.style.height = `${Math.max(120, Math.min(msg.height + 4, 2000))}px`;
-        requestAnimationFrame(edges);
-        break;
-      case "ready-state":
-        cur.ready = !!msg.ready;
-        if (cur.phase === "answer") checkBtn.disabled = !cur.ready;
-        break;
-      case "submit":
-        onSubmit(msg.answer);
-        break;
-      case "key":
-        if (msg.key === "Mod+Enter" && cur.phase === "answer") post({ type: "collect" });
-        else if (cur.phase === "result" && /^[1-4]$/.test(msg.key)) rate(Number(msg.key));
-        else if (cur.phase === "result" && (msg.key === " " || msg.key === "Enter") && cur.result?.suggested) rate(cur.result.suggested);
-        break;
-      case "error":
-        verdictEl.textContent = `Card error: ${msg.message}`;
-        break;
-      case "demo-ack":
-        acks.get(msg.id)?.(msg.point ?? null);
-        acks.delete(msg.id);
-        break;
-    }
-  });
-
-  checkBtn.addEventListener("click", () => cur?.phase === "answer" && post({ type: "collect" }));
-  addEventListener("keydown", (e) => {
-    if (!cur || !stage.matches(":hover, :focus-within")) return;
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && cur.phase === "answer") { e.preventDefault(); post({ type: "collect" }); }
-    else if (cur.phase === "result" && /^[1-4]$/.test(e.key) && !e.target.closest("input, textarea")) rate(Number(e.key));
-  });
-
-  async function onSubmit(answer) {
-    if (cur.phase !== "answer") return;
-    cur.phase = "grading";
-    checkBtn.disabled = true;
-    let g;
-    try { g = grade(cur.demo, cur.prep, answer); } catch (e) { g = { score: null, verdict: "ungraded", feedback: `Grader error: ${e.message}`, suggested: null, grader: { kind: "script" } }; }
-    cur.result = g;
-    cur.phase = "result";
-    post({ type: "result", result: { grade: g, key: cur.prep.key, answer } });
-    const pct = g.verdict === "partial" && g.score != null ? `<span class="m tabular">${Math.round(g.score * 100)}%</span>` : "";
-    const isAr = getCurrentLang() === "ar";
-    const vLabel = getVerdict(g.verdict) ?? (isAr ? "قيّم نفسك" : "Rate yourself");
-    const checkMsg = isAr ? `· تم التحقق برمجياً في ${g.grader.ms} م ث` : `· checked by the card's script in ${g.grader.ms} ms`;
-    verdictEl.innerHTML = `<span class="v ${g.verdict}">${vLabel}</span>${pct}<span class="m">${checkMsg}</span>`;
-    verdictEl.classList.remove("pop"); void verdictEl.offsetWidth; verdictEl.classList.add("pop");
-    // The answer and explanation grow the card: bring them into view inside the window.
-    // The typing test puts its result (wpm, accuracy) at the top instead, so it stays there.
-    setTimeout(() => body.scrollTo({ top: cur.demo.type === "typing" ? 0 : body.scrollHeight, behavior: reduced ? "auto" : "smooth" }), 350);
-    checkBtn.parentElement.hidden = true;
-    const { fsrs, generatorParameters, createEmptyCard } = await loadFsrs();
-    const f = fsrs(generatorParameters({ enable_fuzz: false, learning_steps: ["1m", "10m"], relearning_steps: ["10m"] }));
-    const now = new Date();
-    const next = f.repeat(createEmptyCard(now), now);
-    ratings.innerHTML = [1, 2, 3, 4].map((r) => `<button type="button" class="rate r${r}${g.suggested === r ? " suggested" : ""}" data-r="${r}">${getRating(r)}<small>${humanInterval(next[r].card.due - now)}</small></button>`).join("");
-    ratings.hidden = false;
-  }
-  ratings.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-r]");
-    if (b) rate(Number(b.dataset.r));
-  });
-  async function rate(r) {
-    if (cur?.phase !== "result") return;
-    cur.phase = "rated";
-    const b = $(`[data-r="${r}"]`, ratings);
-    const isAr = getCurrentLang() === "ar";
-    const interval = b?.querySelector("small")?.textContent ?? (isAr ? "قريباً" : "a while");
-    const backMsg = isAr ? `· المراجعة بعد ${interval}. البطاقة التالية…` : `· back in ${interval}. Next card…`;
-    verdictEl.innerHTML = `<span class="v" style="color:var(--${["", "again", "hard", "good", "easy"][r]})">${getRating(r)}</span><span class="m">${backMsg}</span>`;
-    ratings.hidden = true;
-    await sleep(1100);
-    while (!stageVis.on) await sleep(400);
-    open((index + 1) % DEMOS.length);
-  }
-
-  // ------------------------------------------------ autoplay: a cursor plays the deck
-  // Solvers turn a card's prepared view and key into taps. Ratings vary like a real session.
-  const W = (pc) => [1, 3, 6, 8, 10].includes(pc) ? [0.5, 0.45] : [0.5, 0.86];
-  const SOLVE = {
-    chess: (p) => [{ sel: `[data-sq="${p.key.answers[0].slice(0, 2)}"]` }, { sel: `[data-sq="${p.key.answers[0].slice(2, 4)}"]` }],
-    "unit-circle": (p) => { const t = ((p.key.target + 15) * Math.PI) / 180; return [{ sel: ".uc-svg", svg: [0.92 * Math.cos(t), -0.92 * Math.sin(t)] }]; },
-    chord: (p) => p.key.pcs.map((pc) => ({ sel: `.cd-kb .key[data-m="${48 + pc}"]`, at: W(pc) })),
-    math: (p) => {
-      const m = /x\^\{(\d)\}\s*(\\sin x|\\cos x|e\^\{x\}|\\ln x)/.exec(p.fields.prompt ?? "");
-      const n = m ? Number(m[1]) : 0, lo = n - 1 === 1 ? "x" : `x^${n - 1}`;
-      const f = { "\\sin x": `${lo}(${n}sin(x) + x cos(x))`, "\\cos x": `${lo}(${n}cos(x) - x sin(x))`, "e^{x}": `${lo}e^x(${n} + x)`, "\\ln x": `${lo}(${n}ln(x) + 1)` };
-      return [{ sel: "#answer" }, { kind: "type", sel: "#answer", text: m ? f[m[2]] : String(p.key.answers?.[0] ?? "") }];
-    },
-    "graph-walk": (p) => p.key.order.map((id) => ({ sel: `.gw-node[data-id="${id}"]`, pause: 180 })),
-    staff: (p) => [{ sel: `.st-kb .key[data-m="${60 + p.key.pc}"]`, at: W(p.key.pc) }],
-    plot: (p) => p.key.points.map(([x, y]) => ({ sel: ".pl-svg", svg: [x, -y] })),
-    timeline: (p) => Object.entries(p.key.years).map(([id, y]) => ({ kind: "drag", sel: `.tl-chip[data-id="${id}"]`, to: { sel: ".tl", at: [(y - p.view.from) / (p.view.to - p.view.from), 0.6] } })),
-    color: (p) => ["h", "s", "l"].map((k, i) => ({ kind: "range", sel: `.co-slider[data-k="${k}"] input`, value: p.key.hsl[i] })),
-    // About 110 wpm with an uneven hand. The test ends itself on the last word.
-    typing: (p) => [{ sel: ".ty-box" }, { kind: "type", sel: ".ty-box", into: ".ty-input", text: p.view.words.join(" "), delay: 105 }],
-  };
-  // Mostly the suggested rating, sometimes Easy: a person who knows some cards cold.
-  const RATE = { typing: 3, timeline: 3, chess: 3, "unit-circle": 2, chord: 4, math: 3, "graph-walk": 3, staff: 4, plot: 3, color: 3 };
-  const cursor = document.createElement("div");
-  cursor.className = "demo-cursor";
-  cursor.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 8-6.2 1.6L9.6 19z"/></svg><i></i>`;
-  stage.appendChild(cursor);
-  const toggle = document.createElement("button");
-  toggle.type = "button"; toggle.className = "linkish demo-toggle";
-  $(".window-bar", stage).appendChild(toggle);
-  const acks = new Map();
-  let ackId = 0, auto = !reduced, gen = 0, touched = false, resumeTimer = null;
-  // A long typed step (the typing test) takes longer than the usual 3 s to answer.
-  const ask = (type, step) => new Promise((r) => { const id = ++ackId; acks.set(id, r); post({ type, id, step }); setTimeout(() => acks.has(id) && (acks.delete(id), r(null)), 3000 + (type === "demo-do" && step?.kind === "type" ? step.text.length * (step.delay ?? 42) * 1.5 : 0)); });
-  const live = (g) => g === gen && auto;
-  const until = async (cond, g, ms = 8000) => { const t = Date.now(); while (!cond()) { if (!live(g) || Date.now() - t > ms) return false; await sleep(80); } return true; };
-  function place(x, y) { const r = stage.getBoundingClientRect(); cursor.style.transform = `translate(${x - r.left}px, ${y - r.top}px)`; cursor.classList.add("on"); }
-  const tap = async () => { cursor.classList.remove("tap"); void cursor.offsetWidth; cursor.classList.add("tap"); await sleep(140); };
-  async function moveToFrame(step, g) {
-    let pt = await ask("demo-where", step);
-    if (!pt || !live(g)) return false;
-    const fr = cur.frame.getBoundingClientRect(), br = body.getBoundingClientRect();
-    const y = fr.top + pt.y;
-    if (y < br.top + 30 || y > br.bottom - 30) { body.scrollTo({ top: body.scrollTop + y - (br.top + br.height / 2), behavior: "smooth" }); await sleep(450); pt = await ask("demo-where", step); }
-    if (!pt) return false;
-    const f2 = cur.frame.getBoundingClientRect();
-    place(f2.left + pt.x, f2.top + pt.y);
-    await sleep(step.kind === "type" ? 300 : 620);
-    return live(g);
-  }
-  async function moveTo(el, g) { const r = el.getBoundingClientRect(); place(r.left + r.width / 2, r.top + r.height / 2); await sleep(640); return live(g); }
-  async function play(g) {
-    while (live(g)) {
-      if (!(await until(() => cur?.phase === "answer" && stageVis.on, g, 60000))) return;
-      await sleep(900);
-      const steps = SOLVE[cur.demo.type]?.(cur.prep) ?? [];
-      for (const st of steps) {
-        if (!(await moveToFrame(st, g))) return;
-        if (st.kind !== "type" && st.kind !== "range") await tap();
-        if (st.kind === "drag") {
-          const end = await ask("demo-where", st.to), fr = cur.frame.getBoundingClientRect();
-          const done = ask("demo-do", st);
-          if (end) place(fr.left + end.x, fr.top + end.y);
-          await done;
-        } else await ask("demo-do", st);
-        await sleep(st.pause ?? 380);
-      }
-      // Some cards submit themselves (the typing test on its last word); the rest need Check.
-      if (cur.phase === "answer") {
-        if (!(await until(() => !checkBtn.disabled || cur.phase !== "answer", g, 3000))) { if (live(g)) open((index + 1) % DEMOS.length); continue; }
-        if (cur.phase === "answer") {
-          if (!(await moveTo(checkBtn, g))) return;
-          await tap(); post({ type: "collect" });
-        }
-      }
-      if (!(await until(() => cur.phase === "result" && !ratings.hidden, g))) return;
-      await sleep(2200);
-      const r = RATE[cur.demo.type] ?? cur.result?.suggested ?? 3;
-      const b = $(`[data-r="${cur.result?.verdict === "partial" ? 2 : r}"]`, ratings);
-      if (!b || !(await moveTo(b, g))) return;
-      await tap(); rate(Number(b.dataset.r));
-      await until(() => cur.phase === "loading" || cur.phase === "answer", g, 4000);
-    }
-  }
-  function updateToggleUI() {
-    const isAr = getCurrentLang() === "ar";
-    toggle.innerHTML = auto
-      ? `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span class="dt-label">${isAr ? "التشغيل التلقائي يعمل" : "Playing the deck"}</span>`
-      : `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg><span class="dt-label">${isAr ? "تشغيل تلقائي" : "Play the deck"}</span>`;
-    toggle.setAttribute("aria-label", auto ? (isAr ? "إيقاف التشغيل التلقائي" : "Pause the deck") : (isAr ? "تشغيل تلقائي للحزمة" : "Play the deck"));
-  }
-  function setAuto(on) {
-    auto = on; gen++;
-    updateToggleUI();
-    if (!on) { cursor.classList.remove("on"); if (!cur) open(index); }
-    else { if (touched || cur?.phase !== "answer") open((index + 1) % DEMOS.length); touched = false; play(gen); }
-  }
-  window.addEventListener("wikae-lang-change", updateToggleUI);
-  // A real person takes over: stop the demo where it is and let them finish the card.
-  const takeOver = (e) => { if (!e.isTrusted || e.target.closest(".demo-toggle")) return; touched = true; clearTimeout(resumeTimer); if (auto) setAuto(false); };
-  stage.addEventListener("pointerdown", takeOver);
-  addEventListener("blur", () => { if (document.activeElement === cur?.frame) { touched = true; if (auto) setAuto(false); } });
-  stage.addEventListener("pointerenter", (e) => { if (e.isTrusted && e.pointerType === "mouse") clearTimeout(resumeTimer); });
-  stage.addEventListener("pointerleave", (e) => { if (e.isTrusted && !auto && !reduced) { clearTimeout(resumeTimer); resumeTimer = setTimeout(() => setAuto(true), 9000); } });
-  toggle.addEventListener("click", () => { clearTimeout(resumeTimer); setAuto(!auto); });
-  tabs.addEventListener("click", (e) => { if (e.isTrusted) { touched = true; if (auto) setAuto(false); } }, true);
-  setAuto(auto);
-}
 
 // ------------------------------------------- the self-grading Quranic Mutashabihat mini card
 const mini = $("#mini");
@@ -671,14 +406,16 @@ if (exam) {
         return [...days.values()].map((r) => `<circle class="${cls}" cx="${x(r.t).toFixed(1)}" cy="${y(R(r.card, r.t + 1000)).toFixed(1)}" r="${cls === "d-on" ? 4 : 3.6}"/>`).join("");
       };
       let g = "";
+      const isAr = getCurrentLang() === "ar";
       for (let r = ymin; r <= 1.0001; r += ystep) g += `<line class="grid" x1="${L}" x2="${W - Rt}" y1="${y(r)}" y2="${y(r)}"/><text x="${L - 8}" y="${y(r) + 4}" text-anchor="end">${Math.round(r * 100)}%</text>`;
       const step = D <= 14 ? 2 : D <= 30 ? 5 : 10;
       const ex = x(on.examAt);
-      for (let d = 0; d < D; d += step) if (ex - x(t0 + d * DAY) > 34) g += `<text x="${x(t0 + d * DAY)}" y="${H - 8}" text-anchor="middle">${d === 0 ? "day 0" : d}</text>`;
-      g += `<line class="examline" x1="${ex}" x2="${ex}" y1="${T}" y2="${H - B}"/><text class="serif" x="${ex}" y="${H - 8}" text-anchor="middle" style="fill:var(--foreground)">exam</text>`;
+      for (let d = 0; d < D; d += step) if (ex - x(t0 + d * DAY) > 34) g += `<text x="${x(t0 + d * DAY)}" y="${H - 8}" text-anchor="middle">${d === 0 ? (isAr ? "اليوم 0" : "day 0") : d}</text>`;
+      g += `<line class="examline" x1="${ex}" x2="${ex}" y1="${T}" y2="${H - B}"/><text class="serif" x="${ex}" y="${H - 8}" text-anchor="${small ? "end" : "middle"}" style="fill:var(--foreground)">${isAr ? "الختمة" : "exam"}</text>`;
       // The recall the deadline buys back, shaded between the two curves' final values.
       g += `<path class="c-on" d="${curve(on)}"/><path class="c-off" d="${curve(off)}"/>` + dots(on, "d-on") + dots(off, "d-off");
-      chart.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Predicted recall over time, with and without a deadline">${g}</svg>`;
+      const aria = isAr ? "منحنى التذكر المتوقع عبر الزمن مع تحديد موعد الختمة وبدونه" : "Predicted recall over time, with and without a deadline";
+      chart.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" dir="ltr" direction="ltr" role="img" aria-label="${aria}">${g}</svg>`;
     }
     let last = null;
     function render() {
@@ -804,13 +541,19 @@ if (shotTabs) {
 const codeTabs = $("[data-code-tabs]");
 if (codeTabs) {
   const code = $("[data-code]"), note = $("[data-code-note]"), tree = $("[data-tree]");
-  tree.innerHTML =
-    `<div><span class="dir">unit-circle/</span><span>the Unit circle card type</span></div>` +
-    TYPE_FILES.map((f, i) => `<div class="ind" data-f="${i}">${esc(f.name)}<span>${f.lines} lines</span></div>`).join("");
+  let activeIdx = 4;
+  const renderTree = () => {
+    const isAr = getCurrentLang() === "ar";
+    tree.innerHTML =
+      `<div><span class="dir">quran-mutashabihat/</span><span>${isAr ? "نوع بطاقة متشابهات القرآن" : "the Quranic Mutashabihat card type"}</span></div>` +
+      TYPE_FILES.map((f, i) => `<div class="ind${i === activeIdx ? " on" : ""}" data-f="${i}">${esc(f.name)}<span>${isAr ? `${f.lines} سطراً` : `${f.lines} lines`}</span></div>`).join("");
+  };
   codeTabs.innerHTML = TYPE_FILES.map((f, i) => `<button role="tab" type="button" aria-selected="${i === 0}" data-f="${i}">${esc(f.name)}</button>`).join("");
   const show = (i) => {
+    activeIdx = i;
+    const isAr = getCurrentLang() === "ar";
     code.innerHTML = TYPE_FILES[i].html;
-    note.textContent = TYPE_FILES[i].note;
+    note.textContent = (isAr && TYPE_FILES[i].noteAr) ? TYPE_FILES[i].noteAr : TYPE_FILES[i].note;
     $$("[data-f]", codeTabs).forEach((b) => b.setAttribute("aria-selected", String(Number(b.dataset.f) === i)));
     $$("[data-f]", tree).forEach((b) => b.classList.toggle("on", Number(b.dataset.f) === i));
     code.parentElement.scrollTop = 0;
@@ -818,6 +561,8 @@ if (codeTabs) {
   const pick = (e) => { const b = e.target.closest("[data-f]"); if (b) show(Number(b.dataset.f)); };
   codeTabs.addEventListener("click", pick);
   tree.addEventListener("click", pick);
+  window.addEventListener("wikae-lang-change", () => { renderTree(); show(activeIdx); });
+  renderTree();
   show(4);
 }
 
@@ -853,23 +598,49 @@ if (rep && GALLERY?.length) {
     en: { self: "Show answer", ai: "Show the reference", default: "Check" }
   };
 
-  // The programme: types grouped by what they ask of you, numbered in one run like a concert programme.
-  let n = 0, html = "";
-  for (const group of [...new Set(GALLERY.map((e) => e.group))]) {
-    html += `<div class="rep-group"><p class="rep-group-h">${esc(group)}</p><ol>`;
-    GALLERY.forEach((e, i) => {
-      if (e.group !== group) return;
-      html += `<li><button type="button" class="rep-item" data-i="${i}" data-type="${esc(e.type)}" aria-controls="rep-panel" aria-current="false" tabindex="-1"><span class="rep-n tabular">${++n}</span><span class="rep-l">${esc(e.label)}</span>${e.grader === "ai" ? `<span class="rep-dag" aria-label="graded by AI">†</span>` : ""}</button></li>`;
-    });
-    html += `</ol></div>`;
-  }
-  list.innerHTML = html + `<p class="rep-foot-note"><span aria-hidden="true">†</span> graded by AI in the app</p>`;
-  const items = $$(".rep-item", list);
-
+  let items = [];
   let cur = null; // { entry, i, k, seed, prep, frame, phase }
+  function buildRepList() {
+    const isAr = getCurrentLang() === "ar";
+    let n = 0, html = "";
+    for (const group of [...new Set(GALLERY.map((e) => e.group))]) {
+      const firstInGroup = GALLERY.find((e) => e.group === group);
+      const gTitle = isAr ? (firstInGroup?.groupAr ?? group) : group;
+      html += `<div class="rep-group"><p class="rep-group-h">${esc(gTitle)}</p><ol>`;
+      GALLERY.forEach((e, i) => {
+        if (e.group !== group) return;
+        const lbl = isAr ? (e.labelAr ?? e.label) : e.label;
+        const current = cur?.i === i ? "true" : "false";
+        html += `<li><button type="button" class="rep-item" data-i="${i}" data-type="${esc(e.type)}" aria-controls="rep-panel" aria-current="${current}" tabindex="${cur?.i === i ? 0 : -1}"><span class="rep-n tabular">${++n}</span><span class="rep-l">${esc(lbl)}</span>${e.grader === "ai" ? `<span class="rep-dag" aria-label="${isAr ? "مصحح بالذكاء الاصطناعي" : "graded by AI"}">†</span>` : ""}</button></li>`;
+      });
+      html += `</ol></div>`;
+    }
+    const footText = isAr ? "مصحح بالذكاء الاصطناعي في التطبيق" : "graded by AI in the app";
+    list.innerHTML = html + `<p class="rep-foot-note"><span aria-hidden="true">†</span> ${footText}</p>`;
+    items = $$(".rep-item", list);
+  }
+  buildRepList();
+
   const variant = new Map(); // which item of an entry was shown last
   const swap = frameSwapper(body, loader);
   const post = (msg) => cur?.frame.contentWindow?.postMessage({ etude: 1, ...msg }, "*");
+
+  function syncRepLabels() {
+    if (!cur) return;
+    const entry = cur.entry;
+    const lang = getCurrentLang();
+    const isAr = lang === "ar";
+    groupEl.textContent = isAr ? (entry.groupAr ?? entry.group) : entry.group;
+    nameEl.textContent = isAr ? (entry.labelAr ?? entry.label) : entry.label;
+    descEl.textContent = isAr ? (entry.descAr ?? entry.desc) : entry.desc;
+    graderEl.textContent = (GRADER[lang] || GRADER.ar)[entry.grader] ?? "";
+    checkBtn.firstChild.textContent = `${(CHECK[lang] || CHECK.ar)[entry.grader] ?? (CHECK[lang] || CHECK.ar).default} `;
+    againBtn.innerHTML = `${(AGAIN[lang] || AGAIN.ar)[entry.again] || (isAr ? "تمرين آخر" : "New variant")} <span aria-hidden="true">↻</span>`;
+  }
+  window.addEventListener("wikae-lang-change", () => {
+    buildRepList();
+    syncRepLabels();
+  });
 
   function open(i, { fresh = false, focus = false } = {}) {
     const entry = GALLERY[i];
@@ -881,17 +652,10 @@ if (rep && GALLERY?.length) {
     items.forEach((b, j) => { b.setAttribute("aria-current", String(j === i)); b.tabIndex = j === i ? 0 : -1; });
     // Keep the chosen type in view in the phone's horizontal strip, without scrolling the page.
     const b = items[i];
-    if (list.scrollWidth > list.clientWidth + 2) list.scrollTo({ left: b.offsetLeft - list.clientWidth / 2 + b.offsetWidth / 2, behavior: reduced ? "auto" : "smooth" });
-    const lang = getCurrentLang();
-    groupEl.textContent = entry.group;
-    nameEl.textContent = entry.label;
-    descEl.textContent = entry.desc;
-    graderEl.textContent = (GRADER[lang] || GRADER.ar)[entry.grader] ?? "";
+    if (b && list.scrollWidth > list.clientWidth + 2) list.scrollTo({ left: b.offsetLeft - list.clientWidth / 2 + b.offsetWidth / 2, behavior: reduced ? "auto" : "smooth" });
     verdictEl.innerHTML = "";
     checkBtn.hidden = false;
     checkBtn.disabled = true;
-    checkBtn.firstChild.textContent = `${(CHECK[lang] || CHECK.ar)[entry.grader] ?? (CHECK[lang] || CHECK.ar).default} `;
-    againBtn.innerHTML = `${(AGAIN[lang] || AGAIN.ar)[entry.again] || (lang === "ar" ? "تمرين آخر" : "New variant")} <span aria-hidden="true">↻</span>`;
     againBtn.classList.remove("btn-primary");
     againBtn.classList.add("btn-ghost");
     let prep;
@@ -905,6 +669,7 @@ if (rep && GALLERY?.length) {
     frame.style.height = old ? old.style.height : "420px";
     frame.src = `frames/gallery/${entry.type}.html`;
     cur = { entry, i, k, item, seed, prep, frame, phase: "loading", ready: true, focus };
+    syncRepLabels();
     swap.add(frame);
   }
 
@@ -1076,20 +841,22 @@ if (rep && GALLERY?.length) {
       return out;
     }
     const ROWS = [
-      { id: "fsrs", name: "FSRS", note: "right before you'd forget it", run: fsrsRow, tag: (o) => (o.state?.ivl ? `+${o.state.ivl}d` : null) },
-      { id: "drill", name: "Drill", note: "every day, nothing to rate", run: (m) => script(SCHEDULERS.drill, { perDay: 1, everyDays: 1 }, m) },
-      { id: "leitner", name: "Leitner", note: "up a box if right, box 1 if wrong", run: (m) => script(SCHEDULERS.leitner, { boxes: "1, 2, 4, 8, 16, 32" }, m), tag: (o) => o.state?.box },
-      { id: "monday", name: "Your own", note: "a few lines of JS: Mondays", run: (m) => script(SCHEDULERS.monday, { weeks: 1 }, m) },
+      { id: "fsrs", name: "FSRS-6", nameAr: "FSRS-6", note: "right before you'd forget it", noteAr: "قبيل لحظة النسيان تماماً", run: fsrsRow, tag: (o) => (o.state?.ivl ? `+${o.state.ivl}d` : null) },
+      { id: "drill", name: "Drill", nameAr: "التكرار اليومي", note: "every day, nothing to rate", noteAr: "مراجعة يومية للورد الثابت", run: (m) => script(SCHEDULERS.drill, { perDay: 1, everyDays: 1 }, m) },
+      { id: "leitner", name: "Leitner", nameAr: "صناديق لايتنر", note: "up a box if right, box 1 if wrong", noteAr: "ترقية عند الإصابة والأول عند الخطأ", run: (m) => script(SCHEDULERS.leitner, { boxes: "1, 2, 4, 8, 16, 32" }, m), tag: (o) => o.state?.box },
+      { id: "monday", name: "Your own", nameAr: "جدولك المخصص", note: "a few lines of JS: Mondays", noteAr: "بضعة أسطر برمجية: كل يوم إثنين", run: (m) => script(SCHEDULERS.monday, { weeks: 1 }, m) },
     ];
     async function draw() {
       const miss = missBox.checked;
       missNote.hidden = !miss;
+      const isAr = getCurrentLang() === "ar";
       const rows = [];
       for (const r of ROWS) rows.push({ ...r, pts: await r.run(miss) });
       const W = Math.max(300, Math.round(chart.clientWidth || 900)), small = W < 640;
       const L = small ? 8 : 230, R = small ? 8 : 64, rowH = small ? 74 : 62, top = 8, H = top + rows.length * rowH + 30;
       const x = (d) => L + ((W - L - R) * (d + 0.5)) / SPAN;
-      let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="When the card comes back under each scheduler">`;
+      const aria = isAr ? "مواعيد عودة البطاقة للمراجعة تحت كل خوارزمية جدولة" : "When the card comes back under each scheduler";
+      let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" dir="ltr" direction="ltr" role="img" aria-label="${aria}">`;
       // weeks
       const rowY = (i) => top + i * rowH + (small ? 46 : rowH / 2);
       for (let w = 0; w <= 6; w++) {
@@ -1097,12 +864,14 @@ if (rep && GALLERY?.length) {
         // On a phone the row names sit above the dots, so the week lines only cross the dot rows.
         if (small) rows.forEach((_, i) => (s += `<line class="grid" x1="${gx}" x2="${gx}" y1="${rowY(i) - 9}" y2="${rowY(i) + 9}"/>`));
         else s += `<line class="grid" x1="${gx}" x2="${gx}" y1="${top}" y2="${H - 26}"/>`;
-        if (w < 6) s += `<text x="${gx + 4}" y="${H - 8}">${small ? `w${w + 1}` : `week ${w + 1}`}</text>`;
+        if (w < 6) s += `<text x="${gx + 4}" y="${H - 8}">${small ? (isAr ? `أ${w + 1}` : `w${w + 1}`) : (isAr ? `أسبوع ${w + 1}` : `week ${w + 1}`)}</text>`;
       }
       rows.forEach((r, i) => {
         const y = rowY(i);
-        if (small) s += `<text class="serif" x="${L}" y="${y - 24}">${r.name} <tspan class="dim">· ${esc(r.note)}</tspan></text>`;
-        else s += `<text class="serif" x="0" y="${y - 2}">${r.name}</text><text class="dim small" x="0" y="${y + 15}">${esc(r.note)}</text>`;
+        const rName = isAr ? r.nameAr : r.name;
+        const rNote = isAr ? r.noteAr : r.note;
+        if (small) s += `<text class="serif" x="${L}" y="${y - 24}">${rName} <tspan class="dim">· ${esc(rNote)}</tspan></text>`;
+        else s += `<text class="serif" x="0" y="${y - 2}">${rName}</text><text class="dim small" x="0" y="${y + 15}">${esc(rNote)}</text>`;
         s += `<line class="axis" x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/>`;
         const pts = r.pts.filter((p) => p.d < SPAN);
         for (const p of pts) {
@@ -1112,13 +881,14 @@ if (rep && GALLERY?.length) {
         }
         // A long gap at the end is the point, not missing data: say when the card comes back.
         const last = pts[pts.length - 1]?.d ?? 0;
-        if (r.pts.next >= SPAN && SPAN - last > 6) s += `<text class="next" x="${W - R - 4}" y="${y + (small ? 19 : -9)}" text-anchor="end">next: day ${r.pts.next} →</text>`;
+        if (r.pts.next >= SPAN && SPAN - last > 6) s += `<text class="next" x="${W - R - 4}" y="${y + (small ? 19 : -9)}" text-anchor="end">${isAr ? `التالي: يوم ${r.pts.next}` : `next: day ${r.pts.next} →`}</text>`;
         if (!small) s += `<text class="count" x="${W - R + 14}" y="${y + 5}">${pts.length}×</text>`;
       });
       chart.innerHTML = s + "</svg>";
       window.__tempo = rows.map((r) => ({ id: r.id, days: r.pts.map((p) => p.d) }));
     }
     missBox.addEventListener("change", draw);
+    window.addEventListener("wikae-lang-change", draw);
     let w = 0;
     new ResizeObserver(() => { const n = chart.clientWidth; if (Math.abs(n - w) > 4) { w = n; draw(); } }).observe(chart);
     whenVisible(box, draw, "0px 0px 30% 0px");
@@ -1316,77 +1086,17 @@ if (rep && GALLERY?.length) {
   }
 }
 
-// ------------------------------------------------------- lifting the hero off the film
-// The hero and the film are two cards in a stack, the hero on top. The film waits underneath it,
-// pinned under the nav. Once the hero's bottom reaches the bottom of the screen, scrolling lifts
-// the hero off: it becomes a card, turns counter-clockwise and flies away up and to the left,
-// uncovering the film. Then the film scrolls on. It follows the scroll position, so it runs
-// backwards when you scroll back. Phones just scroll: there the hero is two screens tall.
+// ------------------------------------------------------- hero interactive mutashabihat preview
 {
-  const deal = $(".deal"), hero = $(".deal > .hero"), film = $(".deal > .film");
-  // sticky can't move into its parent's padding, so the pinned stretch is an empty block after the film
-  const room = deal && document.createElement("div");
-  if (room) { room.className = "deal-room"; room.setAttribute("aria-hidden", "true"); deal.append(room); }
-  const wide = matchMedia("(min-width: 700px)");
-  if (deal && hero && film && !reduced) {
-    const ease = (t) => t * t;
-    const clamp = (x) => Math.max(0, Math.min(1, x));
-    let ticking = false, start = 0, T = 0;
-    const layout = () => {
-      if (!wide.matches) {
-        deal.classList.remove("on");
-        film.style.marginTop = room.style.height = film.style.top = "";
-        return false;
-      }
-      deal.classList.add("on");
-      const vh = innerHeight, H = hero.offsetHeight, nav = $("#nav")?.offsetHeight ?? 64;
-      start = Math.max(0, deal.offsetTop + H - vh);               // the hero's bottom reaches the screen's bottom
-      T = vh * 0.85;                                               // how far you scroll while it flies off
-      const F = film.offsetHeight;
-      film.style.top = `${nav + Math.max(0, (vh - nav - F) / 2)}px`;  // centred in the screen below the nav
-      film.style.marginTop = `${-H}px`;                            // the film starts right under the hero
-      room.style.height = `${T + vh * 0.2 + Math.max(0, (vh - nav - F) / 2)}px`;  // pinned while the hero leaves, plus a short beat
-      return true;
-    };
-    const frame = () => {
-      ticking = false;
-      if (!layout()) {
-        hero.style.transform = "";
-        hero.classList.remove("lifting");
-        film.style.opacity = "";
-        film.style.pointerEvents = "";
-        return;
-      }
-      const raw = clamp((scrollY - start) / T), p = ease(raw);
-      window.__deal = { start, T };
-      hero.style.setProperty("--lift", clamp(raw * 5).toFixed(3));
-      if (raw === 0) {
-        hero.style.transform = "";
-        hero.classList.remove("lifting");
-        film.style.opacity = "0";
-        film.style.pointerEvents = "none";
-        return;
-      }
-      film.style.opacity = "";
-      film.style.pointerEvents = "";
-      hero.classList.add("lifting");
-      const vw = innerWidth, vh = innerHeight;
-      const tx = -p * vw * 0.95, ty = -p * vh * 0.75, rot = -28 * ease(clamp(raw * 1.4)), sc = 1 - 0.12 * clamp(raw * 2);
-      hero.style.transform = `translate3d(${tx.toFixed(1)}px, ${ty.toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
-    };
-    const kick = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
-    addEventListener("scroll", kick, { passive: true });
-    addEventListener("resize", kick);
-    frame();
-    // the Film link goes to the moment the film is uncovered
-    document.addEventListener("click", (e) => {
-      const a = e.target.closest('a[href="#film"]');
-      if (!a || !deal.classList.contains("on")) return;
-      e.preventDefault();
-      scrollTo({ top: start + T, behavior: "smooth" });
-      history.replaceState(null, "", "#film");
+  $$("[data-hero-answer]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ok = btn.dataset.heroAnswer === "correct";
+      $$("[data-hero-answer]").forEach((b) => b.classList.remove("is-correct", "is-wrong"));
+      btn.classList.add(ok ? "is-correct" : "is-wrong");
+      const fb = $("#hero-proof-feedback");
+      if (fb) fb.hidden = false;
     });
-  }
+  });
 }
 
 // ------------------------------------------------------------- the film
@@ -1437,7 +1147,7 @@ if (rep && GALLERY?.length) {
   const box = $("[data-market]");
   if (box) {
     const grid = $("[data-market-grid]", box), count = $("[data-market-count]", box), tabs = $$("[data-kind]", box);
-    let entries = [], kind = "theme";
+    let entries = [], generated = "", kind = "deck";
     const v = (t, k, d) => t?.vars?.[k] ?? d;
     const themeTile = (t) => {
       const isAr = getCurrentLang() === "ar";
@@ -1462,18 +1172,24 @@ if (rep && GALLERY?.length) {
       const shown = entries.filter((e) => e.kind === kind);
       grid.innerHTML = shown.map(tile).join("");
       const c = (x) => entries.filter((e) => e.kind === x).length;
+      const dateStr = generated ? generated.slice(0, 10) : "";
       if (isAr) {
-        count.textContent = `${c("theme")} مظاهر، و ${c("deck")} حزم قرآنية، و ${c("type")} أنواع بطاقات حتى الآن.`;
+        count.textContent = `${c("deck")} حزم قرآنية، و ${c("type")} أنواع بطاقات، و ${c("theme")} مظاهر حتى الآن${dateStr ? ` · آخر تحديث ${dateStr}` : ""}.`;
       } else {
         const k = { type: ["card type", "card types"], deck: ["deck", "decks"], theme: ["theme", "themes"] };
-        count.textContent = `${c("theme")} ${k.theme[+(c("theme") !== 1)]}, ${c("deck")} ${k.deck[+(c("deck") !== 1)]} and ${c("type")} ${k.type[+(c("type") !== 1)]} so far.`;
+        count.textContent = `${c("deck")} ${k.deck[+(c("deck") !== 1)]}, ${c("type")} ${k.type[+(c("type") !== 1)]}, and ${c("theme")} ${k.theme[+(c("theme") !== 1)]} so far${dateStr ? ` · snapshot ${dateStr}` : ""}.`;
       }
       tabs.forEach((b) => b.setAttribute("aria-selected", String(b.dataset.kind === kind)));
     };
     box.addEventListener("click", (e) => { const b = e.target.closest("[data-kind]"); if (b) { kind = b.dataset.kind; render(); } });
     window.addEventListener("wikae-lang-change", render);
     whenVisible(box, async () => {
-      try { entries = (await (await fetch("assets/market/market.json")).json()).entries; render(); } catch {}
+      try {
+        const snap = await (await fetch("assets/market/market.json")).json();
+        entries = snap.entries ?? [];
+        generated = snap.generated ?? "";
+        render();
+      } catch {}
     }, "0px 0px 30% 0px");
   }
 }
@@ -1589,18 +1305,26 @@ if (rep && GALLERY?.length) {
   // folded material: the button folds whatever its data-expand selector names (within its section)
   for (const b of $$("[data-expand]")) {
     const sec = b.closest("section") ?? document;
-    const target = $(b.dataset.expand, sec);
-    if (!target) continue;
-    const more = b.textContent, less = b.dataset.less ?? more;
-    const isLetter = target.classList.contains("letter");
+    const targets = $$(b.dataset.expand, sec);
+    if (!targets.length) continue;
+    const arSpan = b.querySelector('[data-lang="ar"]');
+    const enSpan = b.querySelector('[data-lang="en"]');
+    const moreAr = arSpan?.textContent ?? "قراءة المزيد";
+    const moreEn = enSpan?.textContent ?? "Read more";
+    const lessAr = b.dataset.less ?? "طي النص";
+    const lessEn = b.dataset.lessEn ?? "Show less";
+    const isLetter = targets[0].classList.contains("letter");
     const fold = (open) => {
       b.setAttribute("aria-expanded", String(open));
-      b.textContent = open ? less : more;
-      if (isLetter) target.classList.toggle("folded", !open && phone.matches);
-      else { target.classList.add("folds"); target.classList.toggle("open", open); }
+      if (arSpan) arSpan.textContent = open ? lessAr : moreAr;
+      if (enSpan) enSpan.textContent = open ? lessEn : moreEn;
+      for (const target of targets) {
+        if (isLetter) target.classList.toggle("folded", !open && phone.matches);
+        else { target.classList.add("folds"); target.classList.toggle("open", open); }
+      }
     };
     // the letter lives inside .letter, so put its button after it, where the fade ends
-    if (isLetter) target.after(b);
+    if (isLetter) targets[0].after(b);
     b.addEventListener("click", () => {
       const open = b.getAttribute("aria-expanded") !== "true";
       fold(open);

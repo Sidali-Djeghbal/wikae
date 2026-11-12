@@ -9,7 +9,8 @@
 <script>
   (function(){
     try {
-      var lang = localStorage.getItem('wikae-lang') || 'ar';
+      var q = new URLSearchParams(window.location.search).get('lang');
+      var lang = (q === 'ar' || q === 'en') ? q : (localStorage.getItem('wikae-lang') || 'ar');
       var theme = localStorage.getItem('wikae-theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
       document.documentElement.setAttribute('lang', lang);
       document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
@@ -19,15 +20,21 @@
     } catch(e){}
   })();
 </script>
+<link rel="canonical" href="https://sidali-djeghbal.github.io/wikae/{{SLUG}}.html">
+<link rel="alternate" hreflang="ar" href="https://sidali-djeghbal.github.io/wikae/{{SLUG}}.html?lang=ar">
+<link rel="alternate" hreflang="en" href="https://sidali-djeghbal.github.io/wikae/{{SLUG}}.html?lang=en">
+<link rel="alternate" hreflang="x-default" href="https://sidali-djeghbal.github.io/wikae/{{SLUG}}.html">
 <meta property="og:title" content="{{TITLE}} · وِكَاء (Wikae)">
 <meta property="og:description" content="{{DESCRIPTION}}">
-<meta property="og:image" content="assets/og.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sidali-djeghbal.github.io/wikae/{{SLUG}}.html">
+<meta property="og:image" content="https://sidali-djeghbal.github.io/wikae/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{TITLE}} · وِكَاء (Wikae)">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Amiri+Quran&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="preload" href="assets/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="runtime/vendor/fonts/KaTeX_Main-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/cairo-400-700-arabic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/site.css">
 <link rel="stylesheet" href="assets/pages.css">
 <script type="module" src="assets/page.js"></script>
