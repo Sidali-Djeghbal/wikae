@@ -80,8 +80,23 @@ const SANDBOX = "allow-scripts allow-same-origin";
 
 // ------------------------------------------------------------------ page chrome
 const nav = $("#nav");
-const onScroll = () => nav.classList.toggle("scrolled", scrollY > 8);
+let lastY = Math.max(0, scrollY);
+const onScroll = () => {
+  const y = Math.max(0, scrollY);
+  nav.classList.toggle("scrolled", y > 8);
+  if (y <= 80) {
+    nav.classList.remove("nav-hidden");
+    lastY = y;
+  } else if (y > lastY + 12) {
+    nav.classList.add("nav-hidden");
+    lastY = y;
+  } else if (y < lastY - 2) {
+    nav.classList.remove("nav-hidden");
+    lastY = y;
+  }
+};
 addEventListener("scroll", onScroll, { passive: true });
+nav.addEventListener("focusin", () => nav.classList.remove("nav-hidden"));
 onScroll();
 initThemeToggle();
 initLanguageToggle();
@@ -150,6 +165,11 @@ function theme() {
   const lang = getCurrentLang();
   const dir = lang === "ar" ? "rtl" : "ltr";
   return { scheme, vars, lang, dir };
+}
+function cardTheme(view) {
+  const t = theme();
+  if (/[\u0600-\u06FF]/.test(JSON.stringify(view ?? ""))) t.dir = "rtl";
+  return t;
 }
 
 function humanInterval(ms) {
@@ -641,6 +661,7 @@ if (rep && GALLERY?.length) {
   window.addEventListener("wikae-lang-change", () => {
     buildRepList();
     syncRepLabels();
+    if (cur) post({ type: "theme", theme: cardTheme(cur.prep.view) });
   });
 
   function open(i, { fresh = false, focus = false } = {}) {
@@ -682,7 +703,7 @@ if (rep && GALLERY?.length) {
       case "loaded":
         // The visitor chose this card with a pointer: let it take the keyboard, as it would in the app.
         if (cur.focus && !coarse) post({ type: "rep-focus" });
-        post({ type: "init", view: cur.prep.view, mode: "answer", answer: null, result: null, theme: theme() });
+        post({ type: "init", view: cur.prep.view, mode: "answer", answer: null, result: null, theme: cardTheme(cur.prep.view) });
         break;
       case "mounted":
         cur.phase = "answer";
@@ -1005,7 +1026,7 @@ if (rep && GALLERY?.length) {
       if (!msg || msg.etude !== 1) return;
       if (msg.type === "loaded") {
         if (cur.focus && !coarse) post({ type: "rep-focus" });
-        post({ type: "init", view: cur.prep.view, mode: "answer", answer: null, result: null, theme: theme() });
+        post({ type: "init", view: cur.prep.view, mode: "answer", answer: null, result: null, theme: cardTheme(cur.prep.view) });
       } else if (msg.type === "mounted") { cur.phase = "answer"; swap.mounted(cur.frame); checkBtn.disabled = !cur.ready; }
       else if (msg.type === "size" && typeof msg.height === "number") cur.frame.style.height = `${Math.max(160, Math.min(msg.height + 4, 2400))}px`;
       else if (msg.type === "ready-state") { cur.ready = !!msg.ready; if (cur.phase === "answer") checkBtn.disabled = !cur.ready; }
@@ -1081,6 +1102,7 @@ if (rep && GALLERY?.length) {
         }
         const lbl = cur.entry.auto ? (isAr ? "إعادة التجربة" : "Play again") : (isAr ? "بطاقة أخرى" : "Another card");
         nextBtn.innerHTML = `<span>${lbl}</span> <span aria-hidden="true">↻</span>`;
+        post({ type: "theme", theme: cardTheme(cur.prep.view) });
       }
     });
     whenVisible(box, () => open("quran-mutashabihat"), "0px 0px 40% 0px");

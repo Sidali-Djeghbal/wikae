@@ -218,6 +218,7 @@ const CARD_STRINGS_AR = {
   "Type your answer": "اكتب إجابتك",
   "Your answer": "إجابتك",
   "Answer in your own words": "أجب بأسلوبك الخاص",
+  "Answer in your own words. $math$ and **markdown** render as you type.": "أجب بأسلوبك الخاص. يُنسق النص والرموز تلقائياً أثناء الكتابة.",
   "Pinch or double-tap to zoom": "قرّب بالإصبعين أو اضغط مرتين للتكبير",
   "Ctrl + scroll or double-click to zoom": "Ctrl + التمرير أو انقر نقراً مزدوجاً للتكبير",
 };
@@ -226,7 +227,7 @@ function translateCard(root) {
   if (document.documentElement.lang !== "ar") return;
   if (!root) return;
   for (const [en, ar] of Object.entries(CARD_STRINGS_AR)) {
-    for (const el of root.querySelectorAll(".e-muted, .help, .hint, .code-hint, .io-self, .e-section-title, .mx-empty, .mx-help")) {
+    for (const el of root.querySelectorAll(".e-muted, .help, .hint, .code-hint, .io-self, .e-section-title, .mx-empty, .mx-help, .cm-placeholder")) {
       if (el.textContent?.trim() === en || el.innerHTML?.trim() === en) {
         el.innerHTML = ar;
       }

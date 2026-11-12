@@ -1,5 +1,6 @@
 // text: one line · long (default): markdown with live math, like a notebook · code: a code editor · plain: a bare textarea
 const kind = etude.view.input || "long";
+const isAr = document.documentElement.lang === "ar";
 const box = etude.$(".answer-box");
 const initial = etude.answer != null ? String(etude.answer) : "";
 let text = initial;
@@ -7,14 +8,14 @@ const ready = () => etude.setReady(text.trim().length > 0);
 etude.getAnswer(() => text);
 
 if (kind === "text") {
-  box.innerHTML = `<input class="e-input" id="answer" autocomplete="off" placeholder="Your answer" autofocus>`;
+  box.innerHTML = `<input class="e-input" id="answer" autocomplete="off" placeholder="${isAr ? "إجابتك" : "Your answer"}" autofocus>`;
   const input = etude.$("#answer");
   input.value = initial;
   input.addEventListener("input", () => { text = input.value; ready(); });
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); etude.submit(); } });
   etude.onResult(() => { input.disabled = true; });
 } else if (kind === "plain") {
-  box.innerHTML = `<textarea class="e-textarea" id="answer" rows="5" placeholder="Answer in your own words" autofocus></textarea>`;
+  box.innerHTML = `<textarea class="e-textarea" id="answer" rows="5" placeholder="${isAr ? "أجب بأسلوبك الخاص" : "Answer in your own words"}" autofocus></textarea>`;
   const input = etude.$("#answer");
   input.value = initial;
   const grow = () => { input.style.height = "auto"; input.style.height = Math.max(input.scrollHeight + 2, 120) + "px"; };
@@ -36,7 +37,7 @@ if (kind === "text") {
   };
   const editor = code
     ? await etude.codeEditor(host, { ...opts, language, minLines: 8 })
-    : await etude.markdownEditor(host, { ...opts, minLines: 4, placeholder: "Answer in your own words. $math$ and **markdown** render as you type." });
+    : await etude.markdownEditor(host, { ...opts, minLines: 4, placeholder: isAr ? "أجب بأسلوبك الخاص. يُنسق النص والرموز تلقائياً أثناء الكتابة." : "Answer in your own words. $math$ and **markdown** render as you type." });
   host.querySelector(".e-editor-loading")?.remove();
   if (etude.mode === "answer") editor.focus();
   etude.onResult(() => {

@@ -48,7 +48,7 @@ body {
 .prose pre { background: var(--muted); border: 1px solid var(--border); padding: 0.85em 1em; border-radius: var(--radius); overflow-x: auto; }
 .prose pre code { background: none; padding: 0; font-size: 0.88em; line-height: 1.5; }
 .prose table { border-collapse: collapse; margin: 0.75em 0; font-size: 0.95em; }
-.prose th, .prose td { border: 1px solid var(--border); padding: 0.35em 0.7em; text-align: left; }
+.prose th, .prose td { border: 1px solid var(--border); padding: 0.35em 0.7em; text-align: start; }
 .prose th { background: var(--muted); font-weight: 600; }
 .prose img { max-width: 100%; border-radius: calc(var(--radius) - 4px); }
 .prose blockquote { margin: 0.75em 0; padding-left: 1em; border-left: 2px solid var(--border); color: var(--muted-foreground); }
@@ -77,12 +77,13 @@ body {
 .e-textarea.mono, .e-input.mono { font-family: var(--font-mono); font-size: 0.92rem; }
 .e-input:focus, .e-textarea:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 25%, transparent); }
 .e-input:disabled, .e-textarea:disabled { opacity: 1; color: var(--foreground); }
+html[lang="en"] .cm-placeholder { direction: ltr; unicode-bidi: embed; text-align: left; }
 .e-unit { color: var(--muted-foreground); font-size: 0.95rem; white-space: nowrap; }
 
 /* Choice-like surfaces: options, blocks, chips */
 .e-option {
   display: flex; align-items: flex-start; gap: 0.75rem;
-  width: 100%; text-align: left;
+  width: 100%; text-align: start;
   background: transparent; color: var(--foreground);
   border: 1px solid var(--border); border-radius: calc(var(--radius) - 2px);
   padding: 0.7rem 0.9rem; font: inherit; cursor: pointer;

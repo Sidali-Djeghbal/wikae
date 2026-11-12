@@ -6,8 +6,23 @@ const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 
 const nav = $("#nav");
-const onScroll = () => nav.classList.toggle("scrolled", scrollY > 8);
+let lastY = Math.max(0, scrollY);
+const onScroll = () => {
+  const y = Math.max(0, scrollY);
+  nav.classList.toggle("scrolled", y > 8);
+  if (y <= 80) {
+    nav.classList.remove("nav-hidden");
+    lastY = y;
+  } else if (y > lastY + 12) {
+    nav.classList.add("nav-hidden");
+    lastY = y;
+  } else if (y < lastY - 2) {
+    nav.classList.remove("nav-hidden");
+    lastY = y;
+  }
+};
 addEventListener("scroll", onScroll, { passive: true });
+nav.addEventListener("focusin", () => nav.classList.remove("nav-hidden"));
 onScroll();
 initThemeToggle();
 initLanguageToggle();

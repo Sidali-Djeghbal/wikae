@@ -152,33 +152,61 @@ const REPERTOIRE: [string, [string, string, string, string[]][]][] = [
       "showcase.quran.shafaa_adl",
       "showcase.quran.sariou_sabiqu",
     ]],
-    ["basic", "Flip a card", "The classic: think of the answer, turn the card over, and be honest with yourself.", ["wikae.basic.tuhfah", "wikae.basic.jazariyyah", "wikae.basic.nawawi1"]],
-    ["typed", "Type the answer", "A short answer typed from memory, checked against the accepted spellings.", ["wikae.typed.iqlab", "wikae.typed.madd", "wikae.typed.suwar"]],
-    ["mcq", "Pick the answer", "Options shuffled every time, so you remember the answer, not its position.", ["wikae.mcq.qalqalah", "wikae.mcq.makki", "wikae.mcq.maddtabii"]],
-    ["cloze", "Fill the blanks", "A verse or a hadith with holes in it. Each blank is checked on its own.", ["wikae.cloze.nawawi1", "wikae.cloze.tuhfah", "wikae.cloze.jazariyyah"]],
-    ["match", "Match the pairs", "Wire each item to its partner. The right side comes shuffled.", [
+    ["basic", "Flip a card", "Hadith from Al-Arba'in An-Nawawiyyah, Hisn Al-Muslim, and Tajweed.", [
+      "wikae.basic.nawawi1",
+      "wikae.basic.nawawi11",
+      "wikae.basic.hisn_sleep",
+      "wikae.basic.tuhfah",
+      "wikae.basic.jazariyyah",
+    ]],
+    ["cloze", "Fill the blanks", "Forty Nawawi hadiths, daily Adhkar, and Tajweed matn verses.", [
+      "wikae.cloze.nawawi1",
+      "wikae.cloze.nawawi2",
+      "wikae.cloze.hisn_morning",
+      "wikae.cloze.tuhfah",
+      "wikae.cloze.jazariyyah",
+    ]],
+    ["typed", "Type the answer", "Type the Surah name or Tajweed rule from memory.", [
+      "wikae.typed.araf_baqarah",
+      "wikae.typed.iqlab",
+      "wikae.typed.madd",
+      "wikae.typed.suwar",
+    ]],
+  ]],
+  ["Understand", [
+    ["match", "Match the pairs", "Connect Quranic vocabulary and Tajweed rules to their meanings.", [
       "showcase.match.quran",
+      "wikae.match.tajweed",
       "showcase.match.naba",
       "showcase.match.tariq",
       "showcase.match.fajr",
       "showcase.match.takwir",
       "showcase.match.qariah",
     ]],
-  ]],
-  ["Calculate", [
-    ["numeric", "Compute, with units", "Figures from fiqh and from your own hifz plan, with a tolerance on the answer.", ["wikae.numeric.zakat", "wikae.numeric.salat", "wikae.numeric.hifz"]],
-    ["estimate", "Estimate it", "Slide to your best guess. Close is full credit, near is partial.", ["wikae.estimate.baqarah", "wikae.estimate.ayat"]],
+    ["mcq", "Pick the answer", "Questions on Tajweed, Forty Nawawi, Fiqh of Wudu, and Quran sciences.", [
+      "wikae.mcq.nawawi_rawi",
+      "wikae.mcq.wudu",
+      "wikae.mcq.qalqalah",
+      "wikae.mcq.makki",
+      "wikae.mcq.maddtabii",
+    ]],
+    ["free", "Explain in your words", "Reflect on Hadith and Adhkar meanings; graded by AI against a rubric in the app.", [
+      "wikae.free.nawawi_niyyah",
+      "wikae.free.hisn_istikhara",
+    ]],
   ]],
   ["Arrange", [
-    ["order", "Put them in order", "Drag the blocks, or move them with the keyboard. Partial credit for what's already in order.", [
+    ["order", "Put them in order", "Sequence Quranic Surahs, Wudu steps, and the Five Pillars.", [
       "showcase.order.quran",
       "showcase.order.fatiha",
+      "wikae.order.wudu",
+      "wikae.order.arkan_islam",
       "showcase.order.duha",
       "showcase.order.sharh",
       "showcase.order.naba",
       "showcase.order.tin",
     ]],
-    ["timeline", "Place it in time", "Drag each event to its year. Graded on order and on how many years off.", ["wikae.timeline.seerah"]],
+    ["timeline", "Place it in time", "Place key events of the Prophetic Seerah in their Hijri year.", ["wikae.timeline.seerah"]],
   ]],
 ];
 // The new Market decks (site/tools/new-decks.mjs copies their types and a few real items into
@@ -199,8 +227,8 @@ function loadSiteType(type: string): { def: any; assets?: { type: string; files:
 const FACE: Record<string, string> = { "geo.country.jpn": "locate", "geo.country.egy": "locate", "geo.country.mng": "locate" };
 
 const GROUP_AR: Record<string, string> = {
-  "Recall": "الاستحضار والتسميع",
-  "Calculate": "الحساب والمعادلات",
+  "Recall": "الاستحضار والمتون",
+  "Understand": "الفهم والاختبار",
   "Arrange": "الترتيب والتسلسل",
   "Explore": "الاستكشاف والخرائط",
   "Code": "البرمجة والخوارزميات",
@@ -237,7 +265,7 @@ const REP_AR: Record<string, [string, string]> = {
   "sprint": ["سباق الحساب الذهني", "ثلاثون ثانية من الحساب الذهني السريع تُرسل نتيجتها تلقائياً عند انتهاء الوقت."],
   "typing": ["سرعة الطباعة", "اختبار سرعة ودقة الكتابة يبدأ مع أول ضغطة مفتاح ويحسب عدد الكلمات في الدقيقة."],
   "flippy": ["تحويل الأرقام الست عشرية", "تمرين سريع لتحويل الأرقام الست عشرية إلى ثنائية."],
-  "free": ["البرهان والكتابة الحرة", "اكتب البرهان أو الإجابة التفصيلية بأسلوبك مع دعم الرموز الرياضية."],
+  "free": ["الشرح والاستنباط", "اشرح الفوائد والمعاني بأسلوبك ليقيّمها الذكاء الاصطناعي وفق المعايير المعتمدة."],
   "draw": ["الرسم والكتابة اليدوية", "ارسم أو اكتب بخط يدك بالماوس أو اللمس ليقرأه نموذج الرؤية."],
 };
 
