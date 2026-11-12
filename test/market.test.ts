@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Etude } from "../src/core/engine.ts";
@@ -50,6 +50,23 @@ test("submissions: themes, decks and types become valid entries", async () => {
 
   assert.throws(() => buildSubmission(e, { kind: "theme", ref: "midnight" }), /ships with Etude/);
   assert.throws(() => buildSubmission(e, { kind: "type", ref: "numeric" }), /ships with Etude/);
+});
+
+test("submissions: item media travels inside the entry and installs into media", async () => {
+  const e = await Etude.open(":memory:");
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+  const m = e.storeMedia("dot.png", png);
+  e.upsertItem({ id: "anat.1", type: "basic", deck: "Anatomy", fields: { front: "Dot", back: "A dot", image: m.url } });
+  const deck = buildSubmission(e, { kind: "deck", ref: "Anatomy", author: "ana" });
+  const item = deck.content.items.find((i: any) => i.id === "anat.1");
+  assert.match(item.fields.image, /^data:image\/png;base64,/);
+  assert.ok(!JSON.stringify(deck).includes("/media/"), "no collection-local paths leak into the entry");
+
+  const b = await Etude.open(":memory:");
+  installFile(b, deck);
+  const image = b.item("anat.1").fields.image as string;
+  assert.match(image, /^\/media\/files\/[a-f0-9]+\.png$/);
+  assert.ok(existsSync(join(b.mediaDir, image.slice("/media/".length))), "the picture is in the new collection");
 });
 
 test("checkEntry rejects bad files", () => {

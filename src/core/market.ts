@@ -9,9 +9,10 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { EtudeError, plainLabel, type Etude } from "./engine.ts";
+import { mediaType } from "./media.ts";
 import { BUILTIN_THEMES, THEME_ID, ThemeError, freeThemeId, normalizeTheme, type Theme } from "./themes.ts";
 import { validateType } from "./types.ts";
 import type { CardTypeDef } from "./model.ts";
@@ -52,11 +53,12 @@ export type MarketSummary =
   | { decks: string[]; items: number; cardTypes: Record<string, number>; types: { id: string; name: string }[]; watch: boolean; samples: string[] }
   | { types: { id: string; name: string; description: string; grader: string; fields: string[]; assets?: { files: number; bytes: number } }[]; items: number; samples: string[] };
 
-/** A one-line label for an item, from its first text-like field. */
+/** A one-line label for an item, from its first text-like field. Media paths and data URLs are skipped. */
 function sampleOf(item: any): string {
   const f = item?.fields ?? {};
-  for (const k of ["prompt", "front", "question", "note", "text", "letter", "title"]) if (typeof f[k] === "string" && f[k].trim()) return plainLabel(f[k]).slice(0, 90);
-  const first = Object.values(f).find((v) => typeof v === "string" && v.trim()) as string | undefined;
+  const text = (v: unknown): v is string => typeof v === "string" && !!v.trim() && !/^(?:data:|https?:\/\/|\/media\/)/i.test(v.trim());
+  for (const k of ["prompt", "front", "question", "note", "text", "letter", "title"]) if (text(f[k])) return plainLabel(f[k]).slice(0, 90);
+  const first = Object.values(f).find(text);
   return first ? plainLabel(first).slice(0, 90) : "";
 }
 /** How many asset files a type carries and their decoded size, for the index. */
@@ -436,6 +438,28 @@ const stripType = (def: any) => {
   return rest;
 };
 
+/**
+ * A pack exported from a collection names its media as `/media/<file>`, which means nothing on
+ * another machine. Publishing inlines those files as data URLs so an installed copy keeps them;
+ * `importPack` unpacks data URLs back into the media folder.
+ */
+function inlineMedia(e: Etude, pack: any) {
+  const root = resolve(e.mediaDir);
+  for (const it of pack.items ?? []) {
+    for (const [k, v] of Object.entries(it.fields ?? {})) {
+      if (typeof v !== "string") continue;
+      const m = /^\/media\/(.+)$/.exec(v);
+      if (!m) continue;
+      const full = resolve(root, m[1]);
+      if (!full.startsWith(root + sep) || !existsSync(full)) continue;
+      const type = mediaType(full);
+      if (!type) continue;
+      it.fields[k] = `data:${type.mime};base64,${readFileSync(full).toString("base64")}`;
+    }
+  }
+  return pack;
+}
+
 /** Builds the entry file for something in this collection. */
 export function buildSubmission(e: Etude, input: SubmissionInput): MarketFile {
   const { kind, ref } = input;
@@ -453,7 +477,7 @@ export function buildSubmission(e: Etude, input: SubmissionInput): MarketFile {
     name ||= t.name;
   } else if (kind === "deck") {
     const d = e.deck(ref);
-    content = e.exportPack({ deck: d.name, name: name || d.name });
+    content = inlineMedia(e, e.exportPack({ deck: d.name, name: name || d.name }));
     if (!content.items.length) throw new MarketError(`deck "${d.name}" has no active items to share`);
     delete content.exported;
     name ||= d.name.split("::").pop()!;
@@ -464,7 +488,7 @@ export function buildSubmission(e: Etude, input: SubmissionInput): MarketFile {
     const shipped = e.listTypes().find((t) => t.id === ref);
     if (def.builtin && !shipped?.edited) throw new MarketError(`"${def.name}" ships with Etude already; publish your own type`);
     const n = Math.max(0, Math.min(20, input.examples ?? 3));
-    const sample = n ? e.exportPack({ query: `type:${ref}` }) : { items: [], decks: [], presets: [] };
+    const sample = n ? inlineMedia(e, e.exportPack({ query: `type:${ref}` })) : { items: [], decks: [], presets: [] };
     const items = sample.items.slice(0, n);
     const used = new Set(items.flatMap((i: any) => i.deck.split("::").map((_: string, k: number, a: string[]) => a.slice(0, k + 1).join("::"))));
     content = {

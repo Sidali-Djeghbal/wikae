@@ -11,7 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, Page, PageHeader } from "@/components/page";
-import { ThemeMiniature, ThemeSwatches } from "@/components/settings-theme-preview";
+import { ThemeMiniature, ThemeSwatches, themeStyle } from "@/components/settings-theme-preview";
 import { CardPreview } from "@/components/card-preview";
 import { download } from "@/components/type-editor/starter";
 import { api, ApiError, type CardType, type MarketEntry, type MarketFile, type MarketKind, type PublishResult } from "@/lib/api";
@@ -232,12 +232,30 @@ function InstalledMark({ state }: { state: MarketEntry["installed"] }) {
 
 function Cover({ entry, large }: { entry: MarketEntry; large?: boolean }) {
   const s = entry.summary as any;
-  if (entry.kind === "theme") return <ThemeMiniature theme={s.theme} className={large ? "" : "rounded-lg"} />;
+  if (entry.kind === "theme") {
+    // The dialog keeps the live miniature; tiles get a portrait poster so every card is the same shape.
+    if (large) return <ThemeMiniature theme={s.theme} />;
+    return (
+      <div style={themeStyle(s.theme)} className="flex aspect-[2/3] min-w-0 flex-col gap-2.5 overflow-hidden rounded-lg border bg-background p-2.5">
+        <ThemeMiniature theme={s.theme} className="w-full shrink-0" />
+        <div className="grid min-h-0 flex-1 grid-cols-2 gap-1.5">
+          {["--card", "--highlight", "--foreground", "--muted-foreground"].map((v) => (
+            <div key={v} className="rounded-md border" style={{ background: `var(${v})` }} aria-hidden="true" />
+          ))}
+        </div>
+        <div className="grid shrink-0 grid-cols-4 gap-1" aria-hidden="true">
+          {(["again", "hard", "good", "easy"] as const).map((r) => (
+            <div key={r} className="h-2.5 rounded-full" style={{ background: `var(--${r})` }} />
+          ))}
+        </div>
+      </div>
+    );
+  }
   const Icon = KIND_ICON[entry.kind];
   if (entry.cover) {
     return (
-      <div className={cn("aspect-[16/10] min-w-0 overflow-hidden rounded-lg bg-[#070707]", large && "rounded-xl")}>
-        <img src={api.marketCoverUrl(entry.kind, entry.id)} alt="" loading="lazy" className="size-full object-contain" />
+      <div className={cn("aspect-[2/3] min-w-0 overflow-hidden rounded-lg bg-[#070707]", large && "rounded-xl")}>
+        <img src={api.marketCoverUrl(entry.kind, entry.id)} alt="" loading="lazy" className="size-full object-cover" />
       </div>
     );
   }
@@ -251,7 +269,7 @@ function Cover({ entry, large }: { entry: MarketEntry; large?: boolean }) {
       ? `${plural(s.items, "card")}${s.watch ? " · tour" : ""}`
       : (s.types as any[]).map((t) => GRADER_WORD[t.grader] ?? t.grader).join(", ");
   return (
-    <div className={cn("flex aspect-[16/9] min-w-0 flex-col gap-2.5 overflow-hidden rounded-lg bg-muted/50 p-3.5 sm:aspect-[16/10]", large && "rounded-xl p-5")}>
+    <div className={cn("flex aspect-[2/3] min-w-0 flex-col gap-2.5 overflow-hidden rounded-lg bg-muted/50 p-3.5", large && "rounded-xl p-5")}>
       <div className="flex items-center gap-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
         <Icon className="size-3.5 text-highlight" />
         <span>{t(KIND_LABEL[entry.kind])}</span>

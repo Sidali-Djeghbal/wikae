@@ -958,7 +958,7 @@ function DoneStep({ level, ai, sync, onFinish }: { level: OnboardingLevel; ai: A
       <p className="mt-6 text-[14.5px] font-medium">{t("Start with something")}</p>
       <Options className="mt-2.5">
         <Option icon={importing ? Spinner : Star} title={t("Try the Showcase deck")} hint={t("Every card type in 5 minutes.")} onClick={importing ? undefined : showcase} />
-        <Option icon={Download} title={t("Browse the Market")} hint={t("Countries, periodic table, Morse…")} onClick={() => void onFinish(() => navigate("/market"))} />
+        <Option icon={Download} title={t("Browse the Market")} hint={t("Quran mutashabihat, hadith, and matn…")} onClick={() => void onFinish(() => navigate("/market"))} />
         <Option
           icon={FileInput}
           title={t("Import from Anki")}

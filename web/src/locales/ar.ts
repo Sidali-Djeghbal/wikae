@@ -423,7 +423,7 @@ const ar: Record<string, string> = {
   "Couldn't switch theme": "تعذر تبديل المظهر",
   "Couldn't undo": "تعذر التراجع",
   "Counted across this deck and its subdecks, custom study included.": "محسوبة عبر هذه المجموعة ومجموعاتها الفرعية، بما في ذلك الدراسة المخصصة.",
-  "Countries, periodic table, Morse…": "الدول، الجدول الدوري، لغة مورس…",
+  "Quran mutashabihat, hadith, and matn…": "متشابهات القرآن، والأحاديث، والمتون…",
   "Cover parts of an image and name each one. Every box, or group of boxes, is its own card. Unlabeled boxes are shown and self-graded": "غطِّ أجزاءً من الصورة وسمِّ كل جزء. كل مربع أو مجموعة مربعات تصبح بطاقة مستقلة. المربعات غير المعنونة تُعرض ويتم تقييمها ذاتياً",
   "Cover parts of an image and name each one. Every box, or group of boxes, is its own card. Unlabeled boxes are shown and self-graded.": "غطِّ أجزاء من الصورة وسمِّ كل جزء. كل مربع، أو مجموعة مربعات، هو بطاقة مستقلة. تُعرض المربعات غير المسماة للتقييم الذاتي.",
   "Create": "إنشاء",

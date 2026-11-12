@@ -419,7 +419,7 @@ const en: Record<string, string> = {
   "Couldn't switch theme": "Couldn't switch theme",
   "Couldn't undo": "Couldn't undo",
   "Counted across this deck and its subdecks, custom study included.": "Counted across this deck and its subdecks, custom study included.",
-  "Countries, periodic table, Morse…": "Countries, periodic table, Morse…",
+  "Quran mutashabihat, hadith, and matn…": "Quran mutashabihat, hadith, and matn…",
   "Cover parts of an image and name each one. Every box, or group of boxes, is its own card. Unlabeled boxes are shown and self-graded": "Cover parts of an image and name each one. Every box, or group of boxes, is its own card. Unlabeled boxes are shown and self-graded",
   "Cover parts of an image and name each one. Every box, or group of boxes, is its own card. Unlabeled boxes are shown and self-graded.": "Cover parts of an image and name each one. Every box, or group of boxes, is its own card. Unlabeled boxes are shown and self-graded.",
   "Create": "Create",
