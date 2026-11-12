@@ -94,6 +94,14 @@ const onScroll = () => {
     nav.classList.remove("nav-hidden");
     lastY = y;
   }
+
+  // Hero parallax: gentle depth shift on the hero's pseudo glow layer
+  if (!reduced) {
+    const hero = $(".hero");
+    if (hero && y < innerHeight * 1.5) {
+      hero.style.setProperty("--hero-parallax", `${y * 0.18}px`);
+    }
+  }
 };
 addEventListener("scroll", onScroll, { passive: true });
 nav.addEventListener("focusin", () => nav.classList.remove("nav-hidden"));
@@ -101,8 +109,23 @@ onScroll();
 initThemeToggle();
 initLanguageToggle();
 
-const revealer = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && (e.target.classList.add("in"), revealer.unobserve(e.target))), { rootMargin: "0px 0px -8% 0px" });
+// Scroll-reveal: handles both [data-reveal] and [data-stagger] containers.
+// Elements with [data-stagger] animate their children in sequence.
+const revealer = new IntersectionObserver(
+  (entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      e.target.classList.add("in");
+      revealer.unobserve(e.target);
+    }
+  },
+  { rootMargin: "0px 0px -8% 0px" }
+);
 $$("[data-reveal]").forEach((el) => revealer.observe(el));
+$$("[data-stagger]").forEach((el) => {
+  [...el.children].forEach((child, i) => child.style.setProperty("--i", i));
+  revealer.observe(el);
+});
 
 for (const b of $$("[data-copy]")) {
   b.addEventListener("click", async () => {

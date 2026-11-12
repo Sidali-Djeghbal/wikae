@@ -2056,11 +2056,16 @@ html[dir="rtl"] .mini-label {
 .graders>div {
   padding: 1.1rem 0;
   border-top: 1px solid var(--border);
+  transition: padding-inline-start 0.22s var(--ease);
 }
 
 .graders>div:first-child {
   border-top: 0;
   padding-top: 0;
+}
+
+.graders>div:hover {
+  padding-inline-start: 0.5rem;
 }
 
 .graders dt {
@@ -6278,11 +6283,17 @@ html[data-theme="light"] .programme-back.open,
   flex-direction: column;
   gap: 1.25rem;
   box-shadow: var(--sheet-shadow);
-  transition: transform 0.25s var(--ease), border-color 0.2s;
+  transition:
+    transform 0.3s var(--ease),
+    border-color 0.3s var(--ease),
+    box-shadow 0.3s var(--ease);
+  will-change: transform;
 }
 
 .mutashabih-card:hover {
+  transform: translateY(-3px);
   border-color: color-mix(in oklab, var(--highlight) 40%, var(--border));
+  box-shadow: var(--sheet-shadow), 0 8px 24px oklch(0 0 0 / 18%);
 }
 
 .mutashabih-head {
@@ -6392,6 +6403,17 @@ html[data-theme="light"] .programme-back.open,
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  transition:
+    transform 0.3s var(--ease),
+    border-color 0.3s var(--ease),
+    box-shadow 0.3s var(--ease);
+  will-change: transform;
+}
+
+.quran-pillar:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in oklab, var(--highlight) 35%, var(--border));
+  box-shadow: 0 8px 20px oklch(0 0 0 / 15%);
 }
 
 .quran-pillar .pillar-num {
