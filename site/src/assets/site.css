@@ -224,6 +224,14 @@
 
   --page: 74rem;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 0.18s;
+  --dur-base: 0.38s;
+  --dur-slow: 0.65s;
+  --dur-reveal: 0.72s;
+  --stagger: 0.08s;
   --rule: oklch(0.95 0.01 85 / 22%);
   --paper: oklch(0.955 0.012 85);
   --ink: oklch(0.2 0.01 85);
@@ -1598,12 +1606,54 @@ html[dir="rtl"] .lede {
 
 [data-reveal] {
   opacity: 0;
-  translate: 0 20px;
-  transition: opacity 0.9s var(--ease), translate 0.9s var(--ease);
+  translate: 0 24px;
+  transition:
+    opacity var(--dur-reveal) var(--ease),
+    translate var(--dur-reveal) var(--ease),
+    filter var(--dur-reveal) var(--ease);
   transition-delay: var(--d, 0s);
 }
 
 [data-reveal].in {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* Variant — fade only (no movement) */
+[data-reveal][data-reveal-fade] {
+  translate: none;
+}
+
+/* Variant — slide in from the side (LTR: left; RTL: right) */
+[data-reveal][data-reveal-side] {
+  translate: -32px 0;
+}
+html[dir="rtl"] [data-reveal][data-reveal-side] {
+  translate: 32px 0;
+}
+[data-reveal][data-reveal-side].in {
+  translate: 0 0;
+}
+
+/* Variant — subtle zoom */
+[data-reveal][data-reveal-zoom] {
+  scale: 0.96;
+  translate: none;
+}
+[data-reveal][data-reveal-zoom].in {
+  scale: 1;
+}
+
+/* Staggered children: set style="--i:N" on each child (0-based) */
+[data-stagger] > * {
+  opacity: 0;
+  translate: 0 18px;
+  transition:
+    opacity var(--dur-reveal) var(--ease),
+    translate var(--dur-reveal) var(--ease);
+  transition-delay: calc(var(--i, 0) * var(--stagger));
+}
+[data-stagger].in > * {
   opacity: 1;
   translate: 0 0;
 }
@@ -2281,7 +2331,6 @@ html[dir="rtl"] .mini-label {
 
 html[dir="rtl"] .slider {
   background: linear-gradient(-90deg, var(--foreground) var(--p, 40%), var(--rule) var(--p, 40%));
-}
   -webkit-appearance: none;
   appearance: none;
   width: min(20rem, 100%);
@@ -3362,6 +3411,13 @@ html[dir="rtl"] .slider {
   }
 
   [data-reveal] {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+    filter: none;
+  }
+
+  [data-stagger] > * {
     opacity: 1;
     translate: 0 0;
   }
@@ -6340,6 +6396,12 @@ html[lang="ar"] :is(.opus, .opus span, .colophon, .hero-proof-badge, .mk-tags sp
     scroll-behavior: auto !important;
   }
   [data-reveal] {
+    opacity: 1 !important;
+    translate: none !important;
+    scale: 1 !important;
+    filter: none !important;
+  }
+  [data-stagger] > * {
     opacity: 1 !important;
     translate: none !important;
   }
