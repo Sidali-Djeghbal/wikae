@@ -26,8 +26,8 @@ export async function offerApplicationsFolder(win: BrowserWindow): Promise<boole
   if (process.platform !== "darwin" || !app.isPackaged || app.isInApplicationsFolder() || prefs().declined?.includes("applications")) return false;
   const { response } = await dialog.showMessageBox(win, {
     type: "question",
-    message: "Move Etude to the Applications folder?",
-    detail: "Etude updates itself only from there. It opens again right after moving.",
+    message: "Move Wikae to the Applications folder?",
+    detail: "Wikae updates itself only from there. It opens again right after moving.",
     buttons: ["Move to Applications", "Not now"],
     defaultId: 0,
     cancelId: 1,
@@ -44,14 +44,16 @@ export async function offerApplicationsFolder(win: BrowserWindow): Promise<boole
   }
 }
 
-const desktopEntry = () => join(homedir(), ".local", "share", "applications", "etude-desktop.desktop");
+const desktopEntry = () => join(homedir(), ".local", "share", "applications", "wikae-desktop.desktop");
 
 function entryText(appImage: string): string {
-  return ["[Desktop Entry]", "Type=Application", "Name=Etude", "Comment=Spaced repetition with programmable card types", `Exec="${appImage.replaceAll('"', '\\"')}" %U`, "Icon=etude-desktop", "Categories=Education;", "Terminal=false", ""].join("\n");
+  // Inside Exec's double quotes, \, $ and backtick are still special; % starts a field code.
+  const path = appImage.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\$/g, "\\$").replace(/`/g, "\\`").replace(/%/g, "%%").replace(/[\r\n]/g, " ");
+  return ["[Desktop Entry]", "Type=Application", "Name=Wikae", "Comment=Spaced repetition with programmable card types", `Exec="${path}" %U`, "Icon=wikae-desktop", "Categories=Education;", "Terminal=false", ""].join("\n");
 }
 
 function writeEntry(appImage: string, root: string) {
-  const icon = join(homedir(), ".local", "share", "icons", "hicolor", "512x512", "apps", "etude-desktop.png");
+  const icon = join(homedir(), ".local", "share", "icons", "hicolor", "512x512", "apps", "wikae-desktop.png");
   mkdirSync(join(icon, ".."), { recursive: true });
   copyFileSync(join(root, "web", "dist", "icon-512.png"), icon);
   mkdirSync(join(desktopEntry(), ".."), { recursive: true });
@@ -69,8 +71,8 @@ export async function offerAppMenuEntry(win: BrowserWindow, root: string) {
   if (prefs().declined?.includes("menu")) return;
   const { response } = await dialog.showMessageBox(win, {
     type: "question",
-    message: "Add Etude to your app menu?",
-    detail: "Then you can open it like any other app. If you move this file later, Etude updates the entry when it opens.",
+    message: "Add Wikae to your app menu?",
+    detail: "Then you can open it like any other app. If you move this file later, Wikae updates the entry when it opens.",
     buttons: ["Add to app menu", "Not now"],
     defaultId: 0,
     cancelId: 1,

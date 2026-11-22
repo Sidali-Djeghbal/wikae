@@ -1,12 +1,12 @@
-// API keys in $ETUDE_HOME/.env: one NAME=value per line, readable by the owner only. A key is written
+// API keys in the app home's .env: one NAME=value per line, readable by the owner only. A key is written
 // here and put in the environment, and never read back out.
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 export const ENV_KEY_NAME = /^[A-Z_][A-Z0-9_]{0,63}$/;
-/** Only credential-shaped names can be written: never PATH, NODE_*, ETUDE_* or anything else the process reads as configuration. */
+/** Only credential-shaped names can be written: never PATH, NODE_*, app settings or anything else the process reads as configuration. */
 const KEY_SHAPED = /_(API_KEY|KEY|TOKEN)$/;
-const RESERVED = /^(ETUDE_|NODE_|NPM_|PATH$|HOME$|LD_|DYLD_)/;
+const RESERVED = /^(ETUDE_|WIKAE_|WIKAA_|GH_|GITHUB_|ELECTRON_|NODE_|NPM_|PATH$|HOME$|LD_|DYLD_)/;
 
 export class EnvKeyError extends Error {}
 

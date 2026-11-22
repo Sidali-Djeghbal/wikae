@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { accountFor, AccountError } from "../../core/account.ts";
 import { command, group, CliError } from "../registry.ts";
 
-group({ name: "account", summary: "Etude account: sign-in, devices, passkeys and Sync", defaultVerb: "status" });
+group({ name: "account", summary: "Wikae account: sign-in, devices, passkeys and Sync", defaultVerb: "status" });
 
 const a = (c: { e: any }) => accountFor(c.e);
 
@@ -23,7 +23,7 @@ async function call<T>(fn: () => Promise<T>): Promise<T> {
 command({ name: "account status", summary: "Server, sign-in state, account and Sync storage.", output: "{ server, offering, signedIn, email, me, billing, vault }", run: (c) => call(() => a(c).status()) });
 command({
   name: "account server",
-  summary: "Show or change the Etude server this install uses (default https://sync.etude.study, or $ETUDE_CLOUD_URL).",
+  summary: "Show or change the Wikae sync server this install uses (default https://sync.wikae.study, or $WIKAE_CLOUD_URL; $ETUDE_CLOUD_URL still works).",
   args: [{ name: "url", description: "Server address. Empty string goes back to the default." }],
   writes: true,
   examples: ["etude account server", "etude account server http://localhost:4870"],
@@ -35,9 +35,13 @@ command({ name: "account verify", summary: "Redeem the 6-digit code from the sig
 command({ name: "account signout", summary: "Sign this device out of the account. Local data stays.", writes: true, output: "{ signedIn }", run: (c) => call(() => a(c).signout()) });
 command({ name: "account devices", summary: "Devices signed in to the account.", output: "{ devices: [{ id, name, via, created, lastSeen, current }] }", run: (c) => call(() => a(c).devices()) });
 command({ name: "account revoke", summary: "Sign a device out. Another device needs a sign-in on this one within 10 minutes.", args: [{ name: "device", description: "Device id.", required: true }], writes: true, output: "{ ok }", run: (c) => call(() => a(c).revokeDevice(c.args.device)) });
+command({ name: "account device-rename", summary: "Rename a device signed in to the account.", args: [{ name: "device", description: "Device id (see `etude account devices`).", required: true }, { name: "name", description: "New device name.", required: true }], writes: true, examples: ["etude account device-rename DEV_ID \"My laptop\""], output: "{ device }", run: (c) => call(() => a(c).renameDevice(c.args.device, c.args.name)) });
 command({ name: "account passkeys", summary: "Passkeys on the account (add them in Settings → Account; the browser holds them).", output: "{ passkeys }", run: (c) => call(() => a(c).passkeys()) });
+command({ name: "account passkey-delete", summary: "Delete a passkey from the account.", args: [{ name: "id", description: "Passkey id (see `etude account passkeys`).", required: true }], writes: true, examples: ["etude account passkey-delete KEY_ID"], output: "{ ok }", run: (c) => call(() => a(c).removePasskey(c.args.id)) });
 command({ name: "account email", summary: "Start an email change: a link goes to the new address. Needs a recent sign-in.", args: [{ name: "email", description: "New address.", required: true }], writes: true, output: "{ ok, expiresIn }", run: (c) => call(() => a(c).emailStart(c.args.email)) });
 command({ name: "account email-confirm", summary: "Confirm an email change with the code from the link.", args: [{ name: "code", description: "Code from the link.", required: true }], writes: true, output: "{ ok, email }", run: (c) => call(() => a(c).emailVerify(c.args.code)) });
+command({ name: "account email-status", summary: "Show a pending email change, if any.", examples: ["etude account email-status"], output: "{ email, expiresAt } from the server, or null", run: (c) => call(() => a(c).emailPending()) });
+command({ name: "account email-cancel", summary: "Cancel a pending email change.", writes: true, examples: ["etude account email-cancel"], output: "{ ok }", run: (c) => call(() => a(c).emailCancel()) });
 command({
   name: "account export",
   summary: "Download everything the server holds about the account (JSON).",

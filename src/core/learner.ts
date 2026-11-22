@@ -83,7 +83,8 @@ export function fitSkills(attempts: GradedAttempt[]): SkillModel {
   for (const a of attempts) {
     const b = difficulty.get(a.key) ?? (a.prior != null ? toLogit(a.prior) : 0);
     let first: number | null = null;
-    for (const s of a.skills) {
+    for (const s of new Set(a.skills)) {
+      if (!s) continue;
       const theta = ability[s] ?? 0;
       const p = sigmoid(theta - b);
       first ??= p;
@@ -152,16 +153,16 @@ export function pace(cfg: PresetConfig, h: PaceHistory): Pace {
   if (h.young.reviews < 20 || h.activeDays === 0)
     return { value: clamp(Math.round(cfg.newPerDay), lo, hi), base: cfg.newPerDay, youngRetention: null, minutesPerDay: null, reason: "not enough reviews of recently learned cards yet" };
   const retention = h.young.passed / h.young.reviews;
-  const goal = cfg.desiredRetention;
+  const goal = targetOf(cfg);
   const minutes = h.minutes / h.activeDays;
   const base = Math.max(h.newCards / h.activeDays, lo);
   const byMemory = clamp(1 + 3 * (retention - goal), 0.5, 1.5);
-  const byTime = minutes > 0 ? clamp(cfg.minutesPerDay / minutes, 0.5, 1.5) : 1.5;
+  const byTime = minutes > 0 ? (cfg.minutesPerDay > 0 ? clamp(cfg.minutesPerDay / minutes, 0.5, 1.5) : 1) : 1.5;
   // The stricter of the two decides.
   const value = clamp(Math.round(base * Math.min(byMemory, byTime)), lo, hi);
   const why = [
     retention >= goal + 0.03 ? "recent cards holding well" : retention <= goal - 0.03 ? "recent cards slipping" : "recent cards holding as planned",
-    minutes > cfg.minutesPerDay * 1.1 ? "over the time budget" : minutes < cfg.minutesPerDay * 0.9 ? "time to spare" : "on the time budget",
+    cfg.minutesPerDay > 0 ? (minutes > cfg.minutesPerDay * 1.1 ? "over the time budget" : minutes < cfg.minutesPerDay * 0.9 ? "time to spare" : "on the time budget") : "no time budget set",
   ];
   return { value, base: Math.round(base * 10) / 10, youngRetention: Math.round(retention * 1000) / 1000, minutesPerDay: Math.round(minutes * 10) / 10, reason: why.join(", ") };
 }
@@ -176,6 +177,7 @@ export interface LevelCounts {
 
 /** The first level that isn't done, given each level's counts for one skill. `floor` lifts it (a placement). */
 export function levelState(levels: LevelSpec[], counts: LevelCounts[], cfg: PresetConfig, floor = 0): LevelState {
+  if (!levels.length) return { index: 0, tag: "", progress: 1, checkPassed: true, done: true, nextOpen: false };
   const done = (i: number) => {
     const c = counts[i];
     if (!c || c.total === 0) return true;
@@ -214,7 +216,7 @@ const MAX_PROBES = 24;
  * answers passes or fails, a passed band implies the ones below it, and the next probe halves the
  * remaining gap.
  */
-export function placementState(bands: number, probes: { band: number; score: number }[]): PlacementState {
+export function placementState(bands: number, probes: { band: number; score: number }[], exhausted: Set<number> = new Set()): PlacementState {
   const by = new Map<number, number[]>();
   for (const p of probes) if (p.band >= 0 && p.band < bands) (by.get(p.band) ?? by.set(p.band, []).get(p.band)!).push(p.score);
   const verdict = (b: number) => {
@@ -229,6 +231,8 @@ export function placementState(bands: number, probes: { band: number; score: num
   const frontier = passed + 1;
   let next: number | null = null;
   if (probes.length < MAX_PROBES && frontier < failed) next = Math.floor((frontier + failed - 1) / 2);
+  // A band with no fresh cards can't be probed, so move on rather than waiting for an answer that never comes.
+  while (next !== null && exhausted.has(next)) next = next + 1 < failed ? next + 1 : null;
   return { bands, probes: probes.length, frontier, next };
 }
 

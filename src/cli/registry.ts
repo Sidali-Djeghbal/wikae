@@ -33,7 +33,7 @@ export interface Ctx {
   /** The environment the runner was given (process.env, or a test's). */
   env: Record<string, string | undefined>;
   dry: boolean;
-  /** True when Ask Etude runs the command in-process rather than the user. */
+  /** True when Ask Wikae runs the command in-process rather than the user. */
   agent?: boolean;
   /** Undeclared `--name value` pairs, for commands with `dynamicFlags`. */
   extra: [string, string][];
@@ -79,7 +79,7 @@ export interface GroupSpec {
 }
 
 export const GLOBAL_FLAGS: FlagSpec[] = [
-  { name: "db", type: "string", description: "Database file. Defaults to $ETUDE_DB, then $ETUDE_HOME/etude.db, then ~/.etude/etude.db.", placeholder: "PATH" },
+  { name: "db", type: "string", description: "Database file. Defaults to $WIKAE_DB, then $WIKAE_HOME/etude.db, then ~/.wikae/etude.db.", placeholder: "PATH" },
   { name: "json", type: "boolean", description: "Use JSON output (also the default)." },
   { name: "pretty", type: "boolean", description: "Indent JSON output (the default when stdout is a terminal)." },
   { name: "compact", type: "boolean", description: "One-line JSON output (the default when stdout is not a terminal)." },

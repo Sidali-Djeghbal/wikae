@@ -1,5 +1,5 @@
 // Faces are box ids, or group names when boxes share one (the same rule as facesWhen).
-const faceOf = (b) => String(b.group || b.id || "").replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "");
+const faceOf = (b) => String(b.group || b.id || "").replace(/[^\p{L}\p{N}-]+/gu, "-").replace(/^-+|-+$/g, "");
 const alts = (label) => String(label ?? "").split("|").map((s) => s.trim()).filter(Boolean);
 const num = (v) => (Number.isFinite(Number(v)) ? Math.min(1, Math.max(0, Number(v))) : 0);
 const raw = Array.isArray(fields.boxes) ? fields.boxes.filter((b) => b && typeof b === "object") : [];

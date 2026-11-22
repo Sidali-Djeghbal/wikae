@@ -99,7 +99,7 @@ export const CardFrame = forwardRef<CardFrameHandle, Props>(function CardFrame(p
   const screenHeight = useCallback(() => {
     const el = iframe.current;
     if (!latest.current.fitScreen || !el) return null;
-    return Math.max(200, Math.floor(window.innerHeight - (el.getBoundingClientRect().top + window.scrollY) - (latest.current.fitMargin ?? 16)));
+    return Math.max(200, Math.floor(window.innerHeight - el.getBoundingClientRect().top - (latest.current.fitMargin ?? 16)));
   }, []);
   useEffect(() => {
     if (!loaded) return;
@@ -169,7 +169,10 @@ export const CardFrame = forwardRef<CardFrameHandle, Props>(function CardFrame(p
           const type = typeOfSrc(p.src);
           if (!type || typeof msg.key !== "string") break;
           const saved = api.setTypePref(type, msg.key, msg.value ?? null);
-          prefCache.set(type, saved.catch(() => prefsFor(type)));
+          prefCache.set(type, saved.catch(() => {
+            prefCache.delete(type);
+            return prefsFor(type);
+          }));
           saved.catch((e) => p.onError?.(`couldn't save the card's preference: ${e?.message ?? e}`));
           break;
         }

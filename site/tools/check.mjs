@@ -64,11 +64,14 @@ const ow = await evaluate("document.documentElement.scrollWidth - innerWidth");
 if (ow > 0) problems.push(`horizontal overflow ${ow}px`);
 const wide = await evaluate(`[...document.querySelectorAll('body *')].filter(e => { const r = e.getBoundingClientRect(); return r.right > innerWidth + 1 && getComputedStyle(e).position !== 'fixed' && !e.closest('.marquee, .stage-tabs, .shots-tabs, .code-tabs, .plate-list, .hero-bg, .cta .big-eps, [data-rail], .rep-programme') && !e.closest('pre'); }).slice(0, 8).map(e => e.tagName + '.' + e.className + ' ' + Math.round(e.getBoundingClientRect().right))`);
 if (wide?.length) problems.push("wider than viewport: " + wide.join(" | "));
-const missingLang = await evaluate(`[...document.querySelectorAll('main section[id]')].filter(s => !s.querySelector('[data-lang="ar"]') || !s.querySelector('[data-lang="en"]')).map(s => s.id)`);
+// Text pages put each language in a wrapper around whole sections; the landing page keeps both
+// variants inside each section. Accept either shape.
+const missingLang = await evaluate(`[...document.querySelectorAll('main section[id]')].filter(s => !s.closest('[data-lang]') && (!s.querySelector('[data-lang="ar"]') || !s.querySelector('[data-lang="en"]'))).map(s => s.id)`);
 if (missingLang?.length) problems.push("missing bilingual [data-lang] in sections: " + missingLang.join(", "));
 const h = await evaluate("document.documentElement.scrollHeight");
 const shot = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true, clip: { x: 0, y: 0, width, height: h, scale: 1 } });
 writeFileSync(`${OUT}/full.png`, Buffer.from(shot.result.data, "base64"));
 console.log(JSON.stringify({ page: PAGE, width, height: h, problems }, null, 1));
+if (problems.length) process.exitCode = 1;
 ws.close(); chrome.kill(); await sleep(300);
 rmSync(profile, { recursive: true, force: true });

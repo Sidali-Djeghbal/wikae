@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Etude</string>
+        <string>Wikae</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -55,14 +55,15 @@
 	     Argon2id key derivation: exempt from export documentation. See store/ios/README.md. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<!-- etude://deck/…, etude://study?deck=… -->
+	<!-- wikae://deck/…, wikae://study?deck=… (the old etude:// scheme still works) -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>study.etude.app</string>
+			<string>app.wikae.app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>wikae</string>
 				<string>etude</string>
 			</array>
 		</dict>

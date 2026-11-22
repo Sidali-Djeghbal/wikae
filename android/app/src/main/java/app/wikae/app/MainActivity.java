@@ -1,4 +1,4 @@
-package study.etude.app;
+package app.wikae.app;
 
 import com.getcapacitor.BridgeActivity;
 

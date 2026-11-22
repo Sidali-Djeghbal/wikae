@@ -44,7 +44,7 @@ function scope(root: Root) {
 
 function scoped(): Plugin {
   return {
-    name: "etude-live-scope",
+    name: "wikae-live-scope",
     apply: "build",
     enforce: "post",
     writeBundle() {

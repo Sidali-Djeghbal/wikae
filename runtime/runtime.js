@@ -5,8 +5,10 @@ import katex from "./vendor/katex.js";
 import math from "./mathexpr.js";
 
 // Editors and syntax highlighting live in a separate kit, loaded the first time a card needs them.
+// Serverless frames inject the kit as a global (a srcdoc frame can't import a relative file);
+// server frames load the same kit as a module next to this runtime.
 let kitPromise = null;
-const kit = () => (kitPromise ??= import(new URL("./kit/kit.js", import.meta.url).href));
+const kit = () => (kitPromise ??= globalThis.EtudeKit ? Promise.resolve(globalThis.EtudeKit) : import(new URL("./kit/kit.js", import.meta.url).href));
 
 const parent = window.parent;
 const send = (type, data = {}) => parent.postMessage({ wikae: 1, wikaa: 1, etude: 1, type, ...data }, "*");

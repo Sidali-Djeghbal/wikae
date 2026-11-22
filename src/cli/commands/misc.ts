@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { command, catalog, CliError, KEEP_OPEN, COMMANDS } from "../registry.ts";
 import { LIMIT_FLAG, OFFSET_FLAG } from "../common.ts";
 import { VERSION } from "../version.ts";
+import { appEnv } from "../../core/util.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
@@ -13,10 +14,11 @@ command({
   summary: "Run the web app and HTTP API.",
   description: "The CLI doesn't need the server: every command opens the database directly, and SQLite's WAL mode lets both run at once.",
   flags: [
-    { name: "port", type: "number", description: "Port. Default $ETUDE_PORT or 4610." },
-    { name: "host", type: "string", description: "Interface. Default $ETUDE_HOST or 127.0.0.1. Anything beyond localhost needs --token." },
-    { name: "token", type: "string", description: "Require this bearer token on the API. Default $ETUDE_TOKEN." },
-    { name: "allow-host", type: "string", multiple: true, description: "Also answer requests for this hostname (repeatable; $ETUDE_ALLOW_HOSTS, comma-separated). localhost, 127.x and *.ts.net are always allowed; other names are refused to stop DNS rebinding, on localhost even with --token.", placeholder: "NAME" },
+    { name: "port", type: "number", description: "Port. Default $WIKAE_PORT (or $ETUDE_PORT) or 4610." },
+    { name: "host", type: "string", description: "Interface. Default $WIKAE_HOST (or $ETUDE_HOST) or 127.0.0.1. Anything beyond localhost needs --token." },
+    { name: "token", type: "string", description: "Require this bearer token on the API. Default $WIKAE_TOKEN (or $ETUDE_TOKEN)." },
+    { name: "allow-host", type: "string", multiple: true, description: "Also answer requests for this hostname (repeatable; $WIKAE_ALLOW_HOSTS or $ETUDE_ALLOW_HOSTS, comma-separated). localhost, 127.x and *.ts.net are always allowed; other names are refused to stop DNS rebinding, on localhost even with --token.", placeholder: "NAME" },
+    { name: "trust-proxy", type: "boolean", description: "Honor X-Forwarded-Proto/Host from your TLS reverse proxy (Tailscale serve, nginx). Off by default so a client can't spoof the card frame's origin." },
     { name: "web", type: "string", description: "Serve another web build directory.", placeholder: "DIR" },
     { name: "dev", type: "boolean", description: "API only (Vite serves the web app)." },
   ],
@@ -24,17 +26,17 @@ command({
   async run(ctx) {
     const { serve } = await import("@hono/node-server");
     const { createApp } = await import("../../server/app.ts");
-    const port = ctx.flags.port ?? Number(process.env.ETUDE_PORT ?? 4610);
-    const host = ctx.flags.host ?? process.env.ETUDE_HOST ?? "127.0.0.1";
-    const token = ctx.flags.token ?? process.env.ETUDE_TOKEN;
+    const port = ctx.flags.port ?? Number(appEnv(process.env, "PORT") ?? 4610);
+    const host = ctx.flags.host ?? appEnv(process.env, "HOST") ?? "127.0.0.1";
+    const token = ctx.flags.token ?? appEnv(process.env, "TOKEN");
     if (host !== "127.0.0.1" && host !== "localhost" && !token) throw new CliError("refusing to listen beyond localhost without --token");
     const dist = ctx.flags.web ? resolve(ctx.flags.web) : join(ROOT, "web", "dist");
     let server: ReturnType<typeof serve>;
-    const allowHosts = [...(ctx.flags["allow-host"] ?? []), ...(process.env.ETUDE_ALLOW_HOSTS ?? "").split(",")].map((h: string) => h.trim()).filter(Boolean);
+    const allowHosts = [...(ctx.flags["allow-host"] ?? []), ...(appEnv(process.env, "ALLOW_HOSTS") ?? "").split(",")].map((h: string) => h.trim()).filter(Boolean);
     const localOnly = host === "127.0.0.1" || host === "localhost";
-    const app = createApp(ctx.e, { token, allowHosts, localOnly, webDist: ctx.flags.dev ? null : existsSync(dist) ? dist : null, onRestart: () => restart(server, ctx) });
+    const app = createApp(ctx.e, { token, allowHosts, localOnly, trustProxy: !!ctx.flags["trust-proxy"], webDist: ctx.flags.dev ? null : existsSync(dist) ? dist : null, onRestart: () => restart(server, ctx) });
     server = serve({ fetch: app.fetch, port, hostname: host }, (info) => {
-      ctx.note(`etude ${ctx.flags.dev ? "api (dev) " : ""}on http://${host}:${info.port}  db ${ctx.dbPath}`);
+      ctx.note(`wikae ${ctx.flags.dev ? "api (dev) " : ""}on http://${host}:${info.port}  db ${ctx.dbPath}`);
     });
     return KEEP_OPEN;
   },
@@ -42,12 +44,12 @@ command({
 
 /**
  * Comes back on the new code after `etude update`. Under systemd (or another supervisor that sets
- * ETUDE_SUPERVISED), exit with EX_TEMPFAIL and let it restart us; otherwise free the port and run the
+ * WIKAE_SUPERVISED), exit with EX_TEMPFAIL and let it restart us; otherwise free the port and run the
  * same command again in the foreground, staying around only to pass on its exit code.
  */
 function restart(server: { close(cb?: () => void): unknown; closeAllConnections?(): void }, ctx: { e: { close(): void }; note(m: string): void }) {
-  ctx.note("etude updated; restarting");
-  const supervised = !!(process.env.INVOCATION_ID || process.env.ETUDE_SUPERVISED);
+  ctx.note("wikae updated; restarting");
+  const supervised = !!(process.env.INVOCATION_ID || appEnv(process.env, "SUPERVISED"));
   let once = false;
   const done = () => {
     // server.close's callback and the 3 s fallback can both fire; restart only once.
@@ -69,7 +71,7 @@ function restart(server: { close(cb?: () => void): unknown; closeAllConnections?
 
 command({
   name: "update",
-  summary: "Update this copy of Etude from its GitHub repo: fetch, fast-forward, install dependencies, rebuild the web app.",
+  summary: "Update this copy of Wikae from its GitHub repo (Sidali-Djeghbal/wikae): fetch, fast-forward, install dependencies, rebuild the web app.",
   description:
     "Only works in a git checkout with no local changes. A running server keeps the old code until it restarts; the Update button in the app restarts it for you. Package installs (npm, the Mac app) get the latest release's version and a link instead.",
   flags: [{ name: "check", type: "boolean", description: "Only check for new commits; change nothing." }],
@@ -125,7 +127,7 @@ command({
 
 command({
   name: "version",
-  summary: "Print the Etude version.",
+  summary: "Print the Wikae version.",
   noDb: true,
   run: () => ({ version: VERSION, node: process.version, commands: COMMANDS.filter((c) => !c.legacy).length }),
 });

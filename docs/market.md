@@ -32,7 +32,7 @@ Deck details count leaf topics separately from parent folders. A collection with
 
 ## Publishing
 
-**Market → Publish**, pick the deck, card type or theme, describe it and press **Open pull request**. Etude uses the GitHub CLI on the machine running the server (`gh auth login`): it forks the market repository when you can't push to it, adds the entry file on a new branch and opens the pull request. It goes live once a maintainer merges it.
+**Market → Publish**, pick the deck, card type or theme, describe it and press **Open pull request**. Wikae uses the GitHub CLI on the machine running the server (`gh auth login`): it forks the market repository when you can't push to it, adds the entry file on a new branch and opens the pull request. It goes live once a maintainer merges it.
 
 Decks are shared without review history. Built-in themes and card types can't be published; publish a copy you changed.
 

@@ -1,4 +1,4 @@
-# The etude command line
+# The Wikae command line
 
 Everything the web app can do is also a command. The CLI is built for scripts and agents first: every command prints JSON, takes its input from flags, files or stdin, and describes itself (`etude --help`, `etude <group> --help`, `etude <group> <verb> --help`, `etude commands`).
 
@@ -24,7 +24,7 @@ Run it as `etude` (after `npm link` or through `bin/etude.js`) or straight from 
 | 4 | `validation` | Bad fields or settings, a search that doesn't parse, a pack or type that fails its check |
 | 5 | `conflict` | The id is taken, the preset or type is still in use, the attempt was already rated |
 | 6 | `external` | An AI provider or the network failed |
-| 1 | `internal` | Anything else (a bug); set `ETUDE_DEBUG=1` to get the stack |
+| 1 | `internal` | Anything else (a bug); set `WIKAE_DEBUG=1` to get the stack |
 
 **Input that survives shells.** Long or awkward values never have to go through quoting:
 
@@ -66,11 +66,11 @@ The CLI opens the SQLite database itself. It does not need the server, and it is
 The database is chosen in this order:
 
 1. `--db PATH`
-2. `$ETUDE_DB`
-3. `$ETUDE_HOME/etude.db`
-4. `~/.etude/etude.db`
+2. `$WIKAE_DB` (or `$ETUDE_DB`)
+3. `$WIKAE_HOME/etude.db` (or `$ETUDE_HOME/etude.db`)
+4. `~/.wikae/etude.db`
 
-Media files live in a `media/` folder next to the database. `$ETUDE_HOME/.env` is loaded if it exists, which is where AI provider keys go (settings only store the name of the environment variable, never the key). `etude db path` shows which database a command would use and why.
+Media files live in a `media/` folder next to the database. `$WIKAE_HOME/.env` is loaded if it exists, which is where AI provider keys go (settings only store the name of the environment variable, never the key). `etude db path` shows which database a command would use and why.
 
 ## Recipes
 
@@ -170,7 +170,7 @@ etude item tag --query 'deck:"Networks" prop:lapses>=4' -t leech
 ### Back up and export
 
 ```sh
-etude db backup                                  # ~/.etude/backups/etude-<time>.db
+etude db backup                                  # ~/.wikae/backups/etude-<time>.db
 etude db check
 etude pack export --deck "Networks" -o net.pack.json
 etude pack export -o everything.pack.json
@@ -188,7 +188,7 @@ These work on every command, before or after the command words.
 
 | Flag | Type | Description |
 | --- | --- | --- |
-| `--db <PATH>` | string | Database file. Defaults to $ETUDE_DB, then $ETUDE_HOME/etude.db, then ~/.etude/etude.db. |
+| `--db <PATH>` | string | Database file. Defaults to $WIKAE_DB, then $WIKAE_HOME/etude.db, then ~/.wikae/etude.db. |
 | `--json` | boolean | Use JSON output (also the default). |
 | `--pretty` | boolean | Indent JSON output (the default when stdout is a terminal). |
 | `--compact` | boolean | One-line JSON output (the default when stdout is not a terminal). |
@@ -279,6 +279,8 @@ These work on every command, before or after the command words.
   - [`type show`](#type-show) A type's full definition: fields (with kinds, private flags, defaults), template, prepare and grader code, plus its asset files (name, size, hash).
   - [`type export`](#type-export) Write a type as editable files (type.json, template.html, style.css, card.js, prepare.js, grade.js, assets/), or print it as JSON (assets as base64).
   - [`type import`](#type-import) Create or update a type from a directory, a JSON file, or JSON on stdin (`-`). Saving an edited built-in makes it yours.
+  - [`type usage`](#type-usage) How many items, cards and reviews a type has (archived items counted separately).
+  - [`type leftover`](#type-leftover) Cards on faces the type no longer makes, counted per type and face with their review history.
   - [`type validate`](#type-validate) Check a type definition without saving it. Exits 4 when it has problems.
   - [`type preview`](#type-preview) Run a type on sample fields and show what the card gets (view) and what grading uses (key).
   - [`type test-grade`](#type-test-grade) Run a type's grader on an answer without saving anything.
@@ -323,14 +325,14 @@ These work on every command, before or after the command words.
   - [`settings unset`](#settings-unset) Reset dotted keys to their defaults.
   - [`settings test-ai`](#settings-test-ai) Grade a fixed sample answer with the configured providers, to check keys and models. Costs a fraction of a cent.
   - [`settings onboarding`](#settings-onboarding) Whether first-run setup would show (not done and no decks yet), and the comfort level picked there.
-  - [`settings key set`](#settings-key-set) Save one API key to $ETUDE_HOME/.env (owner-only), read from stdin so it never appears in the shell history.
-  - [`settings key unset`](#settings-key-unset) Remove one API key from $ETUDE_HOME/.env.
+  - [`settings key set`](#settings-key-set) Save one API key to $WIKAE_HOME/.env (owner-only), read from stdin so it never appears in the shell history.
+  - [`settings key unset`](#settings-key-unset) Remove one API key from $WIKAE_HOME/.env.
   - [`settings chatgpt login`](#settings-chatgpt-login) Sign in with ChatGPT, so grading uses the user's ChatGPT Plus or Pro plan instead of an API key.
   - [`settings chatgpt status`](#settings-chatgpt-status) Whether this install is signed in with ChatGPT, for which account, and whether plan usage is granted.
   - [`settings chatgpt logout`](#settings-chatgpt-logout) End the ChatGPT session and delete the saved tokens. The app registration is kept for a later sign-in.
   - [`settings chatgpt models`](#settings-chatgpt-models) The models the signed-in ChatGPT account offers for plan usage (slug and display name).
   - [`settings chatgpt import`](#settings-chatgpt-import) Adopt a chatgpt.json signed in on another machine (the self-hosted-VM path). This host gets its own host id.
-- **sync**: Encrypted offline collection sync over a folder or etude-cloud (`etude sync` alone runs `status`)
+- **sync**: Encrypted offline collection sync over a folder or the Wikae sync server (`etude sync` alone runs `status`)
   - [`sync status`](#sync-status) Show connection, lock and pending change status.
   - [`sync setup`](#sync-setup) Connect this collection to a shared folder or Sync server.
   - [`sync signin`](#sync-signin) Email a one-time 6-digit sign-in code (valid 15 minutes).
@@ -338,17 +340,21 @@ These work on every command, before or after the command words.
   - [`sync unlock`](#sync-unlock) Unlock the vault, or create one and return its recovery key once.
   - [`sync now`](#sync-now) Push pending encrypted changes and merge remote changes.
   - [`sync off`](#sync-off) Sign out and remove this device's saved Sync key; keep local content.
-- **account**: Etude account: sign-in, devices, passkeys and Sync (`etude account` alone runs `status`)
+- **account**: Wikae account: sign-in, devices, passkeys and Sync (`etude account` alone runs `status`)
   - [`account status`](#account-status) Server, sign-in state, account and Sync storage.
-  - [`account server`](#account-server) Show or change the Etude server this install uses (default https://sync.etude.study, or $ETUDE_CLOUD_URL).
+  - [`account server`](#account-server) Show or change the Wikae sync server this install uses (default https://sync.wikae.study, or $WIKAE_CLOUD_URL; $ETUDE_CLOUD_URL still works).
   - [`account signin`](#account-signin) Email a one-time 6-digit sign-in code (valid 15 minutes).
   - [`account verify`](#account-verify) Redeem the 6-digit code from the sign-in email. When already signed in, it re-confirms this device.
   - [`account signout`](#account-signout) Sign this device out of the account. Local data stays.
   - [`account devices`](#account-devices) Devices signed in to the account.
   - [`account revoke`](#account-revoke) Sign a device out. Another device needs a sign-in on this one within 10 minutes.
+  - [`account device-rename`](#account-device-rename) Rename a device signed in to the account.
   - [`account passkeys`](#account-passkeys) Passkeys on the account (add them in Settings → Account; the browser holds them).
+  - [`account passkey-delete`](#account-passkey-delete) Delete a passkey from the account.
   - [`account email`](#account-email) Start an email change: a link goes to the new address. Needs a recent sign-in.
   - [`account email-confirm`](#account-email-confirm) Confirm an email change with the code from the link.
+  - [`account email-status`](#account-email-status) Show a pending email change, if any.
+  - [`account email-cancel`](#account-email-cancel) Cancel a pending email change.
   - [`account export`](#account-export) Download everything the server holds about the account (JSON).
   - [`account delete`](#account-delete) Delete the account on the server: devices, passkeys and the Sync vault. Local data stays.
 - **theme**: Themes: pick the app's colors, or make your own with CSS variables and extra CSS (`etude theme` alone runs `list`)
@@ -381,7 +387,7 @@ These work on every command, before or after the command words.
   - [`market check`](#market-check) Validate market entry files without a database. Exits 4 on problems.
   - [`market index`](#market-index) For the market repository: check every file under entries/ (each deck and type is dry-run imported) and write index.json.
 - **agent**: The in-app assistant: ask it to change your collection, list and manage its conversations (`etude agent` alone runs `list`)
-  - [`agent ask`](#agent-ask) Send a message to the assistant and wait for its reply. It can run Etude commands on the collection.
+  - [`agent ask`](#agent-ask) Send a message to the assistant and wait for its reply. It can run Wikae commands on the collection.
   - [`agent list`](#agent-list) Conversations with the assistant, newest first.
   - [`agent show`](#agent-show) One conversation with all its messages, the commands run and their output.
   - [`agent rename`](#agent-rename) Give a conversation your own title. Automatic titles stop for it.
@@ -396,10 +402,10 @@ These work on every command, before or after the command words.
   - [`db restore`](#db-restore) Replace the database with a backup. The current file is backed up first. Stop the server before restoring.
 - **top level**
   - [`serve`](#serve) Run the web app and HTTP API.
-  - [`update`](#update) Update this copy of Etude from its GitHub repo: fetch, fast-forward, install dependencies, rebuild the web app.
+  - [`update`](#update) Update this copy of Wikae from its GitHub repo (Sidali-Djeghbal/wikae): fetch, fast-forward, install dependencies, rebuild the web app.
   - [`search`](#search) Find cards with the search language (one row per card). Same as `etude card list`.
   - [`commands`](#commands) The catalog of every command: args, flags with types and defaults, examples, whether it writes. JSON for agents.
-  - [`version`](#version) Print the Etude version.
+  - [`version`](#version) Print the Wikae version.
 
 ## deck
 
@@ -1337,7 +1343,7 @@ etude item move [ids...] [flags]
 | --- | --- | --- |
 | `--to <DECK>` | string | Destination deck (created if missing). |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--dry-run` | boolean | Show what would change without writing anything. |
 
 Output: { count, ids, deck }
@@ -1367,7 +1373,7 @@ etude item tag [ids...] [flags]
 | --- | --- | --- |
 | `-t, --tag <VALUE> (repeatable)` | string | Tag to add (repeatable; commas split). |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--dry-run` | boolean | Show what would change without writing anything. |
 
 Output: { count, ids, tags }
@@ -1397,7 +1403,7 @@ etude item untag [ids...] [flags]
 | --- | --- | --- |
 | `-t, --tag <VALUE> (repeatable)` | string | Tag to remove (repeatable; commas split). |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--dry-run` | boolean | Show what would change without writing anything. |
 
 Output: { count, ids, tags }
@@ -1426,7 +1432,7 @@ etude item archive [ids...] [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--dry-run` | boolean | Show what would change without writing anything. |
 
 Output: { count, ids }
@@ -1454,7 +1460,7 @@ etude item unarchive [ids...] [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--dry-run` | boolean | Show what would change without writing anything. |
 
 Output: { count, ids }
@@ -1482,7 +1488,7 @@ etude item delete [ids...] [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--archived` | boolean | With --query: match archived items too. |
 | `--dry-run` | boolean | Show what would change without writing anything. |
 | `-y, --yes` | boolean | Confirm a destructive operation. |
@@ -1734,7 +1740,7 @@ etude card suspend [refs...] [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--face <VALUE>` | string | With item ids: only the card for this face. |
 | `--note` | boolean | Suspend every card of the selected cards' items. |
 | `--dry-run` | boolean | Show what would change without writing anything. |
@@ -1766,7 +1772,7 @@ etude card unsuspend [refs...] [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--face <VALUE>` | string | With item ids: only the card for this face. |
 | `--note` | boolean | Unsuspend every card of the selected cards' items. |
 | `--dry-run` | boolean | Show what would change without writing anything. |
@@ -1798,7 +1804,7 @@ etude card unbury [refs...] [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--face <VALUE>` | string | With item ids: only the card for this face. |
 | `--dry-run` | boolean | Show what would change without writing anything. |
 
@@ -1828,7 +1834,7 @@ etude card reset [refs...] [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--face <VALUE>` | string | With item ids: only the card for this face. |
 | `--dry-run` | boolean | Show what would change without writing anything. |
 
@@ -1887,7 +1893,7 @@ etude card bury [refs...] [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--face <VALUE>` | string | With item ids: only the card for this face. |
 | `--date <DATE>` | string | A date (2026-10-22 means the start of that study day) or ISO date-time; also `today`, `tomorrow`. |
 | `--in <DURATION>` | string | A duration from now: 30m, 12h, 3d, 2w. |
@@ -1923,7 +1929,7 @@ etude card due [refs...] [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--face <VALUE>` | string | With item ids: only the card for this face. |
 | `--date <DATE>` | string | A date (2026-10-22 means the start of that study day) or ISO date-time; also `today`, `tomorrow`. |
 | `--in <DURATION>` | string | A duration from now: 30m, 12h, 3d, 2w. |
@@ -1953,7 +1959,7 @@ etude card reschedule [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--dry-run` | boolean | Show what would change without writing anything. |
 
 Output: { rescheduled: number }
@@ -2212,6 +2218,50 @@ Output: { result: created|updated|unchanged, type: { id, name, fields, grader },
 etude type import ./vocab
 etude type import vocab.json --dry-run
 etude type export basic --json | jq '.id="basic2"' | etude type import -
+```
+
+### etude type usage
+
+<a id="type-usage"></a>
+
+How many items, cards and reviews a type has (archived items counted separately).
+
+```
+etude type usage <id>
+```
+
+*read-only*
+
+| Argument | Description |
+| --- | --- |
+| `id` | Type id. |
+
+Output: { items, archived, cards, reviews }
+
+```sh
+etude type usage numeric
+```
+
+### etude type leftover
+
+<a id="type-leftover"></a>
+
+Cards on faces the type no longer makes, counted per type and face with their review history.
+
+```
+etude type leftover <id>
+```
+
+*read-only*
+
+| Argument | Description |
+| --- | --- |
+| `id` | Type id. |
+
+Output: { cards, reviewed, reviews, faces: [{ type, typeName, face, cards, reviews }] }
+
+```sh
+etude type leftover my-type
 ```
 
 ### etude type validate
@@ -2788,7 +2838,7 @@ etude study counts [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--ahead` | boolean | Study ahead: nothing has to be due. Every card in the scope, soonest due first, no daily limits; ratings are real reviews. |
 
 Output: { new, learning, learningSoon, review, doneToday, nextDue }
@@ -2815,7 +2865,7 @@ etude study next [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--ahead` | boolean | Study ahead: nothing has to be due. Every card in the scope, soonest due first, no daily limits; ratings are real reviews. |
 | `--placement <SESSION>` | string | Placement on an adaptive deck: only probes that find the learner's level. The value names the session (any text, e.g. today's date): use the same one for every probe and when submitting; a new name starts a fresh placement, and the latest placement is the one that counts. |
 | `--exclude <N>` | number | Card id to avoid repeating right away. |
@@ -3014,13 +3064,13 @@ etude study watch [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--limit <N>` | number | At most this many cards. |
 
 Output: { cards: [{ cardId, itemId, type, deck, title, seed, view, demo: { answer, grade } }] }
 
 ```sh
-etude study watch --deck "Etude Showcase"
+etude study watch --deck "Wikae Showcase"
 etude study watch --query "type:chess"
 ```
 
@@ -3043,7 +3093,7 @@ etude stats overview [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--days <N>` | number | Activity window in days (heatmap, ratings, verdicts). Default `30`. |
 
 Output: the engine's stats object (cards, retention, trueRetention, recall, days, forecast, overdue, tags, tagTree, today, ratings, verdicts, streak, window, deadline, schedulers: one row per scheduler with cards, due, pass rate and state groups, practice)
@@ -3068,7 +3118,7 @@ etude stats forecast [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 
 Output: { overdue, forecast: [{ day, due }], deadline }
 
@@ -3111,7 +3161,7 @@ etude stats tags [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--min-cards <N>` | number | Skip tags with fewer seen cards. Default `1`. |
 
 Output: array of { tag, depth, cards, seen, recall }
@@ -3137,7 +3187,7 @@ etude stats weak [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--lapses <N>` | number | Minimum lapses to count as weak. Default `2`. |
 | `--limit <N>` | number | Rows. Default `20`. |
 
@@ -3182,7 +3232,7 @@ etude settings get ai.feedback.model
 
 Change settings with dotted key=value pairs (JSON values when they parse).
 
-Examples of keys: dayStartHour, learnAheadMinutes, ai.autoFeedback (ai-graded|always|never), ai.language, ai.decision (null disables the decision model), ai.decision.model, ai.feedback.model, ai.feedback.url, ai.feedback.apiKeyEnv, ai.vision, onboarding.level (simple|standard|tinker), onboarding.done. API keys themselves live in the environment or $ETUDE_HOME/.env (see `etude settings key set`), never in settings.
+Examples of keys: dayStartHour, learnAheadMinutes, ai.autoFeedback (ai-graded|always|never), ai.language, ai.decision (null disables the decision model), ai.decision.model, ai.feedback.model, ai.feedback.url, ai.feedback.apiKeyEnv, ai.vision, onboarding.level (simple|standard|tinker), onboarding.done. API keys themselves live in the environment or $WIKAE_HOME/.env (see `etude settings key set`), never in settings.
 
 ```
 etude settings set <pairs...> [flags]
@@ -3270,7 +3320,7 @@ etude settings set onboarding.done=false
 
 <a id="settings-key-set"></a>
 
-Save one API key to $ETUDE_HOME/.env (owner-only), read from stdin so it never appears in the shell history.
+Save one API key to $WIKAE_HOME/.env (owner-only), read from stdin so it never appears in the shell history.
 
 The name is the environment variable the settings point at (ai.feedback.apiKeyEnv, ai.decision.apiKeyEnv), e.g. OPENROUTER_API_KEY or OPENAI_API_KEY. Other lines in the file are kept. A running server picks the key up when it is set through Settings; one started earlier needs a restart to see a key set here.
 
@@ -3295,7 +3345,7 @@ etude settings key set OPENAI_API_KEY < key.txt
 
 <a id="settings-key-unset"></a>
 
-Remove one API key from $ETUDE_HOME/.env.
+Remove one API key from $WIKAE_HOME/.env.
 
 ```
 etude settings key unset <name>
@@ -3319,7 +3369,7 @@ etude settings key unset OPENAI_API_KEY
 
 Sign in with ChatGPT, so grading uses the user's ChatGPT Plus or Pro plan instead of an API key.
 
-Opens OpenAI's sign-in page in the system browser and waits for the loopback callback on 127.0.0.1. The browser must run on this machine: a 127.0.0.1 callback never reaches a server on another host. Tokens are saved to $ETUDE_HOME/chatgpt.json with owner-only permissions.
+Opens OpenAI's sign-in page in the system browser and waits for the loopback callback on 127.0.0.1. The browser must run on this machine: a 127.0.0.1 callback never reaches a server on another host. Tokens are saved to $WIKAE_HOME/chatgpt.json with owner-only permissions.
 
 ```
 etude settings chatgpt login [flags]
@@ -3412,12 +3462,12 @@ etude settings chatgpt import <file>
 Output: { signedIn, email, hostId, credentialsPath, plan }
 
 ```sh
-scp laptop:~/.etude/chatgpt.json /tmp/ && etude settings chatgpt import /tmp/chatgpt.json
+scp laptop:~/.wikae/chatgpt.json /tmp/ && etude settings chatgpt import /tmp/chatgpt.json
 ```
 
 ## sync
 
-Encrypted offline collection sync over a folder or etude-cloud.
+Encrypted offline collection sync over a folder or the Wikae sync server.
 
 ### etude sync status
 
@@ -3448,13 +3498,13 @@ etude sync setup [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--folder <VALUE>` | string | Shared folder path. |
-| `--server <VALUE>` | string | HTTPS etude-cloud URL (HTTP on localhost). |
+| `--server <VALUE>` | string | HTTPS Wikae sync server URL (HTTP on localhost). |
 
 Output: Sync status
 
 ```sh
-etude sync setup --folder ~/Sync/Etude
-etude sync setup --server https://sync.etude.study
+etude sync setup --folder ~/Sync/Wikae
+etude sync setup --server https://sync.wikae.study
 ```
 
 ### etude sync signin
@@ -3550,7 +3600,7 @@ Output: Sync status
 
 ## account
 
-Etude account: sign-in, devices, passkeys and Sync.
+Wikae account: sign-in, devices, passkeys and Sync.
 
 ### etude account status
 
@@ -3570,7 +3620,7 @@ Output: { server, offering, signedIn, email, me, billing, vault }
 
 <a id="account-server"></a>
 
-Show or change the Etude server this install uses (default https://sync.etude.study, or $ETUDE_CLOUD_URL).
+Show or change the Wikae sync server this install uses (default https://sync.wikae.study, or $WIKAE_CLOUD_URL; $ETUDE_CLOUD_URL still works).
 
 ```
 etude account server [url]
@@ -3683,6 +3733,29 @@ etude account revoke <device>
 
 Output: { ok }
 
+### etude account device-rename
+
+<a id="account-device-rename"></a>
+
+Rename a device signed in to the account.
+
+```
+etude account device-rename <device> <name>
+```
+
+*writes*
+
+| Argument | Description |
+| --- | --- |
+| `device` | Device id (see `etude account devices`). |
+| `name` | New device name. |
+
+Output: { device }
+
+```sh
+etude account device-rename DEV_ID "My laptop"
+```
+
 ### etude account passkeys
 
 <a id="account-passkeys"></a>
@@ -3696,6 +3769,28 @@ etude account passkeys
 *read-only*
 
 Output: { passkeys }
+
+### etude account passkey-delete
+
+<a id="account-passkey-delete"></a>
+
+Delete a passkey from the account.
+
+```
+etude account passkey-delete <id>
+```
+
+*writes*
+
+| Argument | Description |
+| --- | --- |
+| `id` | Passkey id (see `etude account passkeys`). |
+
+Output: { ok }
+
+```sh
+etude account passkey-delete KEY_ID
+```
 
 ### etude account email
 
@@ -3732,6 +3827,42 @@ etude account email-confirm <code>
 | `code` | Code from the link. |
 
 Output: { ok, email }
+
+### etude account email-status
+
+<a id="account-email-status"></a>
+
+Show a pending email change, if any.
+
+```
+etude account email-status
+```
+
+*read-only*
+
+Output: { email, expiresAt } from the server, or null
+
+```sh
+etude account email-status
+```
+
+### etude account email-cancel
+
+<a id="account-email-cancel"></a>
+
+Cancel a pending email change.
+
+```
+etude account email-cancel
+```
+
+*writes*
+
+Output: { ok }
+
+```sh
+etude account email-cancel
+```
 
 ### etude account export
 
@@ -4051,7 +4182,7 @@ etude pack export [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--deck <NAME>` | string | Limit to this deck and its subdecks. |
-| `--query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
+| `-q, --query <SEARCH>` | string | Limit to cards matching a search (see `Search language`). Also `--q`. |
 | `--name <VALUE>` | string | Pack name. |
 | `-o, --out <FILE>` | string | Write to this file instead of stdout. |
 | `--force` | boolean | Overwrite an existing --out file. |
@@ -4131,7 +4262,7 @@ Anki: bring an .apkg or .colpkg collection in (types, decks, items, cards, media
 
 Import an Anki package: card types, presets, decks, items, cards, media and review history.
 
-Item ids come from the note guid, so importing the same package again updates its items instead of duplicating them: progress made in Etude is kept and reviews aren't imported twice. Each notetype becomes a card type (`anki-<name>`), each deck config a preset, and `::` in deck and tag names keeps its hierarchy. Imported cards keep Anki's due dates and FSRS memory state. With --dry-run the report says what would change and nothing is written. Filtered decks are skipped and their cards land in their home deck.
+Item ids come from the note guid, so importing the same package again updates its items instead of duplicating them: progress made in Wikae is kept and reviews aren't imported twice. Each notetype becomes a card type (`anki-<name>`), each deck config a preset, and `::` in deck and tag names keeps its hierarchy. Imported cards keep Anki's due dates and FSRS memory state. With --dry-run the report says what would change and nothing is written. Filtered decks are skipped and their cards land in their home deck.
 
 ```
 etude anki import <file> [flags]
@@ -4253,7 +4384,7 @@ etude market list [flags]
 | Flag | Type | Description |
 | --- | --- | --- |
 | `--kind <theme\|deck\|type>` | string | theme, deck or type. |
-| `--query <WORDS>` | string | Only entries whose name, description, author or tags contain these words. Also `--q`. |
+| `-q, --query <WORDS>` | string | Only entries whose name, description, author or tags contain these words. Also `--q`. |
 | `--refresh` | boolean | Skip the one-minute cache of the index. |
 | `--url <URL>` | string | Read the market from this URL or folder instead of the configured one (`settings set market.url=…`). |
 
@@ -4366,7 +4497,7 @@ Output: { forgot: id }
 
 Share a theme, deck or card type: opens a pull request on the market repository with your GitHub account.
 
-Needs the GitHub CLI signed in (`gh auth login`). Etude forks the market repository if you can't push to it, adds the entry file on a new branch and opens a pull request; it shows up for everyone once it's merged. Decks are shared without your review history. With -o the entry file is written and nothing is sent. --dry-run builds and checks the file and prints where it would go.
+Needs the GitHub CLI signed in (`gh auth login`). Wikae forks the market repository (Sidali-Djeghbal/wikae-market) if you can't push to it, adds the entry file on a new branch and opens a pull request; it shows up for everyone once it's merged. Decks are shared without your review history. With -o the entry file is written and nothing is sent. --dry-run builds and checks the file and prints where it would go.
 
 ```
 etude market publish <ref> [flags]
@@ -4458,7 +4589,7 @@ The in-app assistant: ask it to change your collection, list and manage its conv
 
 <a id="agent-ask"></a>
 
-Send a message to the assistant and wait for its reply. It can run Etude commands on the collection.
+Send a message to the assistant and wait for its reply. It can run Wikae commands on the collection.
 
 Starts a new conversation unless --conversation is given. Destructive commands the assistant wants to run are denied unless --yes is given. The collection is snapshotted before the reply's first write, so `etude agent undo` can put it back. Progress (each command it runs) goes to stderr.
 
@@ -4617,7 +4748,7 @@ etude db path
 
 *read-only · no database*
 
-Output: { db, exists, bytes, mediaDir, source: flag|ETUDE_DB|ETUDE_HOME|default, home }
+Output: { db, exists, bytes, mediaDir, source: flag|WIKAE_DB|WIKAE_HOME|default, home }
 
 ### etude db backup
 
@@ -4699,7 +4830,7 @@ etude db restore <backup> [flags]
 Output: { restored, previous }
 
 ```sh
-etude db restore ~/.etude/backups/etude-20261020-190000.db --yes
+etude db restore ~/.wikae/backups/etude-20261020-190000.db --yes
 ```
 
 ## Top-level commands
@@ -4720,10 +4851,11 @@ etude serve [flags]
 
 | Flag | Type | Description |
 | --- | --- | --- |
-| `--port <N>` | number | Port. Default $ETUDE_PORT or 4610. |
-| `--host <VALUE>` | string | Interface. Default $ETUDE_HOST or 127.0.0.1. Anything beyond localhost needs --token. |
-| `--token <VALUE>` | string | Require this bearer token on the API. Default $ETUDE_TOKEN. |
-| `--allow-host <NAME> (repeatable)` | string | Also answer requests for this hostname (repeatable; $ETUDE_ALLOW_HOSTS, comma-separated). localhost, 127.x and *.ts.net are always allowed; other names are refused to stop DNS rebinding, on localhost even with --token. |
+| `--port <N>` | number | Port. Default $WIKAE_PORT (or $ETUDE_PORT) or 4610. |
+| `--host <VALUE>` | string | Interface. Default $WIKAE_HOST (or $ETUDE_HOST) or 127.0.0.1. Anything beyond localhost needs --token. |
+| `--token <VALUE>` | string | Require this bearer token on the API. Default $WIKAE_TOKEN (or $ETUDE_TOKEN). |
+| `--allow-host <NAME> (repeatable)` | string | Also answer requests for this hostname (repeatable; $WIKAE_ALLOW_HOSTS or $ETUDE_ALLOW_HOSTS, comma-separated). localhost, 127.x and *.ts.net are always allowed; other names are refused to stop DNS rebinding, on localhost even with --token. |
+| `--trust-proxy` | boolean | Honor X-Forwarded-Proto/Host from your TLS reverse proxy (Tailscale serve, nginx). Off by default so a client can't spoof the card frame's origin. |
 | `--web <DIR>` | string | Serve another web build directory. |
 | `--dev` | boolean | API only (Vite serves the web app). |
 
@@ -4736,7 +4868,7 @@ etude serve --host 0.0.0.0 --token $(openssl rand -hex 16)
 
 <a id="update"></a>
 
-Update this copy of Etude from its GitHub repo: fetch, fast-forward, install dependencies, rebuild the web app.
+Update this copy of Wikae from its GitHub repo (Sidali-Djeghbal/wikae): fetch, fast-forward, install dependencies, rebuild the web app.
 
 Only works in a git checkout with no local changes. A running server keeps the old code until it restarts; the Update button in the app restarts it for you. Package installs (npm, the Mac app) get the latest release's version and a link instead.
 
@@ -4819,7 +4951,7 @@ etude commands --names
 
 <a id="version"></a>
 
-Print the Etude version.
+Print the Wikae version.
 
 ```
 etude version

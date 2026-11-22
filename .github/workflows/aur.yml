@@ -1,8 +1,8 @@
 name: AUR
 
-# When a release is published (not a pre-release), points the etude-bin recipe on the AUR at its .deb,
+# When a release is published (not a pre-release), points the wikae-bin recipe on the AUR at its .deb,
 # so Arch, Manjaro and Omarchy get the new version with `yay -Syu`. Needs the AUR_SSH_KEY secret,
-# the private key of the AUR account that maintains etude-bin; without it this does nothing.
+# the private key of the AUR account that maintains wikae-bin; without it this does nothing.
 
 on:
   release:
@@ -31,19 +31,23 @@ jobs:
           TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
           if [ -z "$AUR_SSH_KEY" ]; then echo "No AUR_SSH_KEY secret yet: skipping."; exit 0; fi
-          pacman -Syu --noconfirm --needed git openssh
+          pacman -Syu --noconfirm --needed git openssh curl
           version=${TAG#v}
-          curl -fsSL -o etude.deb "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/Etude-linux-amd64.deb"
-          sum=$(sha256sum etude.deb | cut -d' ' -f1)
+          # release-please publishes before desktop.yml finishes attaching the installer.
+          url="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/Wikae-linux-amd64.deb"
+          for i in $(seq 1 60); do curl -fsSL -o wikae.deb "$url" && break; sleep 30; done
+          [ -s wikae.deb ] || { echo "No installer attached to $TAG"; exit 1; }
+          sum=$(sha256sum wikae.deb | cut -d' ' -f1)
           mkdir -p ~/.ssh && printf '%s\n' "$AUR_SSH_KEY" > ~/.ssh/aur && chmod 600 ~/.ssh/aur
           printf 'Host aur.archlinux.org\n  IdentityFile ~/.ssh/aur\n  User aur\n' > ~/.ssh/config
-          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
-          git clone ssh://aur@aur.archlinux.org/etude-bin.git aur
+          # Pinned host key: ssh-keyscan would trust whatever a network attacker presents.
+          printf 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN\n' >> ~/.ssh/known_hosts
+          git clone ssh://aur@aur.archlinux.org/wikae-bin.git aur
           cp desktop/aur/PKGBUILD aur/PKGBUILD
           sed -i "s/^pkgver=.*/pkgver=$version/; s/^pkgrel=.*/pkgrel=1/; s/^sha256sums=.*/sha256sums=('$sum')/" aur/PKGBUILD
           useradd -m builder && chown -R builder aur
           su builder -c "cd aur && makepkg --printsrcinfo > .SRCINFO"
           cd aur
           git add PKGBUILD .SRCINFO
-          git -c user.name="Etude" -c user.email="hello@etude.study" commit -m "$version"
+          git -c user.name="Sidali Djeghbal" -c user.email="contact@djeghbal.me" commit -m "$version"
           git push origin HEAD:master

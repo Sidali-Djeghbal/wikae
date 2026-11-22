@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Etude } from "../src/core/engine.ts";
+import { normalizeBoxes } from "../src/core/occlusion.ts";
 
 const dirs: string[] = [];
 // Best effort: Windows can't delete a database that is still open.
@@ -32,6 +33,16 @@ test("one card per box, one per group", async () => {
   const { e } = await fresh();
   const cards = add(e);
   assert.deepEqual(Object.keys(cards).sort(), ["atria", "b1", "b2", "b5"]);
+});
+
+test("unicode group names survive as card faces", async () => {
+  const { e } = await fresh();
+  const cards = add(e, [
+    { id: "b1", x: 0.1, y: 0.1, w: 0.2, h: 0.1, label: "First", group: "الأذين" },
+    { id: "b2", x: 0.5, y: 0.1, w: 0.2, h: 0.1, label: "Second", group: "الأذين" },
+  ] as any);
+  assert.deepEqual(Object.keys(cards), ["الأذين"]);
+  assert.equal((await grade(e, cards["الأذين"], "Second")).score, 1);
 });
 
 test("the view never carries labels; the key does", async () => {
@@ -156,6 +167,12 @@ test("watch: the demo answer grades correct", async () => {
 test("boxes must be set", async () => {
   const { e } = await fresh();
   assert.throws(() => e.upsertItem({ id: "x", type: "occlusion", deck: "A", fields: { image: "/media/a.png" } }), /boxes/);
+});
+
+test("pixel dimensions must be positive and groups must be simple values", () => {
+  assert.throws(() => normalizeBoxes([{ x: 1, y: 1, w: 1, h: 1 }], { px: { width: 0, height: 10 } }), /positive numbers/);
+  assert.throws(() => normalizeBoxes([{ x: 0, y: 0, w: 1, h: 1, group: { a: 1 } }]), /invalid group/);
+  assert.equal(normalizeBoxes([{ x: 0, y: 0, w: 1, h: 1, group: 2 }])[0].group, "2");
 });
 
 // ---------------------------------------------------------------- CLI

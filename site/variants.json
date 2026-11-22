@@ -2,7 +2,7 @@
   {
     "id": "showcase.quran.baqarah_araf",
     "type": "quran-mutashabihat",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::quran",
@@ -50,7 +50,7 @@
   {
     "id": "showcase.quran.qul_qulu",
     "type": "quran-mutashabihat",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::quran",
@@ -98,7 +98,7 @@
   {
     "id": "showcase.quran.shafaa_adl",
     "type": "quran-mutashabihat",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::quran",
@@ -146,7 +146,7 @@
   {
     "id": "showcase.quran.sariou_sabiqu",
     "type": "quran-mutashabihat",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::quran",
@@ -194,7 +194,7 @@
   {
     "id": "showcase.order.fatiha",
     "type": "order",
-    "deck": "Etude Showcase::3 Arrange",
+    "deck": "Wikae Showcase::3 Arrange",
     "tags": [
       "showcase",
       "topic::quran",
@@ -222,7 +222,7 @@
   {
     "id": "showcase.order.duha",
     "type": "order",
-    "deck": "Etude Showcase::3 Arrange",
+    "deck": "Wikae Showcase::3 Arrange",
     "tags": [
       "showcase",
       "topic::quran",
@@ -248,7 +248,7 @@
   {
     "id": "showcase.order.sharh",
     "type": "order",
-    "deck": "Etude Showcase::3 Arrange",
+    "deck": "Wikae Showcase::3 Arrange",
     "tags": [
       "showcase",
       "topic::quran",
@@ -277,7 +277,7 @@
   {
     "id": "showcase.order.naba",
     "type": "order",
-    "deck": "Etude Showcase::3 Arrange",
+    "deck": "Wikae Showcase::3 Arrange",
     "tags": [
       "showcase",
       "topic::quran",
@@ -303,7 +303,7 @@
   {
     "id": "showcase.order.tin",
     "type": "order",
-    "deck": "Etude Showcase::3 Arrange",
+    "deck": "Wikae Showcase::3 Arrange",
     "tags": [
       "showcase",
       "topic::quran",
@@ -329,7 +329,7 @@
   {
     "id": "showcase.match.naba",
     "type": "match",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::quran",
@@ -370,7 +370,7 @@
   {
     "id": "showcase.match.tariq",
     "type": "match",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::quran",
@@ -411,7 +411,7 @@
   {
     "id": "showcase.match.fajr",
     "type": "match",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::quran",
@@ -452,7 +452,7 @@
   {
     "id": "showcase.match.takwir",
     "type": "match",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::quran",
@@ -493,7 +493,7 @@
   {
     "id": "showcase.match.qariah",
     "type": "match",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::quran",

@@ -2,8 +2,8 @@
 
 Notes for coding agents. Two different jobs:
 
-- **Using Etude** (making cards, quizzing someone, changing schedules): read [`skill/SKILL.md`](skill/SKILL.md) and use the `etude` CLI. Don't open the SQLite file yourself. The full reference is [`docs/cli.md`](docs/cli.md).
-- **Working on Etude** (changing its code): the rest of this file.
+- **Using Wikae** (making cards, quizzing someone, changing schedules): read [`skill/SKILL.md`](skill/SKILL.md) and use the `wikae` CLI. Don't open the SQLite file yourself. The full reference is [`docs/cli.md`](docs/cli.md).
+- **Working on Wikae** (changing its code): the rest of this file.
 
 ## Layout
 
@@ -17,14 +17,14 @@ src/cli/       main.ts → run.ts (parsing, errors, dry run); registry.ts (comma
                commands/<group>.ts (one file per noun); help.ts; pack-check.ts
 web/           React + Tailwind + shadcn/ui (Vite). Pages in web/src/pages, API client in web/src/lib/api.ts
 desktop/       the Electron app (own package.json): app.ts (window, menus, permissions, links), engine.ts (runs
-               `etude serve` in a utility process with a per-launch token), find.ts (reuse or start), shell-env.ts,
-               updates.ts (electron-updater, or a link, or the system), command.ts (the etude command), integrate.ts,
+               `wikae serve` in a utility process with a per-launch token), find.ts (reuse or start), shell-env.ts,
+               updates.ts (electron-updater, or a link, or the system), command.ts (the wikae command), integrate.ts,
                preload.cjs (window.etudeDesktop, top frame only), pages/ (starting and error screens), bin/ (the
-               etude launchers), build.ts (stages the app, runs electron-builder), smoke.ts, build/, aur/PKGBUILD
+               Wikae launchers), build.ts (stages the app, runs electron-builder), smoke.ts, build/, aur/PKGBUILD
 runtime/       runtime.js and card.css, loaded inside every card frame
-types/         built-in card types, one directory each (same format as `etude type export`)
+types/         built-in card types, one directory each (same format as `wikae type export`)
 docs/          packs.md, types.md, cli.md (the command reference is generated; see below)
-skill/         the portable agent skill for using Etude
+skill/         the portable agent skill for using Wikae
 scripts/       check-pack.ts, gen-cli-docs.ts
 test/          node:test suites
 ```
@@ -36,7 +36,7 @@ npm test                                  # node --test "test/**/*.test.ts"
 npm run typecheck                         # tsc for the server/CLI and for web/
 node src/cli/main.ts <group> <verb> ...   # the CLI from source (Node runs .ts directly)
 node scripts/gen-cli-docs.ts              # regenerate docs/cli.md after changing any command
-ETUDE_HOME=$(mktemp -d) node src/cli/main.ts ...   # scratch collection
+WIKAE_HOME=$(mktemp -d) node src/cli/main.ts ...   # scratch collection
 npm run desktop                           # the desktop app from source (installs Electron into desktop/ once)
 npm --prefix desktop run typecheck        # the desktop code needs Electron's types, so it's checked apart
 node desktop/build.ts && node desktop/smoke.ts   # installers for this system in desktop/dist/out, then test them

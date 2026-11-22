@@ -74,3 +74,14 @@ test("pack check runs code references against their tests and reads math answers
   assert.ok(r.errors.some((m) => m.includes("reference fails its tests")));
   assert.ok(r.errors.some((m) => m.includes("can't be read")));
 });
+
+test("math edge cases: scientific notation, signed function arguments and restricted domains", () => {
+  assert.equal(math.evaluate(math.parse("1e-5")), 1e-5);
+  assert.equal(math.evaluate(math.parse("\\sin -x"), { x: Math.PI / 2 }), -1);
+  assert.equal(math.equivalent("x = x + 1", "x + 1").equal, false);
+  assert.equal(math.equivalent("x = 3", "3").equal, true);
+  assert.equal(math.equivalent("\\sqrt{x-5}", "\\sqrt{x-5}").equal, true);
+  assert.equal(math.equivalent("\\sqrt{x-5}", "(x-5)^{1/2}").equal, true);
+  // A huge exponent must not expand into billions of factors during a form check.
+  assert.equal(math.check("(x^999999999)(x-1)", ["(x^999999999)(x-2)"], { form: "same" }).score, 0.5);
+});

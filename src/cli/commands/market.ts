@@ -36,7 +36,7 @@ command({
   summary: "Entries in the market, newest first, with whether each is installed here.",
   flags: [
     KIND_FLAG,
-    { name: "query", type: "string", alias: ["q"], description: "Only entries whose name, description, author or tags contain these words.", placeholder: "WORDS" },
+    { name: "query", type: "string", short: "q", alias: ["q"], description: "Only entries whose name, description, author or tags contain these words.", placeholder: "WORDS" },
     { name: "refresh", type: "boolean", description: "Skip the one-minute cache of the index." },
     URL_FLAG,
   ],
@@ -97,7 +97,7 @@ command({
   name: "market installed",
   summary: "What you installed from the market, with what each put in your collection.",
   output: "array of { id, kind, name, version, updated, at, ids }",
-  run: (ctx) => Object.entries(installedEntries(ctx.e)).map(([id, r]) => ({ id, ...r })),
+  run: (ctx) => Object.entries(installedEntries(ctx.e)).map(([key, r]) => ({ id: key.slice(key.indexOf(":") + 1), ...r })),
 });
 
 command({
@@ -127,7 +127,7 @@ command({
   name: "market publish",
   summary: "Share a theme, deck or card type: opens a pull request on the market repository with your GitHub account.",
   description:
-    "Needs the GitHub CLI signed in (`gh auth login`). Etude forks the market repository if you can't push to it, adds the entry file on a new branch and opens a pull request; it shows up for everyone once it's merged. Decks are shared without your review history. With -o the entry file is written and nothing is sent. --dry-run builds and checks the file and prints where it would go.",
+    "Needs the GitHub CLI signed in (`gh auth login`). Wikae forks the market repository (Sidali-Djeghbal/wikae-market) if you can't push to it, adds the entry file on a new branch and opens a pull request; it shows up for everyone once it's merged. Decks are shared without your review history. With -o the entry file is written and nothing is sent. --dry-run builds and checks the file and prints where it would go.",
   args: [{ name: "ref", description: "Theme id, deck name, or type id in your collection.", required: true }],
   flags: [...PUBLISH_FLAGS, { name: "out", type: "string", short: "o", description: "Write the entry file here instead of publishing.", placeholder: "FILE" }, { name: "force", type: "boolean", description: "Overwrite an existing --out file." }],
   writes: true,
@@ -152,13 +152,13 @@ command({
       version: ctx.flags.version,
       examples: ctx.flags.examples,
     });
+    const outPath = ctx.flags.out ? resolve(ctx.flags.out) : entryPath(file.kind, file.id);
+    if (ctx.flags.out && existsSync(outPath) && !ctx.flags.force) throw new CliError(`${outPath} exists (use --force)`, "conflict");
+    if (ctx.dry) return { dryRun: true, repo, path: outPath, bytes: Buffer.byteLength(entryJson(file)), entry: { ...file, content: undefined }, summary: summarize(file), manualUrl: manualPublishUrl(repo, file) };
     if (ctx.flags.out) {
-      const path = resolve(ctx.flags.out);
-      if (existsSync(path) && !ctx.flags.force) throw new CliError(`${path} exists (use --force)`, "conflict");
-      writeFileSync(path, entryJson(file));
-      return { written: path, id: file.id, kind: file.kind, bytes: Buffer.byteLength(entryJson(file)) };
+      writeFileSync(outPath, entryJson(file));
+      return { written: outPath, id: file.id, kind: file.kind, bytes: Buffer.byteLength(entryJson(file)) };
     }
-    if (ctx.dry) return { dryRun: true, repo, path: entryPath(file.kind, file.id), bytes: Buffer.byteLength(entryJson(file)), entry: { ...file, content: undefined }, summary: summarize(file), manualUrl: manualPublishUrl(repo, file) };
     if (!gh?.ok) throw new CliError(`${gh?.reason ?? "gh isn't available"}. Write the file with -o and add it on GitHub: ${manualPublishUrl(repo, file)}`, "external");
     return publishFile(file, { repo });
   },

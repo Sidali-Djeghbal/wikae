@@ -142,7 +142,9 @@ export function apply(db: Db, event: Change) {
 export function localEvent(db: Db, table: string, key: string, fields: Record<string, unknown>, deleted = false, captured?: Stamp) {
   const c = db.get("SELECT * FROM sync_control WHERE id=1")!;
   const stamp = captured ?? tick([c.wall, c.counter, c.device]);
-  const event: Change = { v: 1, table, key, stamp, fields, ...(deleted ? { deleted: true } : {}) };
+  const body = { ...fields };
+  if (!deleted && db.get("SELECT 1 FROM sync_deleted WHERE tbl=? AND key=?", table, key)) body["/__etude_sync_recreated__"] = true;
+  const event: Change = { v: 1, table, key, stamp, fields: body, ...(deleted ? { deleted: true } : {}) };
   const eventId = `${c.device}:${stamp[0]}:${stamp[1]}`;
   apply(db, event);
   db.run("INSERT INTO sync_events(id,body) VALUES(?,?)", eventId, JSON.stringify(event));
@@ -174,10 +176,14 @@ export function receive(db: Db, eventId: string, event: Change) {
 }
 export function rows(db: Db, table: string): Map<string, Row> {
   const out = new Map<string, Row>();
-  for (const r of db.all("SELECT key,field,value FROM sync_registers WHERE tbl=? ORDER BY key,length(field),field", table)) {
+  // Paths already written as a scalar: a stale child register under one must not turn it back into an object.
+  const scalars = new Map<string, Set<string>>();
+  for (const r of db.all("SELECT key,field,value,stamp FROM sync_registers WHERE tbl=? ORDER BY key,length(field),field", table)) {
+    const parts = r.field.split("/").slice(1).map((s: string) => s.replaceAll("~1", "/").replaceAll("~0", "~"));
+    const held = scalars.get(r.key) ?? new Set<string>();
+    if (parts.slice(1).some((_: string, i: number) => held.has(parts.slice(0, i + 1).join("/")))) continue;
     const row = out.get(r.key) ?? {};
     out.set(r.key, row);
-    const parts = r.field.split("/").slice(1).map((s: string) => s.replaceAll("~1", "/").replaceAll("~0", "~"));
     let obj = row;
     for (const p of parts.slice(0,-1)) {
       if (["__proto__", "constructor", "prototype"].includes(p)) throw new Error("invalid sync field");
@@ -188,8 +194,20 @@ export function rows(db: Db, table: string): Map<string, Row> {
     if (["__proto__", "constructor", "prototype"].includes(leaf)) throw new Error("invalid sync field");
     const value = JSON.parse(r.value);
     if (value?.__etude_sync_deleted__ === true) delete obj[leaf];
-    else obj[leaf] = value;
+    else {
+      obj[leaf] = value;
+      if (value === null || typeof value !== "object" || Array.isArray(value)) {
+        held.add(parts.join("/"));
+        scalars.set(r.key, held);
+      }
+    }
   }
-  for (const r of db.all("SELECT key FROM sync_deleted WHERE tbl=?", table)) out.delete(r.key);
+  for (const r of db.all("SELECT key,stamp FROM sync_deleted WHERE tbl=?", table)) {
+    const tomb = JSON.parse(r.stamp);
+    const marker = db.get("SELECT stamp FROM sync_registers WHERE tbl=? AND key=? AND field='/__etude_sync_recreated__'", table, r.key);
+    // Only an explicit local re-creation, with a stamp after the delete, brings a row back.
+    if (!marker || compare(JSON.parse(marker.stamp), tomb) <= 0) out.delete(r.key);
+  }
+  for (const row of out.values()) delete row.__etude_sync_recreated__;
   return out;
 }

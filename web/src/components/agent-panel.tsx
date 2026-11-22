@@ -1,4 +1,4 @@
-// "Ask Etude": the assistant's launcher and side panel. The panel pushes the page on desktop and is a full-screen sheet on phones.
+// "Ask Wikae": the assistant's launcher and side panel. The panel pushes the page on desktop and is a full-screen sheet on phones.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, Ban, CalendarCheck, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronsRight, CornerDownRight, Ellipsis, FileText, FileUp, FolderTree, ImageIcon, Loader2, Package, Palette, Pencil, Plus, RotateCcw, Settings2, Square, SquarePen, Trash2, X } from "lucide-react";
 import { toast } from "sonner";

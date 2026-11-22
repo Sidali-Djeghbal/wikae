@@ -3,23 +3,23 @@ apply plugin: 'com.android.application'
 import groovy.json.JsonSlurper
 
 // Version from the repo's package.json: 2.3.0 → versionName "2.3.0", versionCode 20300 (major*10000 + minor*100 + patch).
-def etudeVersion = new JsonSlurper().parse(file('../../package.json')).version
-def (vMajor, vMinor, vPatch) = etudeVersion.tokenize('.-')[0..2].collect { it as int }
-def etudeVersionCode = vMajor * 10000 + vMinor * 100 + vPatch
+def wikaeVersion = new JsonSlurper().parse(file('../../package.json')).version
+def (vMajor, vMinor, vPatch) = wikaeVersion.tokenize('.-')[0..2].collect { it as int }
+def wikaeVersionCode = vMajor * 10000 + vMinor * 100 + vPatch
 
 // Release signing reads the upload keystore from the environment, so no key is ever committed.
 // See store/android/README.md for the keytool command.
-def keystorePath = System.getenv('ETUDE_KEYSTORE')
+def keystorePath = System.getenv('WIKAE_KEYSTORE') ?: System.getenv('ETUDE_KEYSTORE')
 
 android {
-    namespace = "study.etude.app"
+    namespace = "app.wikae.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "study.etude.app"
+        applicationId "app.wikae.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode etudeVersionCode
-        versionName etudeVersion
+        versionCode wikaeVersionCode
+        versionName wikaeVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -31,15 +31,15 @@ android {
         release {
             if (keystorePath) {
                 storeFile file(keystorePath)
-                storePassword System.getenv('ETUDE_KEYSTORE_PASSWORD')
-                keyAlias System.getenv('ETUDE_KEY_ALIAS') ?: 'etude-upload'
-                keyPassword System.getenv('ETUDE_KEY_PASSWORD') ?: System.getenv('ETUDE_KEYSTORE_PASSWORD')
+                storePassword System.getenv('WIKAE_KEYSTORE_PASSWORD') ?: System.getenv('ETUDE_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('WIKAE_KEY_ALIAS') ?: System.getenv('ETUDE_KEY_ALIAS') ?: 'wikae-upload'
+                keyPassword System.getenv('WIKAE_KEY_PASSWORD') ?: System.getenv('ETUDE_KEY_PASSWORD') ?: System.getenv('WIKAE_KEYSTORE_PASSWORD') ?: System.getenv('ETUDE_KEYSTORE_PASSWORD')
             }
         }
     }
     buildTypes {
         release {
-            // Unsigned when ETUDE_KEYSTORE isn't set (the bundle can still be built and inspected).
+            // Unsigned when the keystore env var isn't set (the bundle can still be built and inspected).
             if (keystorePath) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

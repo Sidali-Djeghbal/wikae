@@ -27,7 +27,7 @@ const MIN = 0.004;
 const MAX_Z = 10;
 const r4 = (v: number) => Math.round(v * 10000) / 10000;
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
-const faceOf = (b: OcclusionBox) => String(b.group || b.id).replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "");
+const faceOf = (b: OcclusionBox) => String(b.group || b.id).replace(/[^\p{L}\p{N}-]+/gu, "-").replace(/^-+|-+$/g, "");
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.matches("input, textarea, select") || t.isContentEditable);
 
 /** The cards an item will have: one per box, or per group. Same rule as the type's facesWhen. */

@@ -245,13 +245,13 @@ test("the authorize URL carries every documented parameter", () => {
       challenge: "ch",
       hostId: "urn:uuid:11111111-1111-1111-1111-111111111111",
       clientId: "dynamic_agent_client",
-      agentNameHint: "Etude",
+      agentNameHint: "Wikae",
     }),
   );
   assert.equal(url.origin + url.pathname, "https://auth.openai.com/api/accounts/authorize");
   const q = url.searchParams;
   assert.equal(q.get("client_id"), "dynamic_agent_client");
-  assert.equal(q.get("agent_name_hint"), "Etude");
+  assert.equal(q.get("agent_name_hint"), "Wikae");
   assert.equal(q.get("ext_agent_host_id"), "urn:uuid:11111111-1111-1111-1111-111111111111");
   assert.equal(q.get("response_type"), "code");
   assert.equal(q.get("redirect_uri"), "http://127.0.0.1:1455/auth/callback");
@@ -288,7 +288,7 @@ test("sign-in exchanges the code, validates the ID token and stores 0600 credent
     fake.registerAuthorize(session.url);
     const q = new URL(session.url).searchParams;
     assert.equal(q.get("client_id"), "dynamic_agent_client");
-    assert.equal(q.get("agent_name_hint"), "Etude");
+    assert.equal(q.get("agent_name_hint"), "Wikae");
     assert.match(q.get("ext_agent_host_id") ?? "", /^urn:uuid:[0-9a-f-]{36}$/);
     const { code, state } = fake.approve("oaiapp_test");
     assert.equal(await callback(session, { code, state, client_id: "oaiapp_test" }), 200);
@@ -330,17 +330,24 @@ test("sign-in exchanges the code, validates the ID token and stores 0600 credent
   }
 });
 
-test("the callback refuses a mismatched state and saves nothing", async () => {
+test("the callback ignores a mismatched state without cancelling the sign-in", async () => {
   const fake = await fakeOpenAi();
   const home = tempHome();
   try {
     const session = await beginChatGptLogin({ home, endpoints: fake.endpoints, timeoutMs: 5000 });
     fake.registerAuthorize(session.url);
     const { code, state } = fake.approve("oaiapp_test");
-    const status = await callback(session, { code, state: state + "x", client_id: "oaiapp_test" });
-    assert.equal(status, 400);
-    await assert.rejects(session.wait, (e: unknown) => e instanceof ChatGptError && e.code === "state_mismatch");
+    assert.equal(await callback(session, { code, state: state + "x", client_id: "oaiapp_test" }), 400);
+    // A stray callback must not settle the real sign-in.
+    const pending = await Promise.race([
+      session.wait.then(() => "settled", () => "settled"),
+      new Promise<string>((r) => setTimeout(() => r("pending"), 100)),
+    ]);
+    assert.equal(pending, "pending");
     assert.equal(readChatGptCredentials(home), null);
+    // The real callback still completes it.
+    assert.equal(await callback(session, { code, state, client_id: "oaiapp_test" }), 200);
+    assert.ok((await session.wait).access_token);
   } finally {
     await fake.close();
   }
@@ -574,7 +581,7 @@ test("the HTTP routes point a remote browser at the CLI", async () => {
     assert.equal(remote.status, 200);
     const body = (await remote.json()) as any;
     assert.equal(body.remote, true);
-    assert.equal(body.cli, "etude settings chatgpt login");
+    assert.equal(body.cli, "wikae settings chatgpt login");
 
     const status = await app.request("/api/chatgpt/status", { headers: { "x-forwarded-host": "127.0.0.1:4610" } });
     const st = (await status.json()) as any;

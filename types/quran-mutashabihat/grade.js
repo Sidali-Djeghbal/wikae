@@ -2,8 +2,16 @@
 const normAr = (text) => std.normalize(text).replace(/[.,/#!$%^&*;:{}=\-_`~()؟،؛۝۞]+/g, " ").replace(/\s+/g, " ").trim();
 
 const ans = typeof answer === "string" ? { chosenOptionId: answer, typedText: answer } : answer || {};
-const mode = ans.mode || view.mode || "pivotal_completion";
-const submode = ans.submode || view.inputSubmode || "choice";
+// The card's mode is fixed by prepare; a client can choose choice or typing only within pivotal completion.
+const mode = view.mode === "surah_identification" ? "surah_identification" : "pivotal_completion";
+const submode =
+  mode === "surah_identification"
+    ? "choice"
+    : ans.submode === "typing" || ans.submode === "choice"
+      ? ans.submode
+      : view.inputSubmode === "typing"
+        ? "typing"
+        : "choice";
 
 let isCorrect = false;
 
@@ -12,8 +20,8 @@ if (submode === "typing" && typeof ans.typedText === "string" && ans.typedText.t
   const targets = [normAr(key.correctPivotalNormalized), normAr(key.correctPivotalUthmani)].filter(Boolean);
   isCorrect = userNorm.length > 0 && targets.indexOf(userNorm) !== -1;
 } else {
-  const chosenId = ans.chosenOptionId;
-  if (typeof chosenId === "string") {
+  const chosenId = typeof ans.chosenOptionId === "string" ? ans.chosenOptionId.trim() : "";
+  if (chosenId) {
     if (mode === "surah_identification") {
       // Opaque option id from the card, or the sibling id for CLI/API callers.
       isCorrect = chosenId === key.correctOptionId || chosenId === key.targetVerseId;

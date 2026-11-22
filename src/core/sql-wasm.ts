@@ -15,7 +15,12 @@ let loaded: Sqlite3 | null = null;
 /** Loads the WebAssembly module once per process (about 40 ms). */
 export function loadSqliteWasm(): Promise<Sqlite3> {
   if (!sqlite3) {
-    sqlite3 = import("@sqlite.org/sqlite-wasm").then(async (m: any) => (loaded = await m.default({ print: () => {}, printErr: () => {} })));
+    sqlite3 = import("@sqlite.org/sqlite-wasm")
+      .then(async (m: any) => (loaded = await m.default({ print: () => {}, printErr: () => {} })))
+      .catch((e) => {
+        sqlite3 = null;
+        throw e;
+      });
   }
   return sqlite3;
 }
@@ -202,8 +207,7 @@ class WasmConnection implements SqlConnection {
     this.db.createFunction({
       name,
       deterministic: !!options.deterministic,
-      // The wrapper's own arity would be 0; SQLite must see the function's real one (-1 = any).
-      arity: fn.length || -1,
+      arity: fn.length,
       xFunc: (_ctx: number, ...args: unknown[]) => fn(...args),
     });
   }
@@ -231,10 +235,19 @@ class WasmConnection implements SqlConnection {
   attachImage(schema: string, bytes: Uint8Array) {
     this.db.exec(`ATTACH DATABASE ':memory:' AS "${schema.replace(/"/g, '""')}"`);
     const { capi, wasm } = this.s;
+    // node:sqlite may write WAL header bytes 18-19; SQLite can't deserialize those from memory.
+    if (bytes[18] === 2 || bytes[19] === 2) {
+      bytes = bytes.slice();
+      bytes[18] = 1;
+      bytes[19] = 1;
+    }
     const p = wasm.allocFromTypedArray(bytes);
     const flags = capi.SQLITE_DESERIALIZE_FREEONCLOSE | capi.SQLITE_DESERIALIZE_RESIZEABLE;
     const rc = capi.sqlite3_deserialize(this.db.pointer, schema, p, bytes.length, bytes.length, flags);
-    if (rc) throw sqlError(this.s, this.db, new Error(`could not attach the image (sqlite rc ${rc})`));
+    if (rc) {
+      this.db.exec(`DETACH DATABASE "${schema.replace(/"/g, '""')}"`);
+      throw sqlError(this.s, this.db, new Error(`could not attach the image (sqlite rc ${rc})`));
+    }
   }
 
   close(): void {
@@ -277,7 +290,7 @@ async function installPool(s: Sqlite3): Promise<any> {
     }
   }
   opfsPool = null;
-  throw new Error(`couldn't open the collection storage (is Etude open in another tab?): ${last}`);
+  throw new Error(`couldn't open the collection storage (is Wikae open in another tab?): ${last}`);
 }
 
 /**
@@ -303,7 +316,7 @@ export async function openWasm(path: string): Promise<SqlConnection> {
   // node:sqlite may have left WAL sidecar files; fold them in before reading the main file.
   if (existsSync(path + "-wal")) {
     const { DatabaseSync } = await import("node:sqlite");
-    const d = new DatabaseSync(path);
+    const d = new DatabaseSync(path, { timeout: 5000 });
     d.exec("PRAGMA wal_checkpoint(TRUNCATE); PRAGMA journal_mode = DELETE;");
     d.close();
   }

@@ -6,7 +6,7 @@ Checked against Google's help pages on 27 Oct 2026: preview assets, Data safety.
 
 | Field | Answer |
 |---|---|
-| App name | Etude: Practice Anything |
+| App name | Wikae: Practice Anything |
 | Default language | English (United States) |
 | App or game | App |
 | Free or paid | Free |
@@ -29,14 +29,14 @@ Checked against Google's help pages on 27 Oct 2026: preview assets, Data safety.
 ## Store settings
 
 - Category: **Education**. Tags: Flashcards, Study, Education, Language learning, Productivity (pick what Play offers).
-- Email: hello@etude.study. Website: https://etude.study. Phone: optional, leave empty.
+- Email: contact@djeghbal.me. Website: https://sidali-djeghbal.github.io/wikae. Phone: optional, leave empty.
 - External marketing: on.
 
 ## App content
 
 | Section | Answer |
 |---|---|
-| Privacy policy | https://etude.study/privacy |
+| Privacy policy | https://sidali-djeghbal.github.io/wikae/privacy |
 | App access | **All or some functionality is restricted**: the optional account. Instructions: "Everything except the optional account works without signing in. To test the account, enter any email address you can read in Settings → Account; a sign-in link arrives by email." No credentials needed. |
 | Ads | **No**, the app has no ads |
 | Content rating | see below |
@@ -47,11 +47,11 @@ Checked against Google's help pages on 27 Oct 2026: preview assets, Data safety.
 | Health | My app doesn't have any health features |
 | News app | No |
 | Advertising ID | No, the app doesn't use the advertising ID |
-| Account deletion | URL: https://etude.study/support#delete. Deletion is also inside the app: Settings → Account → Delete account |
+| Account deletion | URL: https://sidali-djeghbal.github.io/wikae/support#delete. Deletion is also inside the app: Settings → Account → Delete account |
 
 ## Content rating (IARC questionnaire)
 
-- Email: hello@etude.study. Category: **Reference, News, or Educational**.
+- Email: contact@djeghbal.me. Category: **Reference, News, or Educational**.
 - Violence, fear, sexuality, language, controlled substances, crude humour: **No** to all.
 - Gambling or simulated gambling: **No**.
 - Do users interact or exchange content with each other? **No** (no chat, no posting; the Market is a reviewed catalogue).
@@ -80,7 +80,7 @@ Everything else (location, contacts, financial info, health, messages, photos an
 Notes:
 
 - **Sync is exempt.** The collection is end-to-end encrypted on the device and only the person's devices hold the key, which is exactly Google's exemption. Don't declare it.
-- **AI grading.** When someone turns it on, the card and their answer leave the device for OpenAI or OpenRouter under their own key. Etude's servers never see them, and it isn't "sharing" because the person set it up and expects it. Google's definition of collection is "sent off the device", with no exception for a provider the user picked, so the safe answer is to declare it as collected, optional, for app functionality. If Google's reviewer disagrees, remove it.
+- **AI grading.** When someone turns it on, the card and their answer leave the device for OpenAI or OpenRouter under their own key. Wikae's servers never see them, and it isn't "sharing" because the person set it up and expects it. Google's definition of collection is "sent off the device", with no exception for a provider the user picked, so the safe answer is to declare it as collected, optional, for app functionality. If Google's reviewer disagrees, remove it.
 - **Security log IP addresses** (12 months, abuse prevention) count with the account under App functionality; Play has no separate IP row.
 - **Market and update checks** fetch public files from GitHub. Nothing personal is sent, so nothing to declare.
 

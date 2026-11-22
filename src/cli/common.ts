@@ -5,7 +5,7 @@ import { CliError, type Ctx, type FlagSpec } from "./registry.ts";
 import { deepSet, idList, looseValue, splitPair } from "./input.ts";
 
 export const DECK_FLAG: FlagSpec = { name: "deck", type: "string", description: "Limit to this deck and its subdecks.", placeholder: "NAME" };
-export const QUERY_FLAG: FlagSpec = { name: "query", type: "string", alias: ["q"], description: "Limit to cards matching a search (see `Search language`).", placeholder: "SEARCH" };
+export const QUERY_FLAG: FlagSpec = { name: "query", type: "string", short: "q", alias: ["q"], description: "Limit to cards matching a search (see `Search language`).", placeholder: "SEARCH" };
 export const SCOPE_FLAGS = [DECK_FLAG, QUERY_FLAG];
 export const LIMIT_FLAG: FlagSpec = { name: "limit", type: "number", description: "Maximum rows to return.", default: 100 };
 export const OFFSET_FLAG: FlagSpec = { name: "offset", type: "number", description: "Rows to skip (for paging).", default: 0 };

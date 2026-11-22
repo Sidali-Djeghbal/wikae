@@ -36,6 +36,14 @@ function setup(purify: DOMPurify) {
   configured.add(purify);
   purify.addHook("afterSanitizeAttributes", (node) => {
     const el = node as Element;
+    // Arbitrary classes can impersonate app chrome (fixed overlays, fake password forms).
+    // KaTeX markup is restored after sanitizing, so only code/list classes need to survive here.
+    const cls = el.getAttribute("class");
+    if (cls) {
+      const safe = cls.split(/\s+/).filter((c) => /^(?:language-[\w+#.-]+|task-list-item)$/.test(c));
+      if (safe.length) el.setAttribute("class", safe.join(" "));
+      else el.removeAttribute("class");
+    }
     // GFM task lists render `<input type="checkbox" disabled>`; nothing else may be an input.
     if (el.tagName === "INPUT") {
       if ((el.getAttribute("type") ?? "").toLowerCase() !== "checkbox") {
@@ -50,7 +58,10 @@ function setup(purify: DOMPurify) {
       if (src && !/^(?:https?:|\/(?!\/)|data:image\/(?:png|jpe?g|gif|webp|avif);)/i.test(src)) el.removeAttribute("src");
     }
     // Links that leave the app open in a new tab and don't hand it a window.opener.
+    // Clear any supplied target: _top / _self can break the app out of its frame.
     if (el.tagName === "A") {
+      el.removeAttribute("target");
+      el.removeAttribute("rel");
       const href = el.getAttribute("href") ?? "";
       if (/^(?:https?:|mailto:)/i.test(href)) {
         el.setAttribute("target", "_blank");
@@ -63,5 +74,5 @@ function setup(purify: DOMPurify) {
 /** Sanitizes HTML with the given DOMPurify instance (the browser's, or a jsdom-backed one in tests). */
 export function sanitizeHtml(purify: DOMPurify, html: string): string {
   setup(purify);
-  return purify.sanitize(html, { ...CONFIG, ADD_ATTR: ["target", "rel"] }) as string;
+  return purify.sanitize(html, { ...CONFIG, ADD_ATTR: ["rel"] }) as string;
 }

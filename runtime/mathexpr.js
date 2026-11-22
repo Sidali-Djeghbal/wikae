@@ -86,7 +86,7 @@ function tokenize(input) {
       continue;
     }
     if (/[0-9.]/.test(c)) {
-      const m = /^(\d+\.?\d*|\.\d+)/.exec(s.slice(i));
+      const m = /^((?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)/.exec(s.slice(i));
       if (!m) fail(`stray "."`);
       out.push({ k: "num", v: Number(m[1]), raw: m[1] });
       i += m[1].length;
@@ -196,7 +196,7 @@ export function parse(input) {
     }
     const t = toks[i++];
     if (!t || !(t.k === "num" || t.k === "id")) fail("bad subscript");
-    if (t.k === "num" && t.raw.length > 1) {
+    if (t.k === "num" && /^\d{2,}$/.test(t.raw)) {
       toks.splice(i, 0, { k: "num", v: Number(t.raw.slice(1)), raw: t.raw.slice(1) });
       return t.raw[0];
     }
@@ -211,7 +211,7 @@ export function parse(input) {
   function fnArgument() {
     if (peek()?.k === "(") { i++; const e = sum(); take(")", "closing )"); return { t: "paren", a: e }; }
     // \sin 2x and \ln x: the following implicit product, up to the next function.
-    let arg = power();
+    let arg = unary();
     while (startsAtom(peek()) && peek().k !== "fn") arg = { t: "mul", a: arg, b: power(), implicit: true };
     return arg;
   }
@@ -460,21 +460,24 @@ function prng(seed) {
 
 const close = (x, y, tol) => x === y || Math.abs(x - y) <= tol * Math.max(1, Math.abs(x), Math.abs(y));
 
-/** Random points to compare at: a mixed range first, then positive values for logs and roots. */
-function* samples(vars, count) {
+/** Random points to compare at: a mixed range first, then positive values for logs and roots. Points where `defined` isn't a real number are skipped. */
+function* samples(vars, count, defined = null) {
   const rnd = prng(0x5eed);
   const names = [...vars];
-  for (let k = 0; k < count; k++) {
+  let made = 0;
+  for (let k = 0; made < count && k < count * 8; k++) {
     const env = {};
     const positive = k >= count / 2;
-    for (const n of names) env[n] = positive ? 0.05 + rnd() * 3.95 : -3.7 + rnd() * 7.4;
+    for (const n of names) env[n] = positive ? 0.05 + rnd() * 8 : -3.7 + rnd() * 7.4;
+    if (defined && !Number.isFinite(evaluate(defined, env))) continue;
+    made++;
     yield env;
   }
 }
 
 function sameFunction(f, g, vars, tol) {
   let valid = 0;
-  for (const env of samples(vars, 48)) {
+  for (const env of samples(vars, 48, f)) {
     const x = evaluate(f, env), y = evaluate(g, env);
     const fx = Number.isFinite(x), fy = Number.isFinite(y);
     if (fx && fy) {
@@ -493,7 +496,7 @@ function sameFunction(f, g, vars, tol) {
 function proportional(f, g, vars, tol) {
   let ratio = null;
   let valid = 0;
-  for (const env of samples(vars, 48)) {
+  for (const env of samples(vars, 48, f)) {
     const x = evaluate(f, env), y = evaluate(g, env);
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
     if (Math.abs(y) < 1e-12 || Math.abs(x) < 1e-12) {
@@ -544,12 +547,14 @@ export function equivalent(a, b, opts = {}) {
     return { equal: ok, score: ok ? 1 : 0 };
   }
   if (A.t === "eq" || B.t === "eq") {
-    // "x = 3" and "3" agree when the equation just names its variable.
+    // "x = 3" and "3" agree when the equation just names its variable, not when x appears on both sides.
     const [eq, ex] = A.t === "eq" ? [A, B] : [B, A];
+    const v = eq.a.t === "var" ? eq.a : eq.b.t === "var" ? eq.b : null;
     const side = eq.a.t === "var" ? eq.b : eq.b.t === "var" ? eq.a : null;
-    const ok = !!side && sameFunction(side, ex, vars, tol);
+    const ok = !!v && !!side && !variables(side).has(v.n) && sameFunction(side, ex, vars, tol);
     return { equal: ok, score: ok ? 1 : 0 };
   }
+  if (canonical(A) === canonical(B)) return { equal: true, score: 1 };
   const ok = sameFunction(A, B, vars, tol);
   return { equal: ok, score: ok ? 1 : 0 };
 }
@@ -572,7 +577,7 @@ function factorsOf(node, out = []) {
   if (node.t === "neg") return factorsOf(node.a, out);
   if (node.t === "mul") { factorsOf(node.a, out); factorsOf(node.b, out); return out; }
   if (node.t === "pow" && node.b.t === "num" && Number.isInteger(node.b.v) && node.b.v > 1) {
-    for (let k = 0; k < node.b.v; k++) factorsOf(node.a, out);
+    for (let k = 0; k < Math.min(node.b.v, 64); k++) factorsOf(node.a, out);
     return out;
   }
   if (variables(node).size) out.push(node);

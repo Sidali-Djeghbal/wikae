@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { backup } from "node:sqlite";
 import { command, group, CliError, Failed } from "../registry.ts";
+import { appEnv } from "../../core/util.ts";
 
 group({ name: "db", summary: "The database file: path, backups, integrity, schema version" });
 
@@ -11,9 +12,9 @@ command({
   name: "db path",
   summary: "Which database and media directory the CLI uses, and how it was chosen.",
   noDb: true,
-  output: "{ db, exists, bytes, mediaDir, source: flag|ETUDE_DB|ETUDE_HOME|default, home }",
+  output: "{ db, exists, bytes, mediaDir, source: flag|WIKAE_DB|WIKAE_HOME|default, home }",
   run(ctx) {
-    const source = ctx.flags.db ? "flag" : ctx.env.ETUDE_DB ? "ETUDE_DB" : ctx.env.ETUDE_HOME ? "ETUDE_HOME" : "default";
+    const source = ctx.flags.db ? "flag" : appEnv(ctx.env, "DB") ? "WIKAE_DB" : appEnv(ctx.env, "HOME") ? "WIKAE_HOME" : "default";
     const exists = existsSync(ctx.dbPath);
     return { db: ctx.dbPath, exists, bytes: exists ? statSync(ctx.dbPath).size : 0, mediaDir: join(dirname(ctx.dbPath), "media"), source, home: ctx.home };
   },
@@ -86,7 +87,7 @@ command({
   writes: true,
   confirm: true,
   noDb: true,
-  examples: ["etude db restore ~/.etude/backups/etude-20261020-190000.db --yes"],
+  examples: ["etude db restore ~/.wikae/backups/etude-20261020-190000.db --yes"],
   output: "{ restored, previous }",
   async run(ctx) {
     const src = resolve(ctx.args.backup);

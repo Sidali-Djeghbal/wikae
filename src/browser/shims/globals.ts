@@ -4,7 +4,7 @@ import { Buffer } from "buffer";
 const g = globalThis as any;
 g.Buffer ??= Buffer;
 g.process ??= {
-  env: { ETUDE_SQL: "wasm", TMPDIR: "/tmp" },
+  env: { WIKAE_SQL: "wasm", TMPDIR: "/tmp" },
   pid: 1,
   platform: "browser",
   versions: {},

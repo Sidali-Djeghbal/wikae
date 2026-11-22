@@ -21,7 +21,7 @@ const r4 = (v: number) => Math.round(v * 10000) / 10000;
  * Numbers are fractions of the image unless `px` gives its size in pixels.
  */
 export function parseBoxSpec(spec: string): Omit<OcclusionBox, "id"> & { id?: string } {
-  const m = /^\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*(?:@\s*([\w-]+)\s*)?(?:=(.*))?$/s.exec(spec);
+  const m = /^\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*(?:@\s*([\p{L}\p{N}-]+)\s*)?(?:=(.*))?$/su.exec(spec);
   if (!m) throw new OcclusionError(`box "${spec}" should look like x,y,w,h=Label (or x,y,w,h@group=Label)`);
   const [x, y, w, h] = m.slice(1, 5).map(Number);
   if (![x, y, w, h].every(Number.isFinite)) throw new OcclusionError(`box "${spec}" has a coordinate that isn't a number`);
@@ -30,6 +30,7 @@ export function parseBoxSpec(spec: string): Omit<OcclusionBox, "id"> & { id?: st
 
 /** Checks and normalises a box list: ids filled in and unique, coordinates in 0..1 (or converted from pixels). */
 export function normalizeBoxes(raw: unknown[], opts: { px?: { width: number; height: number } } = {}): OcclusionBox[] {
+  if (opts.px && ![opts.px.width, opts.px.height].every((v) => Number.isFinite(v) && v > 0)) throw new OcclusionError("pixel dimensions must be positive numbers");
   const out: OcclusionBox[] = [];
   const used = new Set<string>();
   raw.forEach((b: any, i) => {
@@ -45,7 +46,7 @@ export function normalizeBoxes(raw: unknown[], opts: { px?: { width: number; hei
     if (w <= 0 || h <= 0) throw new OcclusionError(`box ${i + 1} has no area`);
     if (x < -0.001 || y < -0.001 || x + w > 1.001 || y + h > 1.001)
       throw new OcclusionError(`box ${i + 1} (${[x, y, w, h].map((v) => r4(v)).join(", ")}) is outside the image; coordinates are fractions from 0 to 1${opts.px ? "" : " (use --px for pixels)"}`);
-    let id = typeof b.id === "string" && /^[\w-]+$/.test(b.id) ? b.id : "";
+    let id = typeof b.id === "string" && /^[\p{L}\p{N}-]+$/u.test(b.id) ? b.id : "";
     if (!id || used.has(id)) {
       let n = i + 1;
       while (used.has(`b${n}`) || raw.some((o: any) => o?.id === `b${n}` && o !== b)) n++;
@@ -53,7 +54,10 @@ export function normalizeBoxes(raw: unknown[], opts: { px?: { width: number; hei
     }
     used.add(id);
     const box: OcclusionBox = { id, x: r4(Math.max(0, x)), y: r4(Math.max(0, y)), w: r4(Math.min(w, 1 - Math.max(0, x))), h: r4(Math.min(h, 1 - Math.max(0, y))), label: String(b.label ?? "").trim() };
-    if (b.group) box.group = String(b.group);
+    if (b.group) {
+      if (typeof b.group !== "string" && typeof b.group !== "number") throw new OcclusionError(`box ${i + 1} has an invalid group`);
+      box.group = String(b.group);
+    }
     out.push(box);
   });
   return out;

@@ -16,19 +16,20 @@ export const SURAH_NAMES = [
 ];
 
 export function normSurah(s: string | null | undefined): string {
-  return String(s || "")
-    .replace(/^سورة\s+/, "")
-    .replace(/[أإآٱٲٳ]/g, "ا")
-    .replace(/ة/g, "ه")
+  return normalizeArabic(String(s || ""), { stripPunctuation: false })
+    .replace(/^سوره\s+/, "")
     .replace(/\s+/g, "")
     .trim();
 }
+
+const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+const toAsciiDigits = (s: string) => s.replace(/[٠-٩]/g, (d) => String(ARABIC_DIGITS.indexOf(d)));
 
 export function findSurah(val: string | number | null | undefined): { number: number; nameAr: string } | null {
   if (typeof val === "number" && val >= 1 && val <= 114) {
     return { number: val, nameAr: SURAH_NAMES[val - 1] };
   }
-  const str = String(val || "").trim();
+  const str = toAsciiDigits(String(val || "").trim());
   const num = parseInt(str, 10);
   if (!isNaN(num) && num >= 1 && num <= 114 && String(num) === str) {
     return { number: num, nameAr: SURAH_NAMES[num - 1] };
@@ -98,8 +99,9 @@ export function parseSiblingNode(input: unknown, index = 0): MutashabihVerseNode
   }
 
   const surahInfo = findSurah(surahRef);
-  const surahNumber = surahInfo ? surahInfo.number : (parseInt(surahRef, 10) || (index + 1));
-  const surahNameAr = surahInfo ? surahInfo.nameAr : (String(surahRef) || `سورة ${surahNumber}`);
+  if (!surahInfo) throw new Error(`sibling ${index + 1}: unknown Surah "${surahRef}"`);
+  const surahNumber = surahInfo.number;
+  const surahNameAr = surahInfo.nameAr;
   const ayahNumber = ayahRef || 1;
 
   const bStart = verseText.indexOf("[");
@@ -225,7 +227,8 @@ export function validateMutashabihatCard(card: unknown): string[] {
         errs.push("targetVerseId is required");
       } else {
         const ids = c.siblings.map((s: any) => s?.id || (s?.surahNumber && s?.ayahNumber ? `${s.surahNumber}_${s.ayahNumber}` : undefined));
-        if (!ids.includes(c.targetVerseId)) {
+        const wanted = c.targetVerseId.replace(":", "_");
+        if (!ids.includes(c.targetVerseId) && !ids.map(String).includes(wanted)) {
           errs.push(`targetVerseId "${c.targetVerseId}" not found in siblings`);
         }
       }
@@ -256,7 +259,8 @@ export const MutashabihatCardSchema = {
  * 1. pivotal_completion (masks the distinguishing word/phrase in context)
  * 2. surah_identification (asks which Surah features this exact wording)
  * 
- * For N siblings, produces exactly 2 * N atomic cards.
+ * For N siblings, produces up to 2 * N atomic cards. Intra-Surah clusters only
+ * get pivotal_completion cards, since there is no second Surah to identify.
  */
 export function generateCardsFromMutashabihatCluster(
   cluster: MutashabihatClusterCard | MutashabihatClusterInput
@@ -272,6 +276,8 @@ export function generateCardsFromMutashabihatCluster(
 
   const cards: MutashabihatClusterCard[] = [];
   const baseType = cluster.type ?? "quran-mutashabihat";
+  // A Surah-identification card needs at least two distinct Surahs to choose from.
+  const distinctSurahs = new Set(siblings.map((s) => s.surahNumber)).size;
 
   for (const sibling of siblings) {
     // 1. Mode A: Pivotal Word/Phrase Completion
@@ -286,17 +292,19 @@ export function generateCardsFromMutashabihatCluster(
       hintAr: cluster.hintAr,
     });
 
-    // 2. Mode B: Surah & Position Identification
-    cards.push({
-      id: `${cluster.id}_${sibling.id}_surah`,
-      type: baseType,
-      mode: "surah_identification",
-      targetVerseId: sibling.id,
-      siblings,
-      extraDistractorsUthmani: cluster.extraDistractorsUthmani,
-      mnemonicRuleAr: cluster.mnemonicRuleAr,
-      hintAr: cluster.hintAr,
-    });
+    // 2. Mode B: Surah & Position Identification (cross-Surah clusters only)
+    if (distinctSurahs > 1) {
+      cards.push({
+        id: `${cluster.id}_${sibling.id}_surah`,
+        type: baseType,
+        mode: "surah_identification",
+        targetVerseId: sibling.id,
+        siblings,
+        extraDistractorsUthmani: cluster.extraDistractorsUthmani,
+        mnemonicRuleAr: cluster.mnemonicRuleAr,
+        hintAr: cluster.hintAr,
+      });
+    }
   }
 
   return cards;
@@ -403,14 +411,14 @@ export const VERIFIED_SEED_CLUSTERS: MutashabihatClusterCard[] = [
         surahNameAr: "الإسراء",
         ayahNumber: 31,
         prefixUthmani: "وَلَا تَقْتُلُوٓا۟ أَوْلَـٰدَكُمْ",
-        pivotalUthmani: "خَشْيَةَ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُهُمْ وَإِيَّاهُمْ",
+        pivotalUthmani: "خَشْيَةَ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُهُمْ وَإِيَّاكُمْ",
         suffixUthmani: "إِنَّ قَتْلَهُمْ كَانَ خِطْـًٔا كَبِيرًا",
-        textUthmani: "وَلَا تَقْتُلُوٓا۟ أَوْلَـٰدَكُمْ خَشْيَةَ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُهُمْ وَإِيَّاهُمْ إِنَّ قَتْلَهُمْ كَانَ خِطْـًٔا كَبِيرًا",
-        pivotalNormalized: "خشية إملاق نحن نرزقهم وإياهم",
+        textUthmani: "وَلَا تَقْتُلُوٓا۟ أَوْلَـٰدَكُمْ خَشْيَةَ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُهُمْ وَإِيَّاكُمْ إِنَّ قَتْلَهُمْ كَانَ خِطْـًٔا كَبِيرًا",
+        pivotalNormalized: "خشية إملاق نحن نرزقهم وإياكم",
       },
     ],
     mnemonicRuleAr:
-      "في سورة الأنعام الفقر واقع فعلاً (مِّنْ إِمْلَاقٍ) فناسب تقديم رزق الآباء الجائعين (نَرْزُقُكُمْ وَإِيَّاهُمْ)، أما في سورة الإسراء فالفقر متوقع مستقبلاً بسبب الأبناء (خَشْيَةَ إِمْلَاقٍ) فناسب تقديم رزق الأبناء (نَرْزُقُهُمْ وَإِيَّاهُمْ).",
+      "في سورة الأنعام الفقر واقع فعلاً (مِّنْ إِمْلَاقٍ) فناسب تقديم رزق الآباء الجائعين (نَرْزُقُكُمْ وَإِيَّاهُمْ)، أما في سورة الإسراء فالفقر متوقع مستقبلاً بسبب الأبناء (خَشْيَةَ إِمْلَاقٍ) فناسب تقديم رزق الأبناء (نَرْزُقُهُمْ وَإِيَّاكُمْ).",
     hintAr: "اربط بين حضور الفقر الفعلي (مِّنْ) وبين الخوف منه مستقبلاً (خَشْيَةَ) في تقديم ضمير المخاطب أو الغائب.",
   },
 ];

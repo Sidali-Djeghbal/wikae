@@ -10,7 +10,7 @@ const agentError = (e: unknown) => {
 
 command({
   name: "agent ask",
-  summary: "Send a message to the assistant and wait for its reply. It can run Etude commands on the collection.",
+  summary: "Send a message to the assistant and wait for its reply. It can run Wikae commands on the collection.",
   description:
     "Starts a new conversation unless --conversation is given. Destructive commands the assistant wants to run are denied unless --yes is given. The collection is snapshotted before the reply's first write, so `etude agent undo` can put it back. Progress (each command it runs) goes to stderr.",
   args: [{ name: "message", description: "What to ask.", required: true, variadic: true }],

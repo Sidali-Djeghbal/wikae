@@ -55,15 +55,16 @@ const std = {
   /** Normalizes Arabic script: strips Tashkeel, Tanween, Tatweel, annotations, and normalizes letter forms. */
   normalizeArabic(s) {
     return String(s ?? "")
-      .replace(/\u0670/g, "ا")
+      .replace(/[\u200B-\u200D\u200E\u200F\uFEFF]/g, "")
+      .replace(/\u0649\u0670/g, "\u0649")
+      .replace(/\u0648\u0670/g, "\u0627")
+      .replace(/[\u06E6\u06E7]/g, "\u064A")
       .replace(/\u0640/g, "")
       .replace(/[\u0610-\u061A\u061C\u064B-\u065F\u0670\u06D6-\u06ED\u06DD\u06DE\u08D4-\u08ED\u08EF-\u08F3]/g, "")
+      .replace(/(^|[\s])ءا/g, "$1ا")
       .replace(/[أإآٱٲٳ]/g, "ا")
-      .replace(/ءا/g, "ا")
-      .replace(/ا{2,}/g, "ا")
       .replace(/ى/g, "ي")
-      .replace(/ة/g, "ه")
-      .replace(/[\u200B-\u200D\uFEFF]/g, "");
+      .replace(/ة/g, "ه");
   },
   /** Lowercase, trim, collapse whitespace, drop trailing punctuation, with intelligent Arabic normalization. */
   normalize(s) {
@@ -71,19 +72,51 @@ const std = {
     const clean = std.normalizeArabic(raw);
     return clean.replace(/\s+/g, " ").trim().replace(/[.!?;:,؟،؛۝۞]+$/, "").trim();
   },
-  looseEqual(a, b) { return std.normalize(a) === std.normalize(b); },
-  /** Parses "1.5", "1,5", "3e-3", "1/8", "2*10^3", "(1+2)/4". Returns NaN when it can't. */
+  looseEqual(a, b) {
+    const x = std.normalize(a), y = std.normalize(b);
+    if (!x || !y) return false;
+    return x === y || (x.replace(/ا/g, "") === y.replace(/ا/g, "") && x.replace(/ا/g, "").length > 0);
+  },
+  /** Parses "1.5", "1,5", "1,000", "3e-3", "-2^2", "1/8", "2*10^3", "(1+2)/4". Returns NaN when it can't. */
   parseNumber(input) {
     let s = String(input ?? "").trim().replace(/\s+/g, "");
     if (!s) return NaN;
-    if (/^-?\d+,\d+$/.test(s)) s = s.replace(",", ".");
-    s = s.replace(/×|x(?=\d)/g, "*").replace(/\^/g, "**").replace(/−/g, "-");
-    if (!/^[0-9eE+\-*/().]+$/.test(s)) return NaN;
-    if (/[a-df-zA-DF-Z]/.test(s)) return NaN;
-    try {
-      const v = Function('"use strict"; return (' + s + ');')();
-      return typeof v === "number" && Number.isFinite(v) ? v : NaN;
-    } catch { return NaN; }
+    if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, "");
+    else if (/^-?\d+,\d+$/.test(s)) s = s.replace(",", ".");
+    s = s.replace(/×|x(?=\d)/g, "*").replace(/−/g, "-");
+    let i = 0;
+    const number = () => {
+      const m = /^(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/.exec(s.slice(i));
+      if (!m) return NaN;
+      i += m[0].length;
+      return Number(m[0]);
+    };
+    const primary = () => {
+      if (s[i] === "(") { i++; const v = expr(); if (s[i] !== ")") return NaN; i++; return v; }
+      return number();
+    };
+    const power = () => {
+      let v = primary();
+      if (s[i] === "^") { i++; v = Math.pow(v, unary()); }
+      return v;
+    };
+    const unary = () => {
+      if (s[i] === "-") { i++; return -unary(); }
+      if (s[i] === "+") { i++; return unary(); }
+      return power();
+    };
+    const term = () => {
+      let v = unary();
+      while (s[i] === "*" || s[i] === "/") { const op = s[i++]; const r = unary(); v = op === "*" ? v * r : v / r; }
+      return v;
+    };
+    const expr = () => {
+      let v = term();
+      while (s[i] === "+" || s[i] === "-") { const op = s[i++]; const r = term(); v = op === "+" ? v + r : v - r; }
+      return v;
+    };
+    const v = expr();
+    return i === s.length && Number.isFinite(v) ? v : NaN;
   },
   /** Relative tolerance check with an absolute floor for answers near zero. */
   within(value, target, tolerance = 0.01) {
@@ -144,13 +177,14 @@ export function runScript<T = unknown>(body: string, opts: RunOptions): T {
     const bindings = opts.params
       .map((p) => (p === "rng" ? `__makeRng(${Number(opts.seed ?? 1) >>> 0})` : `__args[${JSON.stringify(p)}]`))
       .join(", ");
-    const source = `${PRELUDE}${usesMath(body) ? `\n{\n${MATH_PRELUDE}\nstd.math = __math;\n}\n` : ""}
+    const source = `const __stringify = JSON.stringify;
+${PRELUDE}${usesMath(body) ? `\n{\n${MATH_PRELUDE}\nstd.math = __math;\n}\n` : ""}
 const __args = ${JSON.stringify(opts.args ?? {})};
 ${opts.clock ? `const __RealDate = Date; const __clock = ${JSON.stringify(opts.clock)}; globalThis.Date = class extends __RealDate { constructor(...a) { super(...(a.length ? a : [__clock])); } static now() { return new __RealDate(__clock).getTime(); } }; Math.random = __makeRng(${Number(opts.seed ?? 1) >>> 0}).next;` : ""}
 const __fn = function (${opts.params.join(", ")}) {
 ${body}
 };
-JSON.stringify(__fn(${bindings}) ?? null);`;
+__stringify(__fn(${bindings}) ?? null);`;
     const result = ctx.evalCode(source, `${opts.where}.js`);
     if (result.error) {
       const err = ctx.dump(result.error) as { message?: string; name?: string } | string;
@@ -160,19 +194,44 @@ JSON.stringify(__fn(${bindings}) ?? null);`;
     }
     const text = ctx.getString(result.value);
     result.value.dispose();
-    return (text === "undefined" ? null : JSON.parse(text)) as T;
+    if (text === "undefined") return null as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch (e) {
+      throw new ScriptError(`result isn't JSON: ${(e as Error).message}`, opts.where);
+    }
   } finally {
     ctx.dispose();
     runtime.dispose();
   }
 }
 
-/** Checks that a script body compiles, without running it. */
+/** Checks that a script body compiles, without running it. The body never becomes source text. */
 export function checkSyntax(body: string, params: string[], where: string): string | null {
+  if (!quickjs) throw new Error("sandbox not initialised; call initSandbox() first");
+  const runtime = quickjs.newRuntime();
+  runtime.setMemoryLimit(64 * 1024 * 1024);
+  runtime.setMaxStackSize(1024 * 1024);
+  runtime.setInterruptHandler(shouldInterruptAfterDeadline(Date.now() + 500));
+  const ctx = runtime.newContext();
   try {
-    runScript(`return 0; ${"\n"}function __check(${params.join(", ")}) {\n${body}\n}`, { params: [], args: {}, where });
+    const bodyHandle = ctx.newString(body);
+    ctx.setProp(ctx.global, "__body", bodyHandle);
+    bodyHandle.dispose();
+    const paramsHandle = ctx.newString(params.join(", "));
+    ctx.setProp(ctx.global, "__params", paramsHandle);
+    paramsHandle.dispose();
+    const result = ctx.evalCode("new Function(__params, __body)", `${where}.js`);
+    if (result.error) {
+      const err = ctx.dump(result.error) as { message?: string; name?: string } | string;
+      result.error.dispose();
+      const msg = typeof err === "string" ? err : `${err?.name ?? "Error"}: ${err?.message ?? JSON.stringify(err)}`;
+      return `${where}: ${msg}`;
+    }
+    result.value.dispose();
     return null;
-  } catch (e) {
-    return (e as Error).message;
+  } finally {
+    ctx.dispose();
+    runtime.dispose();
   }
 }

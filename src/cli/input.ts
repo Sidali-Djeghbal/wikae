@@ -87,6 +87,9 @@ export function coerceField(spec: FieldSpec | undefined, raw: string, parsed = l
 /** Sets `a.b.c` inside an object, creating plain objects on the way. */
 export function deepSet(obj: Record<string, any>, path: string, value: unknown) {
   const keys = path.split(".");
+  if (keys.some((k) => k === "__proto__" || k === "constructor" || k === "prototype")) {
+    throw new CliError(`can't set "${path}": that name would pollute the object prototype`, "validation");
+  }
   let o = obj;
   for (const k of keys.slice(0, -1)) {
     if (o[k] == null || typeof o[k] !== "object" || Array.isArray(o[k])) o[k] = {};

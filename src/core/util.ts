@@ -1,4 +1,21 @@
 // Small helpers shared by the engine and its modules.
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
+
+/** Reads a namespaced setting: the Wikae name first, the Étude name as a fallback for old installs. */
+export function appEnv(env: Record<string, string | undefined>, name: string): string | undefined {
+  return env[`WIKAE_${name}`] ?? env[`WIKAA_${name}`] ?? env[`ETUDE_${name}`];
+}
+
+/** The per-install home: an explicit path, then an existing branded directory, else `~/.wikae`. */
+export function resolveAppHome(env: Record<string, string | undefined> = process.env): string {
+  const explicit = appEnv(env, "HOME");
+  if (explicit) return resolve(explicit);
+  const home = homedir();
+  for (const dir of [".wikae", ".wikaa", ".etude"]) if (existsSync(join(home, dir))) return resolve(join(home, dir));
+  return resolve(join(home, ".wikae"));
+}
 
 export const parse = <T>(s: string | null | undefined, fallback: T): T => {
   if (s == null) return fallback;

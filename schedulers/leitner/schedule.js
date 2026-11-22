@@ -8,5 +8,5 @@ if (attempt.rating === 1) box = 1;
 else if (attempt.rating === 2) box = Math.max(1, from);
 else if (attempt.rating === 4) box = Math.min(top, from + 2);
 else box = Math.min(top, from + 1);
-const days = Math.min(Math.round(gaps[box - 1]), ctx.day.length - 1);
+const days = Math.min(Math.max(1, Math.round(gaps[box - 1])), ctx.day.length - 1);
 return { due: ctx.day[days], state: { box } };

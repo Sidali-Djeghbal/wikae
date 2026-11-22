@@ -104,11 +104,11 @@ test("Anki zip bomb: oversized collection and media are refused with a clear err
     // 64 MiB of zeros deflates to ~64 KB: a collection that unpacks far past the cap.
     const bomb = zip({ "collection.anki21": { data: Buffer.concat([sqliteHeader(), Buffer.alloc(64 * 1024 ** 2)]) } });
     assert.ok(bomb.length < 200_000);
-    assert.throws(() => openPackage(bomb), /unpacks to more than 4 MiB/);
+    assert.throws(() => openPackage(bomb), /larger than 4 MiB/);
 
     // The same through zstd (new format).
     const zbomb = zip({ "collection.anki21b": { data: zstdCompressSync(Buffer.concat([sqliteHeader(), Buffer.alloc(64 * 1024 ** 2)])), method: 0 } });
-    assert.throws(() => openPackage(zbomb), /unpacks to more than 4 MiB/);
+    assert.throws(() => openPackage(zbomb), /larger than 4 MiB|unpacks to more than 4 MiB/);
 
     // A media file over the per-file cap fails when it's loaded.
     const media = zip({
@@ -120,7 +120,7 @@ test("Anki zip bomb: oversized collection and media are refused with a clear err
       "3": { data: Buffer.alloc(900 * 1024) },
     });
     const pkg = openPackage(media);
-    assert.throws(() => pkg.media.get("big.png")!(), /unpacks to more than 1 MiB/);
+    assert.throws(() => pkg.media.get("big.png")!(), /larger than 1 MiB|unpacks to more than 1 MiB/);
     // Under the per-file cap, but together over the total.
     pkg.media.get("a.png")!();
     pkg.media.get("b.png")!();

@@ -30,6 +30,10 @@
   <link rel="alternate" hreflang="ar" href="https://sidali-djeghbal.github.io/wikae/?lang=ar">
   <link rel="alternate" hreflang="en" href="https://sidali-djeghbal.github.io/wikae/?lang=en">
   <link rel="alternate" hreflang="x-default" href="https://sidali-djeghbal.github.io/wikae/">
+  <script>
+    // Without JS the bare URL stays the x-default; with JS each language points at itself.
+    (function () { var c = document.querySelector('link[rel="canonical"]'); if (c) c.href = c.href.replace(/\?.*$/, '') + '?lang=' + document.documentElement.lang; })();
+  </script>
   <meta property="og:title" content="وِكَاء — رِباطُ المحفوظ وإتقان المتشابهات">
   <meta property="og:description"
     content="منصة مفتوحة المصدر لحفظ القرآن الكريم وتثبيت المتشابهات اللفظية بخوارزمية FSRS-6 والتقييم الذكي.">
@@ -58,9 +62,14 @@
         "applicationCategory": "EducationalApplication",
         "inLanguage": ["ar", "en"],
         "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+        "softwareVersion": "{{VERSION}}",
         "url": "https://sidali-djeghbal.github.io/wikae/",
         "downloadUrl": "https://sidali-djeghbal.github.io/wikae/download.html",
-        "screenshot": "https://sidali-djeghbal.github.io/wikae/assets/og.png",
+        "screenshot": [
+          "https://sidali-djeghbal.github.io/wikae/assets/shots/app-decks.webp",
+          "https://sidali-djeghbal.github.io/wikae/assets/shots/app-study.webp",
+          "https://sidali-djeghbal.github.io/wikae/assets/shots/app-stats.webp"
+        ],
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "description": "تطبيق مجاني ومفتوح المصدر لحفظ القرآن الكريم وضبط المتشابهات اللفظية والعلوم الشرعية بخوارزمية FSRS-6 للتكرار المتباعد. Open-source, offline-first desktop application for memorizing the Quran and mastering Mutashabihat using FSRS-6 spaced repetition."
       },
@@ -87,6 +96,22 @@
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "نعم، يستورد وِكَاء ملفات .apkg من Anki مباشرة مع الحفاظ الكامل على البطاقات والوسائط وسجل المراجعات التاريخي لتكمل جدولك دون البدء من الصفر."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "هل يعمل وِكَاء دون اتصال بالإنترنت؟",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "نعم. وِكَاء تطبيق مكتبي مستقل يعمل دون إنترنت، وتبقى بياناتك وسجل مراجعاتك محفوظة محلياً على جهازك."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "ما الذي يميز بطاقات وِكَاء عن بطاقات Anki التقليدية؟",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "الاستدعاء النشط لا يقتصر على وجه وظهر: تتدرب على إكمال الآية، واستحضار اسم السورة، وضبط المتشابهات اللفظية، مع معرفة دقيقة برسم الكلمات، وتُجدول المراجعة بخوارزمية FSRS-6 قبل النسيان."
             }
           }
         ]
@@ -271,7 +296,6 @@
             <video id="film-video" playsinline preload="none" poster="assets/film/poster.webp" width="1920"
               height="1080">
               <source src="assets/film/wikae-film.mp4" type="video/mp4">
-              <source src="assets/film/etude-film.mp4" type="video/mp4">
               <track kind="captions" srclang="ar" label="العربية" src="assets/film/wikae-film.ar.vtt" default>
               <track kind="captions" srclang="en" label="English" src="assets/film/wikae-film.en.vtt">
             </video>

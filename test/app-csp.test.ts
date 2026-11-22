@@ -5,6 +5,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Etude } from "../src/core/engine.ts";
 import { createApp } from "../src/server/app.ts";
+import { frameCsp } from "../src/server/frame.ts";
+
+test("card frames keep a usable base-uri under the capacitor and ionic schemes", () => {
+  assert.match(frameCsp("capacitor://localhost/"), /base-uri capacitor:\/\/localhost(;|$)/);
+  assert.match(frameCsp("ionic://localhost/"), /base-uri ionic:\/\/localhost(;|$)/);
+  assert.match(frameCsp("http://127.0.0.1:4610/"), /base-uri http:\/\/127\.0\.0\.1:4610(;|$)/);
+  assert.match(frameCsp("/relative/"), /base-uri 'self'(;|$)/);
+});
 
 test("app page has a strict CSP; card documents (saved and unsaved) are sandboxed", async (t) => {
   const dir = mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), "etude-csp-"));

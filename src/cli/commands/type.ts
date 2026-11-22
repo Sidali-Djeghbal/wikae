@@ -141,6 +141,23 @@ command({
   },
 });
 
+command({
+  name: "type usage",
+  summary: "How many items, cards and reviews a type has (archived items counted separately).",
+  args: [{ name: "id", description: "Type id.", required: true }],
+  examples: ["etude type usage numeric"],
+  output: "{ items, archived, cards, reviews }",
+  run: (ctx) => ctx.e.typeUsage(ctx.args.id),
+});
+command({
+  name: "type leftover",
+  summary: "Cards on faces the type no longer makes, counted per type and face with their review history.",
+  args: [{ name: "id", description: "Type id.", required: true }],
+  examples: ["etude type leftover my-type"],
+  output: "{ cards, reviewed, reviews, faces: [{ type, typeName, face, cards, reviews }] }",
+  run: (ctx) => ctx.e.leftoverReport({ type: ctx.args.id }),
+});
+
 alias("type create", "type import", { summary: "Same as `etude type import` (creates when the id is new)." });
 alias("type update", "type import", { summary: "Same as `etude type import` (updates when the id exists)." });
 

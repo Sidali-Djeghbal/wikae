@@ -37,6 +37,7 @@ const DEFAULT_WRITERS: Record<string, (values: Record<string, any>) => boolean> 
   "type export": (v) => !v.json,
   "scheduler export": (v) => !v.json,
   "market index": (v) => !v.check,
+  "db backup": () => true,
 };
 
 /** Flags and arguments that name a file to read. */
@@ -51,7 +52,8 @@ const WRITE_FILE_ARG = new Set(["pack new"]);
 /** True when a value names something on disk (as opposed to stdin, a /media URL, inline JSON or a stored id). */
 function pathLike(v: string): boolean {
   if (v === "-" || v === "") return false;
-  if (v.startsWith("/media/")) return false;
+  // A media URL is not a file, but `/media/../etc/passwd` is.
+  if (v.startsWith("/media/") && !v.split("/").includes("..")) return false;
   if (/^\s*[[{]/.test(v)) return false;
   if (v.startsWith("file:")) return true;
   if (/^[a-z]+:\/\//i.test(v)) return false;
@@ -73,12 +75,14 @@ export interface GuardInput {
   cmd: CommandSpec;
   values: Record<string, any>;
   named: Record<string, any>;
+  /** Dynamic `--<field>` / `--<field>-file` flags, which parseArgs leaves out of values. */
+  extra?: [string, string][];
   /** The agent's attachment folder: the only place it may read files from. */
   attachmentDir: string;
 }
 
 /** A refusal message when the agent may not run this invocation as given, or null when it may. */
-export function agentRefusal({ cmd, values, named, attachmentDir }: GuardInput): string | null {
+export function agentRefusal({ cmd, values, named, extra = [], attachmentDir }: GuardInput): string | null {
   const name = cmd.name;
   const user = `Ask the user to run it themselves if they want it.`;
 
@@ -86,7 +90,7 @@ export function agentRefusal({ cmd, values, named, attachmentDir }: GuardInput):
   if (typeof values.url === "string" && values.url && name.startsWith("market ")) return `the assistant can't point the Market at another catalog (--url). ${user}`;
 
   // The account holds devices and deletion; the assistant may only look.
-  if (name.startsWith("account ") && !AGENT_ACCOUNT_READS.has(name)) return `the assistant can't change the Etude account or sign in. ${user}`;
+  if (name.startsWith("account ") && !AGENT_ACCOUNT_READS.has(name)) return `the assistant can't change the Wikae account or sign in. ${user}`;
 
   if (name === "settings set" || name === "settings unset") {
     const keys: string[] = name === "settings set" ? (named.pairs ?? []).map((p: string) => String(p).split("=")[0].trim()) : (named.keys ?? []).map(String);
@@ -100,7 +104,9 @@ export function agentRefusal({ cmd, values, named, attachmentDir }: GuardInput):
   const reads: string[] = [];
   for (const [k, v] of Object.entries(values)) {
     if (v === undefined || v === null || typeof v === "boolean") continue;
-    const list = (Array.isArray(v) ? v : [v]).map(String);
+    let list = (Array.isArray(v) ? v : [v]).map(String);
+    // `--set-file key=path` and `--<field>-file`: the path is after the first "=".
+    if (k.endsWith("-file")) list = list.map((s) => (s.indexOf("=") > 0 ? s.slice(s.indexOf("=") + 1) : s));
     if (WRITE_FLAGS.has(k)) writes.push(...list);
     else if (READ_FLAGS.has(k) || k.endsWith("-file")) reads.push(...list);
   }
@@ -109,6 +115,11 @@ export function agentRefusal({ cmd, values, named, attachmentDir }: GuardInput):
     const list = (Array.isArray(v) ? v : [v]).map(String);
     if (WRITE_ARGS.has(k) || (k === "file" && WRITE_FILE_ARG.has(name))) writes.push(...list);
     else if (READ_ARGS.has(k)) reads.push(...list);
+  }
+  for (const [k, v] of extra) {
+    if (v === undefined || v === null) continue;
+    if (WRITE_FLAGS.has(k)) writes.push(String(v));
+    else if (READ_FLAGS.has(k) || READ_ARGS.has(k) || k.endsWith("-file")) reads.push(String(v));
   }
 
   if (writes.some((w) => w !== "-") || DEFAULT_WRITERS[name]?.(values)) return `the assistant can't write files on this computer (\`etude ${name}\` with an output path). ${user}`;

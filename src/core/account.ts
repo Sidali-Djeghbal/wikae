@@ -1,10 +1,11 @@
-// The Etude account on an etude-cloud server: sign-in, devices, passkeys, email, export and deletion.
-// The device token is kept per install in $ETUDE_HOME/account.json (0600); the collection never holds it.
+// The Wikae account on a sync server: sign-in, devices, passkeys, email, export and deletion.
+// The device token is kept per install in the app home (account.json, 0600); the collection never holds it.
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { EtudeError, type Etude } from "./engine.ts";
+import { appEnv } from "./util.ts";
 
-export const DEFAULT_CLOUD = "https://sync.etude.study";
+export const DEFAULT_CLOUD = "https://sync.wikae.study";
 
 export class AccountError extends EtudeError {
   code: string;
@@ -35,10 +36,10 @@ export function checkServerUrl(raw: string): string {
   try {
     u = new URL(raw.trim());
   } catch {
-    throw new AccountError("enter a full https address for the Etude server", 400, "invalid_server");
+    throw new AccountError("enter a full https address for the Wikae server", 400, "invalid_server");
   }
   const local = ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname);
-  if (u.protocol !== "https:" && !(u.protocol === "http:" && local)) throw new AccountError("the Etude server must use https (http only on localhost)", 400, "invalid_server");
+  if (u.protocol !== "https:" && !(u.protocol === "http:" && local)) throw new AccountError("the Wikae server must use https (http only on localhost)", 400, "invalid_server");
   if (u.username || u.password || u.search || u.hash) throw new AccountError("the server address can't carry a user, query or fragment", 400, "invalid_server");
   return u.origin + u.pathname.replace(/\/+$/, "");
 }
@@ -81,9 +82,9 @@ export class AccountClient {
     renameSync(tmp, this.file);
   }
 
-  /** The server this install talks to: saved choice, then $ETUDE_CLOUD_URL, then sync.etude.study. */
+  /** The server this install talks to: saved choice, then a cloud URL env var, then the default. */
   server(): string {
-    return this.load().server || process.env?.ETUDE_CLOUD_URL || DEFAULT_CLOUD;
+    return this.load().server || appEnv(process.env ?? {}, "CLOUD_URL") || DEFAULT_CLOUD;
   }
   token(): string | undefined {
     return this.load().token;
@@ -117,7 +118,7 @@ export class AccountClient {
     const auth = opts.auth ?? true;
     const token = this.token();
     if (auth) {
-      if (!token) throw new AccountError("sign in to your Etude account first", 401, "signed_out");
+      if (!token) throw new AccountError("sign in to your Wikae account first", 401, "signed_out");
       headers.Authorization = `Bearer ${token}`;
     }
     let body: BodyInit | undefined;
@@ -137,7 +138,7 @@ export class AccountClient {
     if (!res.ok) {
       const data: Json = await res.json().catch(() => null);
       const code = data?.error?.code ?? "error";
-      const message = data?.error?.message ?? `the Etude server answered ${res.status}`;
+      const message = data?.error?.message ?? `the Wikae server answered ${res.status}`;
       // A revoked or expired device: forget the token so the app shows "signed out" instead of failing forever.
       if (res.status === 401 && auth && ["unauthorized", "invalid_token", "token_expired", "signed_out"].includes(code)) this.forget();
       throw new AccountError(message, res.status, code);
@@ -270,9 +271,9 @@ export class AccountClient {
 
 function defaultDeviceName() {
   const nav = (globalThis as any).navigator;
-  if (!process.versions?.node && nav?.userAgent) return /iPhone|iPad/.test(nav.userAgent) ? "Etude on iPhone" : /Android/.test(nav.userAgent) ? "Etude on Android" : "Etude in the browser";
+  if (!process.versions?.node && nav?.userAgent) return /iPhone|iPad/.test(nav.userAgent) ? "Wikae on iPhone" : /Android/.test(nav.userAgent) ? "Wikae on Android" : "Wikae in the browser";
   const os = process.platform === "darwin" ? "Mac" : process.platform === "win32" ? "Windows" : "Linux";
-  return `Etude on ${os}`;
+  return `Wikae on ${os}`;
 }
 
 /** Removes this install's saved account (used by tests and `account forget`). */

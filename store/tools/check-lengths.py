@@ -13,7 +13,7 @@ def block(heading: str) -> str:
     return m.group(1)
 
 
-m = re.search(r"`(Etude[^`]*)`", text)
+m = re.search(r"`(Wikae[^`]*)`", text)
 if not m:
     raise SystemExit("missing app name")
 name = m.group(1)

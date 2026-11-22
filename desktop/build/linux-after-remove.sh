@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# DEB passes remove/purge/upgrade; RPM passes 0 (uninstall) or 1 (upgrade).
+# Only a real uninstall should drop the CLI and AppArmor profile: upgrading replaces them.
+case "$1" in
+  0|remove|purge) ;;
+  *) exit 0 ;;
+esac
+
 # Delete the link to the binary
 # update-alternatives --remove <name> <path>: 'path' must be the registered alternative binary,
 # not the generic symlink — see https://man7.org/linux/man-pages/man1/update-alternatives.1.html
@@ -25,7 +32,7 @@ if [ -f "$APPARMOR_PROFILE_DEST" ]; then
   fi
   rm -f "$APPARMOR_PROFILE_DEST"
 fi
-# Etude: remove the etude command if it's the app's.
-if [ "`readlink /usr/bin/etude`" = '/opt/${sanitizedProductName}/resources/app/desktop/bin/etude' ]; then
-    rm -f /usr/bin/etude
+# Wikae: remove the wikae command if it's the app's.
+if [ "`readlink /usr/bin/wikae`" = '/opt/${sanitizedProductName}/resources/app/desktop/bin/wikae' ]; then
+    rm -f /usr/bin/wikae
 fi

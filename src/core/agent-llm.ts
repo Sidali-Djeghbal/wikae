@@ -1,7 +1,8 @@
 // Streaming chat with function tools, for the in-app agent. Two protocols: the Responses API
 // (the user's ChatGPT plan) and OpenAI-compatible Chat Completions (OpenRouter, OpenAI, local servers).
-import { AiError, type AgentEffort, type ChatProvider } from "./ai.ts";
+import { AiError, apiKeyFromEnv, providerHost, type AgentEffort, type ChatProvider } from "./ai.ts";
 import { chatGptEndpoints, getChatGptCredentials, failureMessage, ChatGptError, DEFAULT_CHATGPT_MODEL } from "./chatgpt.ts";
+import { appEnv } from "./util.ts";
 
 export interface ToolSpec {
   name: string;
@@ -45,37 +46,49 @@ export interface LlmResult {
 }
 
 /** Reads a server-sent-events body and calls `on` with every parsed `data:` payload. */
-async function readSse(body: ReadableStream<Uint8Array>, on: (data: any) => boolean | void, signal?: AbortSignal) {
+async function readSse(body: ReadableStream<Uint8Array>, on: (data: any) => boolean | void, signal?: AbortSignal): Promise<boolean> {
   const decoder = new TextDecoder();
   let buffer = "";
+  let sawDone = false;
   const reader = body.getReader();
+  let cancelled = false;
   const abort = () => reader.cancel().catch(() => {});
   signal?.addEventListener("abort", abort, { once: true });
+  const emitBlock = async (block: string): Promise<boolean> => {
+    for (const line of block.split(/\r?\n/)) {
+      if (!line.startsWith("data:")) continue;
+      const payload = line.slice(5).trim();
+      if (payload === "[DONE]") { sawDone = true; continue; }
+      if (!payload) continue;
+      let data: any;
+      try {
+        data = JSON.parse(payload);
+      } catch {
+        continue;
+      }
+      if (on(data) === true) return true;
+    }
+    return false;
+  };
   try {
     for (;;) {
       const { value, done } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
-      let cut: number;
-      while ((cut = buffer.search(/\r?\n\r?\n/)) >= 0) {
-        const block = buffer.slice(0, cut);
-        buffer = buffer.slice(cut + (buffer[cut] === "\r" ? 4 : 2));
-        for (const line of block.split(/\r?\n/)) {
-          if (!line.startsWith("data:")) continue;
-          const payload = line.slice(5).trim();
-          if (!payload || payload === "[DONE]") continue;
-          let data: any;
-          try {
-            data = JSON.parse(payload);
-          } catch {
-            continue;
-          }
-          if (on(data) === true) return;
-        }
+      for (;;) {
+        const sep = /\r\n\r\n|\n\n|\r\r/.exec(buffer);
+        if (!sep) break;
+        const block = buffer.slice(0, sep.index);
+        buffer = buffer.slice(sep.index + sep[0].length);
+        if (await emitBlock(block)) { cancelled = true; return sawDone; }
       }
     }
+    // A final event without a trailing blank line still counts.
+    if (buffer.trim()) { cancelled = await emitBlock(buffer); }
+    return sawDone;
   } finally {
     signal?.removeEventListener("abort", abort);
+    if (cancelled || signal?.aborted) void abort();
     if (signal?.aborted) throw new AiError("stopped");
   }
 }
@@ -181,7 +194,7 @@ async function responsesTurn(req: LlmRequest, p: Extract<ChatProvider, { kind: "
           case "response.completed": {
             completed = true;
             if (ev.response?.model) model = ev.response.model;
-            if (process.env.ETUDE_AGENT_TRACE && ev.response?.usage) process.stderr.write(`[agent] usage ${JSON.stringify(ev.response.usage)}\n`);
+            if (appEnv(process.env, "AGENT_TRACE") && ev.response?.usage) process.stderr.write(`[agent] usage ${JSON.stringify(ev.response.usage)}\n`);
             for (const it of ev.response?.output ?? []) {
               if (it?.type === "function_call" && !calls.has(it.call_id)) calls.set(it.call_id, { id: it.call_id, name: it.name, arguments: it.arguments ?? "{}" });
               if (it?.type === "message" && !text)
@@ -236,10 +249,10 @@ function chatMessages(system: string, messages: LlmMessage[]): unknown[] {
 
 async function chatTurn(req: LlmRequest, p: Extract<ChatProvider, { kind: "openai-chat" }>): Promise<LlmResult> {
   const t0 = Date.now();
-  const key = p.apiKeyEnv ? process.env[p.apiKeyEnv] : undefined;
+  const key = apiKeyFromEnv(p.apiKeyEnv);
   if (p.apiKeyEnv && !key) throw new AiError(`${p.apiKeyEnv} is not set`);
   const timeout = AbortSignal.timeout(p.timeoutMs && p.timeoutMs > 120_000 ? p.timeoutMs : 180_000);
-  const openrouter = /openrouter\.ai/.test(p.url);
+  const openrouter = providerHost(p.url) === "openrouter.ai";
   const body: Record<string, unknown> = {
     model: p.model,
     messages: chatMessages(req.system, req.messages),
@@ -255,7 +268,7 @@ async function chatTurn(req: LlmRequest, p: Extract<ChatProvider, { kind: "opena
   const post = () =>
     fetch(p.url, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...(key ? { Authorization: `Bearer ${key}` } : {}), "X-Title": "Etude", Accept: "text/event-stream" },
+      headers: { "Content-Type": "application/json", ...(key ? { Authorization: `Bearer ${key}` } : {}), "X-Title": "Wikae", Accept: "text/event-stream" },
       body: JSON.stringify(body),
       signal: req.signal ? AbortSignal.any([req.signal, timeout]) : timeout,
     }).catch((e) => {
@@ -275,7 +288,11 @@ async function chatTurn(req: LlmRequest, p: Extract<ChatProvider, { kind: "opena
     const match = text.match(/try again in ([0-9.]+)s/i);
     const delaySec = match ? Math.ceil(parseFloat(match[1])) : Number(res.headers.get("retry-after")) || 3;
     const waitMs = Math.min(Math.max(delaySec, 1), 8) * 1000;
-    await new Promise((r) => setTimeout(r, waitMs));
+    await new Promise<void>((resolve, reject) => {
+      const onAbort = () => { clearTimeout(timer); reject(new AiError("stopped")); };
+      const timer = setTimeout(() => { req.signal?.removeEventListener("abort", onAbort); resolve(); }, waitMs);
+      req.signal?.addEventListener("abort", onAbort, { once: true });
+    });
     res = await post();
   }
   if (!res.ok) throw new AiError(`HTTP ${res.status}: ${(await res.text().catch(() => "")).slice(0, 300)}`);
@@ -285,8 +302,9 @@ async function chatTurn(req: LlmRequest, p: Extract<ChatProvider, { kind: "opena
   let cost: number | undefined;
   const parts: { id: string; name: string; args: string }[] = [];
   let failure: Error | null = null;
+  let sawDone: boolean;
   try {
-    await readSse(
+    sawDone = await readSse(
       res.body,
       (ev) => {
         if (ev?.error) {
@@ -316,6 +334,7 @@ async function chatTurn(req: LlmRequest, p: Extract<ChatProvider, { kind: "opena
     throw aborted(e, req.signal);
   }
   if (failure) throw failure;
+  if (!sawDone) throw new AiError("the model's stream ended without [DONE]");
   const toolCalls = parts.filter(Boolean).map((c, i) => ({ id: c.id || `call_${i}_${Date.now()}`, name: c.name, arguments: c.args || "{}" }));
   return { text, toolCalls, model, ms: Date.now() - t0, cost };
 }

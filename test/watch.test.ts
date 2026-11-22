@@ -16,25 +16,25 @@ async function fresh() {
 
 test("the showcase is a watch deck with one card for every card type", async () => {
   const e = await fresh();
-  const list = e.watchList({ deck: "Etude Showcase" });
+  const list = e.watchList({ deck: "Wikae Showcase" });
   const types = new Set(list.map((c) => c.type));
   assert.equal(list.length, types.size, "one card per type");
   assert.equal(types.size, e.listTypes().length, "every type is in the tour");
-  assert.equal(e.configFor("Etude Showcase::5 Play and listen").mode, "watch");
+  assert.equal(e.configFor("Wikae Showcase::5 Play and listen").mode, "watch");
 });
 
 test("watch decks stay out of study queues and counts", async () => {
   const e = await fresh();
-  assert.equal(e.next({ deck: "Etude Showcase" }).card, null);
+  assert.equal(e.next({ deck: "Wikae Showcase" }).card, null);
   assert.equal(e.counts({}).new, 0);
   // Switching the deck back to study puts its cards in the queue.
-  e.updateDeck("Etude Showcase", { config: { mode: "study" } });
-  assert.ok(e.next({ deck: "Etude Showcase" }).card);
+  e.updateDeck("Wikae Showcase", { config: { mode: "study" } });
+  assert.ok(e.next({ deck: "Wikae Showcase" }).card);
 });
 
 test("every example answer grades as the item intends, across variants", async () => {
   const e = await fresh();
-  for (const c of e.watchList({ deck: "Etude Showcase" })) {
+  for (const c of e.watchList({ deck: "Wikae Showcase" })) {
     for (let k = 0; k < 4; k++) {
       const { card, demo } = e.watchCard(c.cardId);
       // Example answers never reach the card itself.
@@ -52,11 +52,11 @@ test("every example answer grades as the item intends, across variants", async (
 
 test("watching records nothing", async () => {
   const e = await fresh();
-  const [c] = e.watchList({ deck: "Etude Showcase" });
+  const [c] = e.watchList({ deck: "Wikae Showcase" });
   const { card, demo } = e.watchCard(c.cardId);
   await e.watchGrade(c.cardId, card.seed, demo.answer);
   // Every card stays new, whatever schedules it (an occlusion item has a card per box, so count cards, not items).
-  const news = e.stats({ deck: "Etude Showcase" }).schedulers.reduce((a, x) => a + x.new, 0);
+  const news = e.stats({ deck: "Wikae Showcase" }).schedulers.reduce((a, x) => a + x.new, 0);
   assert.equal(news, e.db.get<{ n: number }>("SELECT COUNT(*) AS n FROM cards")!.n);
   assert.equal(e.item(c.itemId).attempts.length, 0);
   assert.equal(e.item(c.itemId).reviews.length, 0);

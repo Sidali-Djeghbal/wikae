@@ -8,7 +8,7 @@ import { StatusBar, Style } from "@capacitor/status-bar";
 const cap = (globalThis as { Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string } }).Capacitor;
 export const native = !!cap?.isNativePlatform?.();
 
-/** etude://study?deck=X and https://etude.study/app/study?deck=X both open /study?deck=X. */
+/** wikae://study?deck=X and https://sidali-djeghbal.github.io/wikae/app/study?deck=X both open /study?deck=X. */
 export function routeOf(url: string): string | null {
   let u: URL;
   try {
@@ -17,8 +17,12 @@ export function routeOf(url: string): string | null {
     return null;
   }
   let path: string;
-  if (u.protocol === "etude:") path = "/" + [u.host, u.pathname.replace(/^\/+/, "")].filter(Boolean).join("/");
-  else if (u.protocol === "https:" && u.host === "etude.study" && (u.pathname === "/app" || u.pathname.startsWith("/app/"))) path = u.pathname.slice(4) || "/";
+  const deep = (prefix: string) => u.pathname === prefix ? "/" : u.pathname.startsWith(prefix + "/") ? u.pathname.slice(prefix.length) : null;
+  const wikaeDeep = u.host === "sidali-djeghbal.github.io" ? deep("/wikae/app") : null;
+  const oldDeep = u.host === "etude.study" ? deep("/app") : null;
+  if (u.protocol === "wikae:" || u.protocol === "etude:") path = "/" + [u.host, u.pathname.replace(/^\/+/, "")].filter(Boolean).join("/");
+  else if (u.protocol === "https:" && wikaeDeep) path = wikaeDeep;
+  else if (u.protocol === "https:" && oldDeep) path = oldDeep;
   else return null;
   // Only the app's own screens; anything else lands on Decks.
   const known = /^\/(|decks?|study|watch|browse|stats|types|market|settings|more)(\/.*)?$/;

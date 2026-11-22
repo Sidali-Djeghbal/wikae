@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Etude } from "../src/core/engine.ts";
 import { run } from "../src/cli/run.ts";
-import { compile } from "../src/core/query.ts";
+import { compile, stripHtml } from "../src/core/query.ts";
 import type { CardTypeDef } from "../src/core/model.ts";
 
 // Like an upgraded Anki vocabulary type: the word and the meaning are answers (private), and the
@@ -135,6 +135,29 @@ test("stored titles and search text are rebuilt when a collection is opened by a
   e = await Etude.open(path);
   assert.deepEqual(e.searchItems("viel").rows.map((r) => [r.id, r.title]), [["viel", "viel"]]);
   e.close();
+});
+
+test("query parser rejects bad entities and operators, and treats a quoted OR as text", () => {
+  assert.doesNotThrow(() => compile("&#99999999;"));
+  assert.equal(stripHtml("&#99999999;"), "&#99999999;");
+  assert.equal(stripHtml("a<script>bad()</script>b<style>x{}</style>c<!--note-->d"), "a b c d");
+  assert.throws(() => compile("OR"), /expected a search term/);
+  assert.match(compile('"OR"').where, /i\.search LIKE/);
+  assert.doesNotThrow(() => compile("prop:DUE<1"));
+  assert.throws(() => compile("prop:due!=1"), /bad prop/);
+  assert.throws(() => compile("prop:due<99999999999999999999999"), /bad prop/);
+  assert.throws(() => compile("rated:99999999999999999999999"), /bad rated/);
+  assert.throws(() => compile("rated:1:5"), /bad rated/);
+  assert.throws(() => compile("rated:1:1.5"), /bad rated/);
+});
+
+test("deck filters fold names the way item search does", async () => {
+  const e = await Etude.open(":memory:");
+  e.saveType(vocab);
+  e.upsertItem({ id: "a", type: "vocab", deck: "أجهزة", fields: { word: "a", bare: "a" } });
+  assert.deepEqual(items(e.search("deck:أجهزة")), ["a"]);
+  assert.deepEqual(items(e.search("deck:" + "أجهزة".normalize("NFD"))), ["a"]);
+  assert.deepEqual(items(e.search("deck:" + "أجهزة".normalize("NFD") + "*")), ["a"]);
 });
 
 test("CLI: item list and --query use field search and relevance", async () => {

@@ -15,6 +15,15 @@ test("face limits merge face by face, and null drops an inherited one", () => {
   for (const bad of [{ t1: -1 }, { t1: "5" }, { "a b": 1 }, [], null]) assert.equal(validateConfig({ newPerFace: bad as never }).length, 1, JSON.stringify(bad));
 });
 
+test("autoRate merges key by key; bad thresholds, steps and weights are rejected", () => {
+  assert.deepEqual(resolveConfig({ autoRate: { good: 0.9, hard: 0.4 } }, { autoRate: { good: 0.8 } } as never).autoRate, { good: 0.8, hard: 0.4 });
+  assert.ok(resolveConfig({ autoRate: null as never }).autoRate.good > 0);
+  assert.deepEqual(validateConfig({ autoRate: { good: 0.9, hard: 0.4 }, learningSteps: ["1m"] }), []);
+  for (const bad of [{ good: 0.4, hard: 0.9 }, { good: 0.9 }, null, ["0m"]]) assert.equal(validateConfig({ autoRate: bad as never }).length, 1, JSON.stringify(bad));
+  assert.equal(validateConfig({ learningSteps: ["0m"] }).length, 1);
+  assert.equal(validateConfig({ weights: [NaN, ...new Array(16).fill(0.1)] }).length, 1);
+});
+
 async function setup() {
   const dir = mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), "etude-faces-"));
   const e = await Etude.open(join(dir, "etude.db"));

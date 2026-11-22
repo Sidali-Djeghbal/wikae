@@ -3,11 +3,11 @@
 ## One item at a time
 
 ```sh
-etude type show numeric --fields-only        # field names, kinds, which are private/required
-etude item add --type numeric --deck "Physics::Kinematics" --id phys.kin.v-1 \
+wikae type show numeric --fields-only        # field names, kinds, which are private/required
+wikae item add --type numeric --deck "Physics::Kinematics" --id phys.kin.v-1 \
   --prompt "A car goes 100 m in 5 s. Speed in m/s?" --answer 20 --unit m/s --tolerance 0.02 \
   --explanation 'v = d/t = 100/5 = 20 m/s' -t phys::kinematics --source "Ch. 2"
-etude item preview phys.kin.v-1 --with-key
+wikae item preview phys.kin.v-1 --with-key
 ```
 
 - Every field of the type is a flag. `--<field>-file path` reads a file, and `--<field> -` reads stdin.
@@ -18,18 +18,18 @@ etude item preview phys.kin.v-1 --with-key
 ## Packs (preferred for more than a few items)
 
 ```sh
-etude pack new course.pack.json --deck "Course" --prefix course   # starter with every built-in type
-etude pack check course.pack.json          # validates fields and ids, runs generators over many seeds
-etude pack import course.pack.json --dry-run
-etude db backup                            # when the pack touches existing items
-etude pack import course.pack.json
+wikae pack new course.pack.json --deck "Course" --prefix course   # starter with every built-in type
+wikae pack check course.pack.json          # validates fields and ids, runs generators over many seeds
+wikae pack import course.pack.json --dry-run
+wikae db backup                            # when the pack touches existing items
+wikae pack import course.pack.json
 ```
 
 The format is in `docs/packs.md`. In short:
 
 ```json
 {
-  "etude": "pack/1",
+  "wikae": "pack/1",
   "name": "Course",
   "presets": [{ "id": "exam", "name": "Exam", "config": { "deadline": "2026-12-10T09:00:00-08:00" } }],
   "decks": [{ "name": "Course", "preset": "exam", "instructions": "Grading notes for every item in the deck." }],
@@ -41,7 +41,7 @@ The format is in `docs/packs.md`. In short:
 - Ids are permanent. Re-importing updates content and keeps scheduling and history. Renaming an id creates a new unstudied card and leaves the old one behind.
 - One idea per item. Put the answer and explanation in private fields, never in the prompt.
 - Record `source` (slide, page, URL) so the learner can check it after answering.
-- To change what's already in the collection, round-trip it: `etude pack export --deck X -o x.json`, edit, then check and import.
+- To change what's already in the collection, round-trip it: `wikae pack export --deck X -o x.json`, edit, then check and import.
 
 ## Built-in types: key fields
 
@@ -57,7 +57,7 @@ The format is in `docs/packs.md`. In short:
 | `free` | ai | prompt, *reference*, *rubric*, input (text\|long\|code), *explanation* |
 | `draw` | ai (vision) | prompt, *reference*, *rubric*, background (blank\|grid\|lines) |
 
-Fields support markdown and `$...$` / `$$...$$` math. Always confirm field names with `etude type show <id> --fields-only`, because edited or custom types can differ.
+Fields support markdown and `$...$` / `$$...$$` math. Always confirm field names with `wikae type show <id> --fields-only`, because edited or custom types can differ.
 
 ## Generated items
 
@@ -72,7 +72,7 @@ return { prompt: `A ${L}-byte packet on a ${R} Mbps link. Transmission delay in 
 - `rng.int(a, b)` (inclusive), `rng.float(a, b, decimals)`, `rng.pick(arr)`, `rng.shuffle(arr)`, `rng.bool(p)`, `rng.next()`.
 - Round results (`toPrecision`, `std.round`) so keys don't show float noise.
 - Keep the static fields as one valid example.
-- Verify with `etude item variants <id> -n 20`: read the keys and do a few by hand. `distinct` counts the variants that differ.
+- Verify with `wikae item variants <id> -n 20`: read the keys and do a few by hand. `distinct` counts the variants that differ.
 
 ## Building a deck from notes
 

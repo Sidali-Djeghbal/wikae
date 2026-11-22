@@ -192,6 +192,15 @@ test("runaway scripts are stopped", async () => {
   assert.throws(() => e.upsertItem({ id: "n.loop", type: "numeric", deck: "Net", fields: { prompt: "x", answer: 1, generator: "while (true) {}" } }), /timed out/);
 });
 
+test("invalid JSON in a setting falls back instead of throwing", async () => {
+  const e = await Etude.open(":memory:");
+  e.db.run("INSERT INTO settings (key, value) VALUES ('broken', 'not json')");
+  assert.deepEqual(e.db.setting("broken", { ok: true }), { ok: true });
+  e.db.setSetting("good", { ok: true });
+  assert.deepEqual(e.db.setting("good", null), { ok: true });
+  e.close();
+});
+
 test("titles drop HTML tags and keep comparison signs", () => {
   assert.equal(plainLabel("[x86-64 ASM] What does the&nbsp;<code>idivb %bl</code> instruction do?"), "[x86-64 ASM] What does the idivb %bl instruction do?");
   assert.equal(plainLabel("Pr\u00e4sens of s<span style=\"text-decoration-line: underline;\">ie</span>hen<br>ich sehe"), "Pr\u00e4sens of siehen ich sehe");

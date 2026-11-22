@@ -56,8 +56,8 @@ if apparmor_status --enabled > /dev/null 2>&1; then
   fi
 fi
 
-# Etude: the etude command, the app's own CLI. An etude from npm or a checkout in /usr/bin stays.
-ETUDE_CLI='/opt/${sanitizedProductName}/resources/app/desktop/bin/etude'
-if [ ! -e /usr/bin/etude ] || [ "`readlink /usr/bin/etude`" = "$ETUDE_CLI" ]; then
-    ln -sf "$ETUDE_CLI" /usr/bin/etude
+# Wikae: the wikae command, the app's own CLI. A wikae from npm or a checkout in /usr/bin stays.
+WIKAE_CLI='/opt/${sanitizedProductName}/resources/app/desktop/bin/wikae'
+if [ ! -e /usr/bin/wikae ] || [ "`readlink /usr/bin/wikae`" = "$WIKAE_CLI" ]; then
+    ln -sf "$WIKAE_CLI" /usr/bin/wikae
 fi

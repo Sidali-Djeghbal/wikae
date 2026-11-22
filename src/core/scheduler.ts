@@ -61,7 +61,8 @@ export function capToDeadline(due: Date, now: Date, cfg: PresetConfig): Date {
   if (due <= latest) return due;
   // Split the time left in half so a well-known card still gets one more look before the exam.
   const half = new Date(now.getTime() + (deadline.getTime() - now.getTime()) / 2);
-  return latest > now ? (half < latest ? half : latest) : half;
+  const cap = latest > now ? (half < latest ? half : latest) : half;
+  return due <= cap ? due : cap;
 }
 
 export interface ScheduleResult {
@@ -111,7 +112,11 @@ export function replay(reviews: { ts: string; rating: number }[], created: Date,
   let card: FsrsCard = toFsrs({ ...emptyCard(created), id: 0, item_id: "", face: "", suspended: 0, buried_until: null });
   const f = engine({ ...cfg, enableFuzz: false });
   for (const r of [...reviews].sort((a, b) => a.ts.localeCompare(b.ts))) {
-    card = f.next(card, new Date(r.ts), r.rating as FsrsGrade).card;
+    // Drill (0) and other non-FSRS ratings are not review grades; fsrs would throw on them.
+    if (!Number.isInteger(r.rating) || r.rating < 1 || r.rating > 4) continue;
+    const at = new Date(r.ts);
+    if (Number.isNaN(at.getTime())) continue;
+    card = f.next(card, at, r.rating as FsrsGrade).card;
   }
   const now = new Date();
   card.due = capToDeadline(card.due, now, cfg);
@@ -125,7 +130,9 @@ export function resolveConfig(...layers: (Partial<PresetConfig> | undefined | nu
     for (const [k, v] of Object.entries(l)) {
       if (v === undefined) continue;
       // Scheduler options and face limits merge key by key, so a subdeck can change one and inherit the rest.
-      if ((k === "schedulerOptions" || k === "newPerFace") && v && typeof v === "object") (out as any)[k] = { ...(out as any)[k], ...(v as Record<string, unknown>) };
+      if ((k === "schedulerOptions" || k === "newPerFace" || k === "autoRate") && v && typeof v === "object") (out as any)[k] = { ...(out as any)[k], ...(v as Record<string, unknown>) };
+      else if (k === "newPerFace" && v == null) out.newPerFace = {};
+      else if (k === "autoRate" && v == null) out.autoRate = { ...DEFAULT_PRESET.autoRate };
       else (out as any)[k] = v;
     }
   }
@@ -145,11 +152,14 @@ export function validateConfig(c: Partial<PresetConfig>): string[] {
   const e: string[] = [];
   if (c.desiredRetention !== undefined && !(c.desiredRetention > 0.5 && c.desiredRetention < 1)) e.push("desiredRetention must be between 0.5 and 1");
   for (const k of ["learningSteps", "relearningSteps"] as const)
-    if (c[k] !== undefined && (!Array.isArray(c[k]) || !c[k]!.every((s) => /^\d+(\.\d+)?[mhd]$/.test(s)))) e.push(`${k} must look like ["1m", "10m", "1d"]`);
+    if (c[k] !== undefined && (!Array.isArray(c[k]) || !c[k]!.every((s) => /^\d+(\.\d+)?[mhd]$/.test(s) && parseFloat(s) > 0))) e.push(`${k} must look like ["1m", "10m", "1d"]`);
   for (const k of ["newPerDay", "reviewsPerDay", "maximumInterval", "deadlineMargin"] as const)
     if (c[k] !== undefined && !(Number.isFinite(c[k]) && (c[k] as number) >= 0)) e.push(`${k} must be a non-negative number`);
-  if (c.weights !== undefined && c.weights !== null && (!Array.isArray(c.weights) || ![17, 19, 21].includes(c.weights.length)))
-    e.push("weights must have 17, 19 or 21 numbers");
+  if (c.weights !== undefined && c.weights !== null && (!Array.isArray(c.weights) || ![17, 19, 21].includes(c.weights.length) || c.weights.some((n) => !Number.isFinite(n))))
+    e.push("weights must have 17, 19 or 21 finite numbers");
+  if (c.autoRate !== undefined && (c.autoRate === null || typeof c.autoRate !== "object" || Array.isArray(c.autoRate) ||
+    !Number.isFinite(c.autoRate.good) || !Number.isFinite(c.autoRate.hard) || c.autoRate.hard < 0 || c.autoRate.good > 1 || c.autoRate.hard >= c.autoRate.good))
+    e.push("autoRate must have hard < good scores between 0 and 1");
   if (c.deadline && Number.isNaN(new Date(c.deadline).getTime())) e.push("deadline must be an ISO date");
   if (c.mode !== undefined && c.mode !== "study" && c.mode !== "watch") e.push('mode must be "study" or "watch"');
   if (c.scheduler !== undefined && (typeof c.scheduler !== "string" || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(c.scheduler))) e.push('scheduler must be "fsrs" or a scheduler id');

@@ -61,6 +61,7 @@ export function readAssetDir(typeDir: string): Record<string, string> | undefine
   if (!existsSync(dir) || !statSync(dir).isDirectory()) return undefined;
   const out: Record<string, string> = {};
   for (const f of readdirSync(dir).sort()) {
+    if (f.startsWith(".")) continue;
     const p = join(dir, f);
     if (!statSync(p).isFile()) continue;
     out[f] = readFileSync(p).toString("base64");

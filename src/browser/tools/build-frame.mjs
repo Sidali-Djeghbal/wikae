@@ -32,6 +32,21 @@ await build({
   },
 });
 
+// The editor kit for serverless frames: an srcdoc frame has no relative URL to import a module from,
+// so build the same kit the server serves as a self-contained global and inject it in frame-local.
+await build({
+  configFile: false,
+  logLevel: "warn",
+  build: {
+    outDir: out,
+    emptyOutDir: false,
+    write: true,
+    minify: true,
+    lib: { entry: join(root, "web", "src", "editor", "kit.ts"), formats: ["iife"], name: "EtudeKit", fileName: () => "frame-kit.js" },
+    rollupOptions: { output: { inlineDynamicImports: true } },
+  },
+});
+
 // KaTeX's CSS with only the woff2 fonts, as data: URLs (a sandboxed frame can't fetch them).
 let katexCss = readFileSync(join(katexDist, "katex.min.css"), "utf8");
 katexCss = katexCss.replace(/src:url\(fonts\/([\w-]+)\.woff2\) format\("woff2"\)(,url\([^)]*\) format\("[^"]*"\))*/g, (_, f) => {

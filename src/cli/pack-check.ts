@@ -20,37 +20,6 @@ export interface PackCheck {
   warnings: string[];
 }
 
-function mulberry32(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function makeRng(seed: number) {
-  const next = mulberry32(seed);
-  return {
-    seed,
-    next,
-    int: (min: number, max: number) => Math.floor(next() * (max - min + 1)) + min,
-    float: (min: number, max: number, d = 2) => Number((min + next() * (max - min)).toFixed(d)),
-    pick: <T>(arr: T[]) => arr[Math.floor(next() * arr.length)],
-    shuffle: <T>(arr: T[]) => {
-      const a = arr.slice();
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(next() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    },
-    bool: (p = 0.5) => next() < p,
-  };
-}
-
 const isStr = (v: unknown) => typeof v === "string" && v.trim().length > 0;
 const isNum = (v: unknown) => typeof v === "number" && Number.isFinite(v);
 
@@ -288,20 +257,19 @@ export function checkPack(pack: Json, file = "pack", opts: { knownTypes?: string
     }
     if (f.generator !== undefined) {
       out.generated++;
-      let fn: Function;
-      try {
-        fn = new Function("rng", "learner", f.generator);
-      } catch (e) {
-        err(`generator does not compile: ${(e as Error).message}`);
-        continue;
-      }
       const seen = new Set<string>();
+      let sandboxed = true;
       for (let seed = 1; seed <= seeds; seed++) {
         let res: Json;
         try {
-          res = fn(makeRng(seed), null);
+          res = runScript<Json>(f.generator, { params: ["rng", "learner"], args: { learner: null }, seed, where: `${where}/generator` });
         } catch (e) {
-          err(`generator threw on seed ${seed}: ${(e as Error).message}`);
+          const msg = (e as Error).message;
+          if (/sandbox not initialised/.test(msg)) {
+            sandboxed = false;
+            break;
+          }
+          err(msg.startsWith("SyntaxError") ? `generator does not compile: ${msg}` : `generator threw on seed ${seed}: ${msg}`);
           break;
         }
         if (!res || typeof res !== "object") {
@@ -315,11 +283,12 @@ export function checkPack(pack: Json, file = "pack", opts: { knownTypes?: string
         if (errors.length > before) break;
         seen.add(JSON.stringify(res));
       }
+      if (!sandboxed) continue;
       if (seen.size < 5) warn(`generator produced only ${seen.size} distinct variants in ${seeds} seeds`);
       // On adaptive decks generators also get a learner.
       for (const sample of SAMPLE_LEARNERS)
         try {
-          const res = fn(makeRng(1), sampleLearner(sample, "general"));
+          const res = runScript<Json>(f.generator, { params: ["rng", "learner"], args: { learner: sampleLearner(sample, "general") }, seed: 1, where: `${where}/generator` });
           if (!res || typeof res !== "object") throw new Error(`returned ${typeof res}`);
         } catch (e) {
           err(`generator fails for ${sample.label}: ${(e as Error).message}`);

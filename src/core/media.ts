@@ -15,9 +15,10 @@ const TYPES: Record<string, [string, MediaKind, string?]> = {
 };
 
 // Where a file name mentioned in text can start: after a quote, bracket, slash, colon or equals sign.
-const NAME_START = new Set(['"', "'", "<", ">", "/", "\\", ":", "=", "\n", "\r", "\t"]);
-// A name may also start after one of these inside such a run ("see my file.mp3" names "file.mp3" too).
-const NAME_SPLIT = /[ ,;|*`()\[\]{}]/g;
+const NAME_START = new Set(['"', "<", ">", "/", "\\", "\n", "\r", "\t"]);
+// A name may also start after one of these inside such a run ("O'Reilly.png", "see my file.mp3").
+// Keep ', : and = here: they are ordinary filename characters, not just separators.
+const NAME_SPLIT = /[ ,;:='`*|()\[\]{}]/g;
 
 /**
  * Adds every file name `text` mentions that ends in one of `exts` (lowercase, no dot), lowercased and
@@ -40,7 +41,7 @@ export function collectFileNames(text: string, exts: Set<string>, into: Set<stri
       const n = name.trim().toLowerCase();
       if (!n) continue;
       into.add(n);
-      into.add(n.replace(/&amp;/g, "&"));
+      into.add(n.replace(/&(amp|#39|#x27);/g, (e) => (e === "&amp;" ? "&" : "'")));
       try {
         into.add(decodeURIComponent(n));
       } catch {}

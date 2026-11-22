@@ -10,12 +10,26 @@ const show = (v) => {
   if (typeof v === "number" && !Number.isFinite(v)) return String(v);
   try { return JSON.stringify(v); } catch { return String(v); }
 };
-const same = (a, b) => show(a) === show(b);
+const same = (a, b) => {
+  if (a === b) return true;
+  if (Array.isArray(a) || Array.isArray(b)) return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, k) => same(v, b[k]));
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    const ka = Object.keys(a), kb = Object.keys(b);
+    return ka.length === kb.length && ka.every((k) => Object.prototype.hasOwnProperty.call(b, k) && same(a[k], b[k]));
+  }
+  return Number.isNaN(a) && Number.isNaN(b);
+};
 
 let run;
 try {
-  // Direct eval inside the answer's own scope sees its functions and variables.
-  run = new Function(`"use strict";\n${answer}\n;return (__expr) => eval(__expr);`)();
+  // Direct eval inside the answer's own scope sees its functions and variables. The finally keeps a
+  // top-level `return` in the answer from replacing the evaluator; rethrow keeps its errors visible.
+  run = new Function(`"use strict";
+let __ev, __err = null;
+try {
+  __ev = (__expr) => eval(__expr);
+${answer}
+} catch (e) { __err = e; } finally { if (__err) throw __err; return __ev; }`)();
 } catch (e) {
   return { score: 0, feedback: `The code doesn't run: ${e.message}`, details: { tests: tests.map(([expr, expected]) => ({ expr, expected: show(expected), got: "not run", ok: false })) } };
 }

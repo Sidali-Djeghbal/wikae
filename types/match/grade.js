@@ -5,4 +5,5 @@ for (const [l, r] of Object.entries(key.pairs)) {
   marks[l] = given[l] === r;
   if (marks[l]) right++;
 }
-return { score: right / Object.keys(key.pairs).length, details: { marks } };
+const pairs = Object.keys(key.pairs).length;
+return { score: pairs ? right / pairs : 0, details: { marks } };

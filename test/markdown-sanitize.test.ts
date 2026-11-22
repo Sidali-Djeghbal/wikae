@@ -109,6 +109,13 @@ test("markdown sanitize: formatting, math, code and links still render", () => {
   assert.deepEqual(dangers(html), []);
 });
 
+test("markdown sanitize: app-chrome classes and target=_top are stripped", () => {
+  const html = md('<div class="fixed inset-0 z-50 bg-background"><a href="/deck" target="_top">click</a><code class="language-js">x</code></div>');
+  assert.doesNotMatch(html, /fixed|inset-0|z-50|bg-background/);
+  assert.doesNotMatch(html, /target="_top"/);
+  assert.match(html, /class="language-js"/);
+});
+
 test("markdown sanitize: KaTeX output is put back only in text, never inside an attribute", () => {
   const html = md(`<a href="https://x.example/\uE0000\uE001">x</a> $y$`);
   assert.doesNotMatch(html, /href="[^"]*katex/);

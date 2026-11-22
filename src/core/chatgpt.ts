@@ -2,11 +2,11 @@
 // loopback callback) and the Responses API call grading uses. Tokens live in one 0600 file.
 import { spawn } from "node:child_process";
 import { createHash, createPublicKey, randomBytes, randomUUID, verify as verifySignature } from "node:crypto";
-import { chmodSync, closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, writeSync } from "node:fs";
+import { chmodSync, closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, statSync, writeSync } from "node:fs";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
+import { resolveAppHome } from "./util.ts";
 
 export const CHATGPT_AUTHORIZE_URL = "https://auth.openai.com/api/accounts/authorize";
 export const CHATGPT_TOKEN_URL = "https://auth.openai.com/api/accounts/oauth/token";
@@ -19,7 +19,7 @@ export const CHATGPT_RESPONSES_URL = "https://api.openai.com/v1/responses";
 export const CHATGPT_RESOURCE = "https://api.openai.com/v1";
 export const CHATGPT_PLAN_SCOPE = "chatgpt.tokens.use.direct";
 export const CHATGPT_SCOPES = ["openid", "profile", "email", "offline_access", "resource.invoke", CHATGPT_PLAN_SCOPE];
-export const CHATGPT_AGENT_NAME = "Etude";
+export const CHATGPT_AGENT_NAME = "Wikae";
 export const CHATGPT_USAGE_URL = "https://chatgpt.com/settings/usage";
 /** First entry in the documented example catalog; the model list endpoint has the real choices. */
 export const DEFAULT_CHATGPT_MODEL = "gpt-6.1-sol";
@@ -59,9 +59,9 @@ export class ChatGptError extends Error {
 
 // ------------------------------------------------------------------ storage
 
-/** Where a host keeps its credentials: `$ETUDE_HOME` (default `~/.etude`). */
+/** Where a host keeps its credentials: the same per-install home the engine uses. */
 export function chatGptHome(env: Record<string, string | undefined> = process.env): string {
-  return resolve(env.ETUDE_HOME ?? join(homedir(), ".etude"));
+  return resolveAppHome(env);
 }
 
 export interface ChatGptPaths {
@@ -419,44 +419,67 @@ export function refreshChatGpt(home: string, endpoints: Partial<ChatGptEndpoints
 }
 
 async function doRefresh(home: string, ep: ChatGptEndpoints): Promise<ChatGptCredentials> {
-  const cur = readChatGptCredentials(home);
-  if (!cur || !cur.refresh_token) throw reauthError();
-  let tokens: TokenResponse;
-  try {
-    tokens = await postToken(ep, { grant_type: "refresh_token", client_id: cur.client_id, refresh_token: cur.refresh_token, resource: ep.resource });
-  } catch (e) {
-    const code = e instanceof ChatGptError ? e.code : "";
-    if (REAUTH_CODES.has(code)) {
-      saveChatGptCredentials(home, { ...cur, access_token: null, refresh_token: null, id_token: null, needs_reauth: true });
-      throw reauthError();
+  // The refresh token rotates. Two processes (CLI + Desktop server) must not spend the same one.
+  const lock = `${chatGptPaths(home).credentials}.lock`;
+  let fd = -1;
+  for (let i = 0; i < 20; i++) {
+    try {
+      fd = openSync(lock, "wx", 0o600);
+      break;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+      // A process that crashed mid-refresh leaves the lock behind; don't wedge sign-in forever.
+      try {
+        if (Date.now() - statSync(lock).mtimeMs > 60_000) rmSync(lock);
+      } catch {}
+      await new Promise((r) => setTimeout(r, 100));
     }
-    throw e;
   }
-  const next: ChatGptCredentials = {
-    ...cur,
-    access_token: tokens.access_token ?? null,
-    // The refresh token rotates: always keep the replacement.
-    refresh_token: tokens.refresh_token ?? cur.refresh_token,
-    id_token: tokens.id_token ?? cur.id_token,
-    token_type: tokens.token_type ?? cur.token_type,
-    expires_in: Number(tokens.expires_in ?? cur.expires_in),
-    scopes: tokens.scope ? tokens.scope.split(/\s+/).filter(Boolean) : cur.scopes,
-    saved_at: new Date().toISOString(),
-    earliest_refresh_at: tokens.earliest_refresh_at ?? null,
-    needs_reauth: false,
-  };
-  saveChatGptCredentials(home, next);
-  return next;
+  if (fd < 0) throw new ChatGptError("another process is refreshing ChatGPT credentials; try again shortly", "refresh_busy");
+  try {
+    // Re-read under the lock: the other process may already have rotated the token.
+    const cur = readChatGptCredentials(home);
+    if (!cur || !cur.refresh_token) throw reauthError();
+    let tokens: TokenResponse;
+    try {
+      tokens = await postToken(ep, { grant_type: "refresh_token", client_id: cur.client_id, refresh_token: cur.refresh_token, resource: ep.resource });
+    } catch (e) {
+      const code = e instanceof ChatGptError ? e.code : "";
+      if (REAUTH_CODES.has(code)) {
+        saveChatGptCredentials(home, { ...cur, access_token: null, refresh_token: null, id_token: null, needs_reauth: true });
+        throw reauthError();
+      }
+      throw e;
+    }
+    const next: ChatGptCredentials = {
+      ...cur,
+      access_token: tokens.access_token ?? null,
+      // The refresh token rotates: always keep the replacement.
+      refresh_token: tokens.refresh_token ?? cur.refresh_token,
+      id_token: tokens.id_token ?? cur.id_token,
+      token_type: tokens.token_type ?? cur.token_type,
+      expires_in: Number(tokens.expires_in ?? cur.expires_in),
+      scopes: tokens.scope ? tokens.scope.split(/\s+/).filter(Boolean) : cur.scopes,
+      saved_at: new Date().toISOString(),
+      earliest_refresh_at: tokens.earliest_refresh_at ?? null,
+      needs_reauth: false,
+    };
+    saveChatGptCredentials(home, next);
+    return next;
+  } finally {
+    closeSync(fd);
+    try { rmSync(lock); } catch {}
+  }
 }
 
 function reauthError() {
-  return new ChatGptError("your ChatGPT sign-in has expired; sign in again with `etude settings chatgpt login`", "reauth_required");
+  return new ChatGptError("your ChatGPT sign-in has expired; sign in again with `wikae settings chatgpt login`", "reauth_required");
 }
 
 /** The stored credentials, refreshed first when they are near expiry. */
 export async function getChatGptCredentials(home: string, endpoints: Partial<ChatGptEndpoints> = {}): Promise<ChatGptCredentials> {
   const c = readChatGptCredentials(home);
-  if (!c) throw new ChatGptError("not signed in to ChatGPT; run `etude settings chatgpt login`", "not_signed_in");
+  if (!c) throw new ChatGptError("not signed in to ChatGPT; run `wikae settings chatgpt login`", "not_signed_in");
   if (c.needs_reauth || !c.refresh_token) throw reauthError();
   if (needsRefresh(c)) return refreshChatGpt(home, endpoints);
   return c;
@@ -521,9 +544,9 @@ export interface ChatGptLoginSession {
   cancel(): void;
 }
 
-const SUCCESS_PAGE = `<!doctype html><meta charset="utf-8"><title>Signed in to Etude</title>
+const SUCCESS_PAGE = `<!doctype html><meta charset="utf-8"><title>Signed in to Wikae</title>
 <body style="font:16px/1.5 system-ui,sans-serif;margin:4rem auto;max-width:32rem;padding:0 1.5rem">
-<h1 style="font-size:1.25rem">You're signed in to Etude</h1>
+<h1 style="font-size:1.25rem">You're signed in to Wikae</h1>
 <p>You can close this window and return to the app.</p></body>`;
 
 const errorPage = (message: string) =>
@@ -569,9 +592,9 @@ export async function beginChatGptLogin(opts: ChatGptLoginOptions): Promise<Chat
   wait.catch(() => {});
 
   const server = createServer(async (req, res) => {
-    const reply = (status: number, body: string) => {
+    const reply = (status: number, body: string, done?: () => void) => {
       res.writeHead(status, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
-      res.end(body);
+      res.end(body, done);
     };
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     if (url.pathname !== "/auth/callback") return reply(404, "not found");
@@ -579,8 +602,8 @@ export async function beginChatGptLogin(opts: ChatGptLoginOptions): Promise<Chat
     const q = url.searchParams;
     const stateOk = q.get("state") === state;
     if (!stateOk) {
-      reply(400, errorPage("This callback doesn't belong to the sign-in Etude started."));
-      return fail(new ChatGptError("the callback state didn't match this sign-in", "state_mismatch"));
+      // A stray callback (old tab, refresh, scanner) must not cancel the sign-in in progress.
+      return reply(400, errorPage("This callback doesn't belong to the sign-in Wikae started."));
     }
     const oauthError = q.get("error");
     if (oauthError) {
@@ -605,7 +628,7 @@ export async function beginChatGptLogin(opts: ChatGptLoginOptions): Promise<Chat
         return fail(new ChatGptError("the callback returned a client id that doesn't match this account's registration", "client_mismatch"));
       }
     } else if (!issued) {
-      reply(400, errorPage("OpenAI didn't finish registering Etude. Try again."));
+      reply(400, errorPage("OpenAI didn't finish registering Wikae. Try again."));
       return fail(new ChatGptError("registration was incomplete: the callback carried no issued client id", "registration_incomplete"));
     }
     const clientId = issued ?? returning!.client_id;
@@ -619,8 +642,8 @@ export async function beginChatGptLogin(opts: ChatGptLoginOptions): Promise<Chat
         throw new ChatGptError("this sign-in belongs to a different ChatGPT account than the one saved", "account_mismatch");
       const creds = credentialsFrom(tokens, { clientId, hostId, claims, endpointIssuer: ep.issuer });
       saveChatGptCredentials(opts.home, creds);
-      reply(200, SUCCESS_PAGE);
-      settle(creds);
+      // Settle only after the page is on the wire: the caller closes the listener on settle.
+      reply(200, SUCCESS_PAGE, () => settle(creds));
     } catch (e) {
       const message = (e as Error).message;
       reply(400, errorPage(message));
@@ -677,7 +700,8 @@ export async function beginChatGptLogin(opts: ChatGptLoginOptions): Promise<Chat
 
 /** Opens a URL in the system browser if the platform has a handler. */
 export function openInBrowser(url: string): boolean {
-  const [cmd, args] = process.platform === "darwin" ? ["open", [url]] : process.platform === "win32" ? ["cmd", ["/c", "start", "", url]] : ["xdg-open", [url]];
+  // cmd /c re-parses its arguments: quote the URL so & in OAuth redirects isn't a shell separator.
+  const [cmd, args] = process.platform === "darwin" ? ["open", [url]] : process.platform === "win32" ? ["cmd", ["/c", "start", "", `"${url.replace(/"/g, '""')}"`]] : ["xdg-open", [url]];
   try {
     const child = spawn(cmd, args, { detached: true, stdio: "ignore" });
     child.on("error", () => {});
@@ -705,8 +729,8 @@ export async function listChatGptModels(home: string, endpoints: Partial<ChatGpt
     throw new ChatGptError(`couldn't reach the model list: ${(e as Error).message}`, "network");
   });
   if (!res.ok) throw new ChatGptError(failureMessage({ status: res.status, detail: (await res.text()).slice(0, 200) }), "models_failed");
-  const body = (await res.json()) as { models?: { slug?: string; id?: string; display_name?: string; visibility?: string }[] };
-  const rows = Array.isArray(body.models) ? body.models : [];
+  const body = (await res.json()) as { models?: { slug?: string; id?: string; display_name?: string; visibility?: string }[]; data?: { slug?: string; id?: string; display_name?: string; visibility?: string }[] };
+  const rows = Array.isArray(body.models) ? body.models : Array.isArray(body.data) ? body.data : [];
   return rows
     .filter((m) => (m.visibility ?? "list") === "list" && (m.slug ?? m.id))
     .map((m) => ({ slug: (m.slug ?? m.id)!, displayName: m.display_name ?? (m.slug ?? m.id)! }));
@@ -745,16 +769,16 @@ export function failureMessage(e: { code?: string; status?: number; detail?: str
     case "subscription_sharing_unsupported_capability":
       return `ChatGPT plan usage doesn't support this request${e.param ? ` (${e.param})` : ""}. Try a different model or send text only.`;
     case "subscription_sharing_route_not_supported":
-      return "ChatGPT plan usage doesn't allow this endpoint. Etude grades through the Responses API only.";
+      return "ChatGPT plan usage doesn't allow this endpoint. Wikae grades through the Responses API only.";
     case "subscription_sharing_invalid_user":
-      return "ChatGPT couldn't validate this sign-in. Sign in again with `etude settings chatgpt login`.";
+      return "ChatGPT couldn't validate this sign-in. Sign in again with `wikae settings chatgpt login`.";
     case "chatpass_v2_scope_not_authorized":
     case "chatpass_v2_invalid_authorization_context":
       return "This sign-in isn't allowed to use the ChatGPT plan. Sign out and sign in again, allowing plan access.";
     default:
       break;
   }
-  if (e.status === 401) return "ChatGPT rejected this sign-in. Sign in again with `etude settings chatgpt login`.";
+  if (e.status === 401) return "ChatGPT rejected this sign-in. Sign in again with `wikae settings chatgpt login`.";
   if (e.status === 403) return `ChatGPT plan usage is blocked for this account${detail ? `: ${detail}` : "."}`;
   if (e.status === 429) return `ChatGPT is rate limiting requests${detail ? `: ${detail}` : "."} Try again shortly.`;
   if (e.status === 503) return "ChatGPT plan usage is unavailable right now. Try again in a moment.";
@@ -785,20 +809,26 @@ async function readErrorBody(res: Response): Promise<ChatGptError> {
 export async function chatGptResponses(req: ResponsesRequest): Promise<ResponsesResult> {
   const t0 = Date.now();
   const ep = chatGptEndpoints(req.endpoints);
-  const creds = await getChatGptCredentials(req.home, ep);
+  let creds = await getChatGptCredentials(req.home, ep);
   if (!hasScope(creds, CHATGPT_PLAN_SCOPE))
     throw new ChatGptError("this sign-in doesn't include ChatGPT plan usage; sign out and sign in again, allowing plan access", "plan_disabled");
   const content: Record<string, unknown>[] = [{ type: "input_text", text: req.input }];
   if (req.image) content.push({ type: "input_image", image_url: req.image });
-  const res = await fetch(ep.responses, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${creds.access_token}`, "Content-Type": "application/json", Accept: "text/event-stream" },
-    body: JSON.stringify({ model: req.model || DEFAULT_CHATGPT_MODEL, instructions: req.instructions, input: [{ role: "user", content }], store: false, stream: true }),
-    signal: AbortSignal.timeout(req.timeoutMs ?? 60_000),
-  }).catch((e) => {
-    const timeout = (e as Error).name === "TimeoutError";
-    throw new ChatGptError(timeout ? `ChatGPT plan request timed out after ${req.timeoutMs ?? 60_000} ms` : `couldn't reach ChatGPT: ${(e as Error).message}`, timeout ? "timeout" : "network");
-  });
+  const post = (token: string | null) =>
+    fetch(ep.responses, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "text/event-stream" },
+      body: JSON.stringify({ model: req.model || DEFAULT_CHATGPT_MODEL, instructions: req.instructions, input: [{ role: "user", content }], store: false, stream: true }),
+      signal: AbortSignal.timeout(req.timeoutMs ?? 60_000),
+    }).catch((e) => {
+      const timeout = (e as Error).name === "TimeoutError";
+      throw new ChatGptError(timeout ? `ChatGPT plan request timed out after ${req.timeoutMs ?? 60_000} ms` : `couldn't reach ChatGPT: ${(e as Error).message}`, timeout ? "timeout" : "network");
+    });
+  let res = await post(creds.access_token);
+  if (res.status === 401) {
+    creds = await refreshChatGpt(req.home, ep);
+    res = await post(creds.access_token);
+  }
   if (!res.ok) throw await readErrorBody(res);
   if (!res.body) throw new ChatGptError("ChatGPT returned an empty response", "empty_stream");
 
@@ -830,27 +860,32 @@ export async function chatGptResponses(req: ResponsesRequest): Promise<Responses
         break;
     }
   };
-  for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
-    buffer += decoder.decode(chunk, { stream: true });
-    let cut: number;
-    while ((cut = buffer.search(/\r?\n\r?\n/)) >= 0) {
-      const block = buffer.slice(0, cut);
-      buffer = buffer.slice(cut + (buffer[cut] === "\r" ? 4 : 2));
-      for (const line of block.split(/\r?\n/)) {
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (!payload || payload === "[DONE]") continue;
-        try {
-          handle(JSON.parse(payload));
-        } catch (e) {
-          if (e instanceof ChatGptError) failure = e;
-          else failure = new ChatGptError(`couldn't read ChatGPT's stream: ${(e as Error).message}`, "bad_stream");
-        }
+  const emitBlock = (block: string) => {
+    for (const line of block.split(/\r?\n/)) {
+      if (!line.startsWith("data:")) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === "[DONE]") continue;
+      try {
+        handle(JSON.parse(payload));
+      } catch (e) {
+        if (e instanceof ChatGptError) failure = e;
+        else failure = new ChatGptError(`couldn't read ChatGPT's stream: ${(e as Error).message}`, "bad_stream");
       }
-      if (failure) break;
+    }
+  };
+  outer: for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
+    buffer += decoder.decode(chunk, { stream: true });
+    for (;;) {
+      const sep = /\r\n\r\n|\n\n|\r\r/.exec(buffer);
+      if (!sep) break;
+      const block = buffer.slice(0, sep.index);
+      buffer = buffer.slice(sep.index + sep[0].length);
+      emitBlock(block);
+      if (failure || completed) break outer;
     }
     if (failure || completed) break;
   }
+  if (!failure && !completed && buffer.trim()) emitBlock(buffer);
   if (failure) throw failure;
   if (!completed) throw new ChatGptError("ChatGPT's stream ended without finishing the response", "incomplete_stream");
   if (!text.trim()) throw new ChatGptError("ChatGPT returned no text", "empty_response");
@@ -904,5 +939,5 @@ export async function chatGptLogout(home: string, endpoints: Partial<ChatGptEndp
     } else warning = "OpenAI's revocation endpoint wasn't reachable";
   } else revoked = true;
   saveChatGptCredentials(home, { ...cur, access_token: null, refresh_token: null, id_token: null, needs_reauth: true });
-  return warning ? { signedIn: false, revoked, warning: `${warning}. Signed out locally; you can also disconnect Etude in ChatGPT settings.` } : { signedIn: false, revoked };
+  return warning ? { signedIn: false, revoked, warning: `${warning}. Signed out locally; you can also disconnect Wikae in ChatGPT settings.` } : { signedIn: false, revoked };
 }

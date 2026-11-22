@@ -10,7 +10,8 @@ export function project(e: Etude) {
   for (const t of ["decks", "cards", "attempts", "reviews"]) prior.set(t, new Map(db.all(`SELECT id,sync_id FROM ${t}`).map(r => [r.sync_id,r.id])));
   const ids = new Map<string, Map<string, number>>();
   for (const t of ["decks", "cards", "attempts", "reviews"]) {
-    let max = Math.max(0,...prior.get(t)!.values());
+    let max = 0;
+    for (const id of prior.get(t)!.values()) if (id > max) max = id;
     ids.set(t,new Map([...data.get(t)!.keys()].map(k => [k,prior.get(t)!.get(k) ?? ++max])));
   }
   const insert = (table: string, raw: Record<string, any>) => {

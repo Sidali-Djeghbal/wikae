@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Etude } from "../src/core/engine.ts";
+import { AnkiFormatError, readProto, zipData } from "../src/core/anki/package.ts";
 import { checkPack } from "../src/cli/pack-check.ts";
 
 const fixture = (name: string) => fileURLToPath(new URL(`./fixtures/anki/${name}`, import.meta.url));
@@ -227,6 +228,19 @@ test("scheduling history, FSRS state and due dates come across", async () => {
   const due = new Date(review.due).getTime();
   const createdAt = 1792494000 * 1000;
   assert.ok(due > createdAt && due - Date.now() < 400 * 86_400_000, "due is a real date");
+});
+
+test("oversized zip entries and truncated protobufs are refused", () => {
+  assert.throws(() => zipData(Buffer.alloc(64), { name: "huge", method: 0, compressedSize: 0, size: 2 ** 31, offset: 0 }, 100), AnkiFormatError);
+  assert.throws(() => readProto(Buffer.from("0a0501020304", "hex")), /truncated protobuf/);
+});
+
+test("new cards don't get Anki's queue position as a 1970 due date", async () => {
+  const { e } = await fresh();
+  e.importAnki(fixture("media-gate.apkg"));
+  const news = e.db.all<{ due: string }>("SELECT due FROM cards WHERE state = 0");
+  assert.ok(news.length, "no new cards in the fixture");
+  assert.ok(news.every((c) => !c.due.startsWith("1970")), "a new card got a 1970 due date");
 });
 
 test("--no-scheduling imports content only", async () => {

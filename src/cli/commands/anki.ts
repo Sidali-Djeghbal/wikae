@@ -7,7 +7,7 @@ command({
   name: "anki import",
   summary: "Import an Anki package: card types, presets, decks, items, cards, media and review history.",
   description:
-    "Item ids come from the note guid, so importing the same package again updates its items instead of duplicating them: progress made in Etude is kept and reviews aren't imported twice. Each notetype becomes a card type (`anki-<name>`), each deck config a preset, and `::` in deck and tag names keeps its hierarchy. Imported cards keep Anki's due dates and FSRS memory state. With --dry-run the report says what would change and nothing is written. Filtered decks are skipped and their cards land in their home deck.",
+    "Item ids come from the note guid, so importing the same package again updates its items instead of duplicating them: progress made in Wikae is kept and reviews aren't imported twice. Each notetype becomes a card type (`anki-<name>`), each deck config a preset, and `::` in deck and tag names keeps its hierarchy. Imported cards keep Anki's due dates and FSRS memory state. With --dry-run the report says what would change and nothing is written. Filtered decks are skipped and their cards land in their home deck.",
   args: [{ name: "file", description: "An .apkg or .colpkg exported by Anki (legacy or current format).", required: true }],
   flags: [
     { name: "no-scheduling", type: "boolean", description: "Content only: every card starts new, with no review history or due dates." },

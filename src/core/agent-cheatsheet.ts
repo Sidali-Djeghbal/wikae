@@ -38,7 +38,7 @@ export const CHEATSHEET_COMMANDS = [
 ];
 
 /** Types with a short example item in the cheat-sheet. Only ones that exist get one. */
-const EXAMPLE_TYPES = ["basic", "typed", "mcq", "cloze"];
+const EXAMPLE_TYPES = ["basic", "typed", "mcq", "cloze", "quran-mutashabihat"];
 
 const EXAMPLES: Record<string, Record<string, unknown>> = {
   basic: { front: "What does the mitochondrion do?", back: "Makes ATP by cellular respiration." },

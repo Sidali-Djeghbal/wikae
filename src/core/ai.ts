@@ -24,7 +24,7 @@ export interface OpenAiChatProvider {
 }
 
 export interface ChatGptProvider {
-  /** The user's ChatGPT plan, through the Responses API. No API key: sign in with `etude settings chatgpt login`. */
+  /** The user's ChatGPT plan, through the Responses API. No API key: sign in with `wikae settings chatgpt login`. */
   kind: "chatgpt";
   model: string;
   /** Responses endpoint; only set this for a proxy or a test server. */
@@ -75,6 +75,23 @@ export const DEFAULT_AI: AiSettings = {
 
 export class AiError extends Error {}
 
+/** Env vars a provider may read as a key: never process configuration or tool credentials. */
+const RESERVED_KEY_ENV = /^(ETUDE_|WIKAE_|WIKAA_|GH_|GITHUB_|ELECTRON_|NODE_|NPM_|PATH$|HOME$|LD_|DYLD_)/;
+export function apiKeyFromEnv(name?: string): string | undefined {
+  if (!name) return undefined;
+  if (RESERVED_KEY_ENV.test(name)) throw new AiError(`${name} can't be used as an API key variable`);
+  return process.env[name];
+}
+
+/** Hostname of a provider URL, or "" when it isn't a valid absolute URL. */
+export function providerHost(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "";
+  }
+}
+
 export interface GradingContext {
   /** The card as the learner saw it, and everything the grader may know, as labelled markdown sections. */
   card: { label: string; text: string }[];
@@ -100,7 +117,7 @@ export interface AiVerdict {
 }
 
 function key(envName?: string): string | undefined {
-  return envName ? process.env[envName] : undefined;
+  return apiKeyFromEnv(envName);
 }
 
 async function post(url: string, body: unknown, apiKeyEnv: string | undefined, timeoutMs: number): Promise<any> {
@@ -112,7 +129,7 @@ async function post(url: string, body: unknown, apiKeyEnv: string | undefined, t
       headers: {
         "Content-Type": "application/json",
         ...(k ? { Authorization: `Bearer ${k}` } : {}),
-        "X-Title": "Etude",
+        "X-Title": "Wikae",
       },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(timeoutMs),
@@ -180,7 +197,8 @@ async function decide(p: DecisionProvider, ctx: GradingContext): Promise<AiVerdi
   const best = probs.indexOf(Math.max(...probs));
   return {
     verdict: LEVELS[best].verdict,
-    score: Math.max(0, Math.min(1, Number(a.score) / 2)),
+    // Some decision models omit `score`; fall back to the winning level instead of NaN.
+    score: Number.isFinite(Number(a.score)) ? Math.max(0, Math.min(1, Number(a.score) / 2)) : best / 2,
     confidence: a.confidence,
     model: reply.model ?? p.model ?? "decision",
     ms: Date.now() - t0,
@@ -216,7 +234,7 @@ async function chat(p: ChatProvider, system: string, user: string, image: string
         { type: "image_url", image_url: { url: image } },
       ]
     : user;
-  const openrouter = /openrouter\.ai/.test(p.url);
+  const openrouter = providerHost(p.url) === "openrouter.ai";
   const reply = await post(
     p.url,
     {
@@ -255,7 +273,12 @@ Verdict meanings: ${LEVELS.map((l) => l.label).join("; ")}.
 For Arabic text, unvocalized answers without Tashkeel/Tanween/Harakat (تشكيل وتنوين وحركات) or hamza variations are completely acceptable and must be graded as correct when the letters match; never penalize the student for lacking Tashkeel or Tanween.
 For "feedback": ${FEEDBACK_STYLE(lang)}${retry}`;
   const out = await chat(p, system, contextText(ctx), ctx.answerImage, true, home);
-  const j = parseJson(out.text);
+  let j: any;
+  try {
+    j = parseJson(out.text);
+  } catch (e) {
+    throw new AiError(`language model returned invalid JSON: ${(e as Error).message}`);
+  }
   if (ctx.retryWhen && j.verdict === "retry") {
     if (typeof j.hint !== "string" || !j.hint.trim() || j.hint.length > 600) throw new AiError("language model returned an invalid retry hint");
     return { verdict: "ungraded", score: 0, retry: { hint: j.hint.trim() }, model: out.model, ms: out.ms, cost: out.cost };
@@ -267,7 +290,7 @@ For "feedback": ${FEEDBACK_STYLE(lang)}${retry}`;
 
 export interface AiRunOptions {
   vision?: boolean;
-  /** Where the ChatGPT-plan credentials live (an engine passes its ETUDE_HOME). */
+  /** Where the ChatGPT-plan credentials live (an engine passes its app home). */
   home?: string;
 }
 
@@ -358,9 +381,10 @@ ${
   ["السورة:الآية | بادئة الآية [اللفظ المفصلي] بقية الآية", "السورة الأخرى:الآية | بادئة الآية [اللفظ المفصلي البديل] بقية الآية"]
   or full sibling objects with surahNumber, surahNameAr, ayahNumber, prefixUthmani, pivotalUthmani, suffixUthmani.
 - Always include at least 2 distinct sibling verses to compare.
-- Set "targetVerseId" to the first sibling identifier, e.g. "2_126" or "2:126".
+- Set "targetVerseId" to the first sibling identifier, e.g. "2_126" (always <surahNumber>_<ayahNumber>).
 - Set "titleAr" to a concise Arabic title comparing the verses and pivotal words.
 - Set "mode" to "pivotal_completion" (default) or "surah_identification".
+- For "surah_identification", use siblings from at least two different Surahs.
 - Set "inputSubmode" to "choice" (default) or "typing".
 - Set "mnemonicRuleAr" to an accurate, memorable mnemonic or rhetorical explanation distinguishing the verses.`
     : ""
@@ -391,7 +415,7 @@ ${
     ? `Special instructions for mcq:
 - "prompt": question text in markdown.
 - "options": array of choices.
-- "multiple": boolean (false for single choice).`
+- "multiple": boolean (false for single choice). Answers are the option text, or an array of option texts when multiple is true.`
     : ""
 }`;
 

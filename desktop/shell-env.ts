@@ -1,6 +1,6 @@
 // Apps opened from the Dock or a launcher don't get the settings a terminal has (PATH, ETUDE_HOME,
 // API keys exported in ~/.zshrc). Ask the login shell once, the way a terminal would start, so the
-// engine finds `gh`, a custom collection folder and the rest just as `etude serve` would.
+// engine finds `gh`, a custom collection folder and the rest just as `wikae serve` would.
 import { spawn } from "node:child_process";
 
 const MARK = "__ETUDE_ENV__";

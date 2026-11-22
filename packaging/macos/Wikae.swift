@@ -1,13 +1,13 @@
-// Etude.app: starts the bundled Etude server and shows it in a native window.
-// Everything it needs is inside the bundle (Node + the app); data lives in ~/.etude.
+// Wikae.app: starts the bundled Wikae server and shows it in a native window.
+// Everything it needs is inside the bundle (Node + the app); data lives in ~/.wikae.
 import Cocoa
 import WebKit
 
 let bundle = Bundle.main.resourceURL!
 let nodeBin = bundle.appendingPathComponent("node/bin/node")
 let appDir = bundle.appendingPathComponent("app")
-let home = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".etude")
-let logURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/Etude.log")
+let home = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".wikae")
+let logURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/Wikae.log")
 let preferredPort = 4610
 
 /// Is something already listening on this port?
@@ -36,8 +36,8 @@ func freePort() -> Int {
     return Int(UInt16(bigEndian: addr.sin_port))
 }
 
-/// Does an Etude server answer on this port? (Then we reuse it: same database.)
-func probeEtude(_ port: Int) -> Bool {
+/// Does a Wikae server answer on this port? (Then we reuse it: same database.)
+func probeWikae(_ port: Int) -> Bool {
     guard let url = URL(string: "http://127.0.0.1:\(port)/api/themes") else { return false }
     var req = URLRequest(url: url); req.timeoutInterval = 1.5
     let sem = DispatchSemaphore(value: 0)
@@ -71,15 +71,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDe
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1180, height: 800),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                           backing: .buffered, defer: false)
-        window.title = "Etude"
+        window.title = "Wikae"
         window.titlebarAppearsTransparent = true
         window.backgroundColor = NSColor(red: 0.04, green: 0.04, blue: 0.05, alpha: 1)
         window.contentView = web
-        window.setFrameAutosaveName("EtudeMain")
-        if !window.setFrameUsingName("EtudeMain") { window.center() }
+        window.setFrameAutosaveName("WikaeMain")
+        if !window.setFrameUsingName("WikaeMain") { window.center() }
         window.makeKeyAndOrderFront(nil)
         buildMenu()
-        showMessage("Starting Etude…", detail: "")
+        showMessage("Starting Wikae…", detail: "")
         NSApp.activate(ignoringOtherApps: true)
 
         DispatchQueue.global().async { self.start() }
@@ -91,7 +91,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDe
         log = try? FileHandle(forWritingTo: logURL)
 
         if portInUse(preferredPort) {
-            if probeEtude(preferredPort) { return open() }      // already running (terminal install or another window)
+            if probeWikae(preferredPort) { return open() }      // already running (terminal install or another window)
             port = freePort()
         }
         // First launch: a fresh collection gets the showcase deck, so there's something to try.
@@ -100,19 +100,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDe
         }
         server = run(["serve", "--port", String(port)], wait: false)
         for _ in 0..<150 {                                      // up to 30 s
-            if probeEtude(port) { return open() }
+            if probeWikae(port) { return open() }
             if let s = server, !s.isRunning { break }
             Thread.sleep(forTimeInterval: 0.2)
         }
         DispatchQueue.main.async {
-            self.showMessage("Etude didn't start.", detail: "The log is in ~/Library/Logs/Etude.log. ⌘R tries again.")
+            self.showMessage("Wikae didn't start.", detail: "The log is in ~/Library/Logs/Wikae.log. ⌘R tries again.")
         }
     }
 
     func run(_ args: [String], wait: Bool) -> Process? {
         let p = Process()
         p.executableURL = nodeBin
-        p.arguments = [appDir.appendingPathComponent("bin/etude.js").path] + args
+        p.arguments = [appDir.appendingPathComponent("bin/wikae.js").path] + args
         p.currentDirectoryURL = appDir
         var env = ProcessInfo.processInfo.environment
         env["ETUDE_HOME"] = env["ETUDE_HOME"] ?? home.path
@@ -142,7 +142,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDe
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ s: NSApplication) -> Bool { true }
 
-    // Links outside Etude open in the default browser.
+    // Links outside Wikae open in the default browser.
     func webView(_ w: WKWebView, decidePolicyFor a: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if let u = a.request.url, a.navigationType == .linkActivated, u.host != "127.0.0.1" {
             NSWorkspace.shared.open(u); decisionHandler(.cancel); return
@@ -166,7 +166,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDe
     }
 
     @objc func reload() {
-        if web.url?.host == "127.0.0.1" { web.reload() } else { DispatchQueue.global().async { if probeEtude(self.port) { self.open() } else { self.start() } } }
+        if web.url?.host == "127.0.0.1" { web.reload() } else { DispatchQueue.global().async { if probeWikae(self.port) { self.open() } else { self.start() } } }
     }
     @objc func home_() { open() }
     @objc func back() { web.goBack() }
@@ -181,9 +181,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDe
         let main = NSMenu()
         let appItem = NSMenuItem(); main.addItem(appItem)
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "Hide Etude", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(withTitle: "Hide Wikae", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Quit Etude", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: "Quit Wikae", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu
 
         let fileItem = NSMenuItem(); main.addItem(fileItem)

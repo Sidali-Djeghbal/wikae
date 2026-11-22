@@ -1,5 +1,6 @@
 import { before, test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { initSandbox, runScript, checkSyntax, ScriptError } from "../src/core/sandbox.ts";
 
 before(async () => {
@@ -21,6 +22,9 @@ test("std.parseNumber accepts the forms a student types", () => {
   // NaN does not survive JSON, so an unparseable answer comes back as null.
   assert.equal(run<number | null>("return std.parseNumber(text);", { text: "abc" }), null);
   assert.equal(run<number | null>("return std.parseNumber(text);", { text: "" }), null);
+  assert.equal(run<number>("return std.parseNumber(text);", { text: "-2^2" }), -4);
+  assert.equal(run<number>("return std.parseNumber(text);", { text: "08" }), 8);
+  assert.equal(run<number>("return std.parseNumber(text);", { text: "1,000" }), 1000);
 });
 
 test("std.within uses relative tolerance with an absolute floor near zero", () => {
@@ -71,6 +75,28 @@ test("the clock option pins Date and Math.random", () => {
 
 test("an endless script is interrupted", () => {
   assert.throws(() => run("while (true) {}", {}, { timeoutMs: 50 }), (e: unknown) => e instanceof ScriptError && /timed out/.test(e.message));
+});
+
+test("grade scripts score empty answer lists as zero", () => {
+  const grade = (type: string, key: unknown, view: unknown, answer: unknown) => {
+    const code = readFileSync(new URL(`../types/${type}/grade.js`, import.meta.url), "utf8");
+    return runScript<{ score: number }>(code, { params: ["answer", "view", "key", "fields"], args: { answer, view, key, fields: {} }, where: `${type}/grade` });
+  };
+  assert.equal(grade("cloze", { answers: [] }, {}, []).score, 0);
+  assert.equal(grade("mcq", { correct: [] }, { multiple: true }, []).score, 0);
+  assert.equal(grade("match", { pairs: {} }, {}, {}).score, 0);
+  assert.equal(grade("order", { order: [] }, {}, []).score, 0);
+});
+
+test("code grading survives a top-level return and ignores object key order", () => {
+  const code = readFileSync(new URL("../types/code/grade.js", import.meta.url), "utf8");
+  const grade = (answer: string, tests: unknown[]) => runScript<{ score: number }>(code, {
+    params: ["answer", "view", "key", "fields"],
+    args: { answer, view: { language: "javascript" }, key: { tests }, fields: {} },
+    where: "code/grade",
+  });
+  assert.equal(grade("const obj = () => ({ b: 2, a: 1 });", [["obj()", { a: 1, b: 2 }]]).score, 1);
+  assert.equal(grade("return 5;", [["obj()", { a: 1 }]]).score, 0);
 });
 
 test("checkSyntax reports broken bodies without running them", () => {

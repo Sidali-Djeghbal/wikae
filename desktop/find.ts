@@ -1,16 +1,15 @@
-// Finding the engine: which collection, which port, and whether the engine already running there can
-// be reused. No Electron here, so the tests and the repo's type check run without it installed.
+// Finding the engine: which collection the CLI opens and which port is free for our own engine.
+// No Electron here, so the tests and the repo's type check run without it installed.
 import { createServer, type AddressInfo } from "node:net";
-import { homedir } from "node:os";
 import { join, resolve } from "node:path";
+import { appEnv, resolveAppHome } from "../src/core/util.ts";
 
-/** Where `etude serve` listens unless told otherwise: $ETUDE_PORT, else 4610. */
-export const usualPort = (env: Record<string, string | undefined>) => Number(env.ETUDE_PORT) || 4610;
+/** Where the engine listens unless told otherwise: $WIKAE_PORT (or $ETUDE_PORT), else 4610. */
+export const usualPort = (env: Record<string, string | undefined>) => Number(appEnv(env, "PORT")) || 4610;
 
-/** The collection the CLI opens: $ETUDE_DB, else $ETUDE_HOME/etude.db, else ~/.etude/etude.db. */
+/** The collection the CLI opens: the database env var, else the app home's etude.db (old name kept for existing collections). */
 export function collectionPath(env: Record<string, string | undefined>): string {
-  const home = resolve(env.ETUDE_HOME ?? join(homedir(), ".etude"));
-  return resolve(env.ETUDE_DB ?? join(home, "etude.db"));
+  return resolve(appEnv(env, "DB") ?? join(resolveAppHome(env), "etude.db"));
 }
 
 /** Mac and Windows file names ignore case. */

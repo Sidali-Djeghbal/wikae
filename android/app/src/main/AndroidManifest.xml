@@ -22,21 +22,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- etude://deck/Spanish, etude://study?deck=… -->
+            <!-- wikae://deck/Spanish, wikae://study?deck=… (the old etude:// scheme still works) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="wikae" />
                 <data android:scheme="etude" />
             </intent-filter>
 
-            <!-- App Links: https://etude.study/app/… opens here once the site serves
+            <!-- App Links: https://sidali-djeghbal.github.io/wikae/app/… opens here once the site serves
                  /.well-known/assetlinks.json with this app's signing fingerprint. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="etude.study" android:pathPrefix="/app/" />
+                <data android:scheme="https" android:host="sidali-djeghbal.github.io" android:pathPrefix="/wikae/app/" />
             </intent-filter>
         </activity>
 

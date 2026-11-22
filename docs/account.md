@@ -2,7 +2,7 @@
 
 The account is optional and free. Wikae works fully offline without one. An account is only used for Wikae Sync (end-to-end encrypted sync between devices).
 
-The app talks to a sync server. The default is `https://sync.etude.study`. Change it in Settings → Account → Server, with `etude account server <url>`, or with `$ETUDE_CLOUD_URL` (the saved choice wins). The account token lives in `<ETUDE_HOME>/account.json` (mode 600) and never reaches the web page; the UI goes through `/api/account/*` on the local server, which forwards to the cloud.
+The app talks to a sync server. The default is `https://sync.wikae.study`. Change it in Settings → Account → Server, with `etude account server <url>`, or with `$WIKAE_CLOUD_URL` (`$ETUDE_CLOUD_URL` still works as a fallback; the saved choice wins). The account token lives in `<WIKAE_HOME>/account.json` (mode 600) and never reaches the web page; the UI goes through `/api/account/*` on the local server, which forwards to the cloud.
 
 ## Settings → Account
 

@@ -249,7 +249,7 @@ command({
   description:
     "What the app's Watch button shows, for decks in watch mode (a tour) or any scope. Each card carries `demo.answer` (the item's own `fields.demo`, or what its type's `demo.js` makes) and `demo.grade`: a recorded grade when the item ships one, otherwise the script grader's verdict on that answer. AI-graded cards without a recorded grade come back ungraded instead of calling a model.",
   flags: [DECK_FLAG, QUERY_FLAG, { name: "limit", type: "number", description: "At most this many cards." }],
-  examples: ['etude study watch --deck "Etude Showcase"', 'etude study watch --query "type:chess"'],
+  examples: ['etude study watch --deck "Wikae Showcase"', 'etude study watch --query "type:chess"'],
   output: "{ cards: [{ cardId, itemId, type, deck, title, seed, view, demo: { answer, grade } }] }",
   async run(ctx) {
     const list = ctx.e.watchList(scopeOf(ctx.flags)).slice(0, ctx.flags.limit ?? Infinity);

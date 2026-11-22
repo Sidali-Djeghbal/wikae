@@ -1,4 +1,4 @@
-// Updating Etude from its GitHub repo: check for new commits, fast-forward, rebuild, restart.
+// Updating Wikae from its GitHub repo: check for new commits, fast-forward, rebuild, restart.
 // Only a git checkout can update itself. Package installs (npm, the Mac app) get the latest
 // release's version and a link instead.
 import { execFileSync, spawnSync } from "node:child_process";
@@ -111,10 +111,15 @@ function repoSlug(pkg: any): string | null {
 }
 
 const newer = (a: string, b: string) => {
-  const pa = a.replace(/^v/, "").split(/[.-]/).map((x) => Number(x) || 0);
-  const pb = b.replace(/^v/, "").split(/[.-]/).map((x) => Number(x) || 0);
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) if ((pa[i] ?? 0) !== (pb[i] ?? 0)) return (pa[i] ?? 0) > (pb[i] ?? 0);
-  return false;
+  const parse = (s: string) => {
+    const [core, pre] = s.replace(/^v/, "").split(/[-+]/, 2);
+    return { nums: core.split(".").map((x) => Number(x) || 0), pre: pre ?? "" };
+  };
+  const x = parse(a), y = parse(b);
+  for (let i = 0; i < Math.max(x.nums.length, y.nums.length); i++) if ((x.nums[i] ?? 0) !== (y.nums[i] ?? 0)) return (x.nums[i] ?? 0) > (y.nums[i] ?? 0);
+  // A pre-release is older than the final release with the same core numbers.
+  if (!x.pre || !y.pre) return !!y.pre && !x.pre;
+  return x.pre > y.pre;
 };
 
 export async function updateStatus(opts: Opts = {}): Promise<UpdateStatus> {
@@ -123,7 +128,7 @@ export async function updateStatus(opts: Opts = {}): Promise<UpdateStatus> {
   const version: string = pkg.version;
 
   if (!isCheckout(root)) {
-    const slug = repoSlug(pkg) ?? "Zibhelina/etude";
+    const slug = repoSlug(pkg) ?? "Sidali-Djeghbal/wikae";
     const url = `https://github.com/${slug}/releases/latest`;
     if (due(root, opts)) {
       const at = new Date().toISOString();
@@ -185,10 +190,15 @@ export async function updateStatus(opts: Opts = {}): Promise<UpdateStatus> {
   return { kind: "git", version, branch, upstream, commit, incoming, behind, ahead, dirty, checked: c?.at ?? null, ...(c?.error ? { checkError: c.error } : {}), ...(blocked ? { blocked } : {}) };
 }
 
-/** npm next to the node that runs Etude, run through that same node (no PATH lookup, no shebang). */
+/** npm next to the node that runs Wikae, run through that same node (no PATH lookup, no shebang). */
 function npmArgs(): [string, string[]] {
-  const cli = join(dirname(process.execPath), "..", "lib", "node_modules", "npm", "bin", "npm-cli.js");
-  return existsSync(cli) ? [process.execPath, [cli]] : ["npm", []];
+  // On Windows npm lives in prefix/node_modules/npm/bin, not lib/node_modules.
+  const dir = dirname(process.execPath);
+  const candidates = process.platform === "win32"
+    ? [join(dir, "node_modules", "npm", "bin", "npm-cli.js"), join(dir, "..", "lib", "node_modules", "npm", "bin", "npm-cli.js")]
+    : [join(dir, "..", "lib", "node_modules", "npm", "bin", "npm-cli.js")];
+  const cli = candidates.find(existsSync);
+  return cli ? [process.execPath, [cli]] : ["npm", []];
 }
 
 /**
@@ -221,7 +231,12 @@ function buildWeb(root: string) {
   run("build", process.execPath, [vite, "build", "--config", join(web, "vite.kit.config.ts")], root, { ...toolEnv(), ETUDE_KIT_OUT: join(next, "kit") });
   rmSync(prev, { recursive: true, force: true });
   if (existsSync(dist)) renameSync(dist, prev);
-  renameSync(next, dist);
+  try {
+    renameSync(next, dist);
+  } catch (e) {
+    if (existsSync(prev)) renameSync(prev, dist);
+    throw e;
+  }
   rmSync(prev, { recursive: true, force: true });
 }
 
@@ -235,7 +250,7 @@ export async function applyUpdate(opts: Omit<Opts, "fetch"> = {}): Promise<Updat
   try {
     const st = await updateStatus({ root, fetch: true, force: true });
     // Run by the desktop app's program (its etude command), this is the app's copy.
-    if (st.kind !== "git" && process.versions.electron) throw new UpdateError("This etude came with the Etude desktop app, which updates itself.", 409);
+    if (st.kind !== "git" && process.versions.electron) throw new UpdateError("This copy came with the Wikae desktop app, which updates itself.", 409);
     if (st.kind !== "git") throw new UpdateError(st.latest ? `This install can't update itself: get ${st.latest} from ${st.url}` : "This install can't update itself (it isn't a git checkout).", 409);
     if (st.checkError) throw new UpdateError(`Couldn't reach the repo: ${st.checkError}`, 502);
     if (st.blocked) throw new UpdateError(st.blocked, 409, { dirty: st.dirty });

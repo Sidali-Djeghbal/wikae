@@ -122,22 +122,27 @@ function openCopy(buf: Buffer): { db: DatabaseSync | SqlConnection; close: () =>
     return { db, close: () => db.close() };
   }
   const dir = mkdtempSync(join(tmpdir(), "etude-anki-"));
-  const file = join(dir, "collection.db");
-  writeFileSync(file, buf);
-  const patch = new DatabaseSync(file);
-  patch.enableDefensive(false);
-  patch.exec("PRAGMA writable_schema = ON");
-  patch.prepare(UNICASE_PATCH).run();
-  patch.exec("PRAGMA writable_schema = OFF");
-  patch.close();
-  const db = new DatabaseSync(file, { readOnly: true });
-  return {
-    db,
-    close: () => {
-      db.close();
-      rmSync(dir, { recursive: true, force: true });
-    },
-  };
+  try {
+    const file = join(dir, "collection.db");
+    writeFileSync(file, buf);
+    const patch = new DatabaseSync(file);
+    patch.enableDefensive(false);
+    patch.exec("PRAGMA writable_schema = ON");
+    patch.prepare(UNICASE_PATCH).run();
+    patch.exec("PRAGMA writable_schema = OFF");
+    patch.close();
+    const db = new DatabaseSync(file, { readOnly: true });
+    return {
+      db,
+      close: () => {
+        try { db.close(); } finally { rmSync(dir, { recursive: true, force: true }); }
+      },
+    };
+  } catch (e) {
+    // A malformed package may throw before `close` exists; don't leave a full-size copy behind.
+    rmSync(dir, { recursive: true, force: true });
+    throw e;
+  }
 }
 
 const bytes = (v: unknown): Buffer => (v == null ? Buffer.alloc(0) : Buffer.isBuffer(v) ? v : Buffer.from(v as Uint8Array));
@@ -196,7 +201,7 @@ function readCurrent(db: Reader): AnkiCollection {
   const configs: AnkiDeckConfig[] = [];
   for (const row of db.prepare("SELECT id, name, config FROM deck_config ORDER BY id").all() as any[]) {
     const c = readProto(bytes(row.config));
-    const weights = [3, 5, 6].map((f) => protoFloats(c, f)).find((w) => w.length >= 17) ?? [];
+    const weights = [6, 5, 3].map((f) => protoFloats(c, f)).find((w) => w.length >= 17) ?? [];
     configs.push({
       id: num(row.id),
       name: String(row.name),

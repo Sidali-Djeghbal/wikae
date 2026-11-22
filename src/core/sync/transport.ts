@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, renameSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, renameSync, rmSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 import type { VaultKeys } from "./crypto.ts";
 
@@ -45,7 +45,15 @@ export class FolderTransport implements Transport {
   async pull(_cursor:string) {
     const events:WireEvent[]=[];
     const root=join(this.folder,"events");
-    if (existsSync(root)) for (const dev of readdirSync(root)) if (VALID.test(dev)) for (const file of readdirSync(join(root,dev))) if (file.endsWith(".json") && VALID.test(file.slice(0,-5).replaceAll("~",":"))) events.push(JSON.parse(readFileSync(join(root,dev,file),"utf8")));
+    if (existsSync(root)) for (const dev of readdirSync(root)) if (VALID.test(dev)) {
+      const dir=join(root,dev);
+      for (const file of readdirSync(dir)) {
+        if (file.startsWith(".") || !file.endsWith(".json") || !VALID.test(file.slice(0,-5).replaceAll("~",":"))) continue;
+        const p=join(dir,file);
+        if (!statSync(p).isFile()) continue;
+        events.push(JSON.parse(readFileSync(p,"utf8")));
+      }
+    }
     return {events,cursor:"",more:false};
   }
   async putBlob(name:string,bytes:Uint8Array) {

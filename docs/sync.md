@@ -1,4 +1,4 @@
-# Etude Sync
+# Wikae Sync
 
 Sync keeps a local collection on every device. Work offline, then exchange encrypted events through a shared folder or etude-cloud. The CLI reference lists the `sync` commands. Settings → Sync uses the same core and API in Node and the browser worker.
 
@@ -16,9 +16,9 @@ Remote application updates the registers and rebuilds the relational view inside
 
 Synced content: presets; deck names, descriptions, instructions, archive state, order and configuration; items and their individual JSON fields, tags, source, notes, dates, order and archive state; customized card types and schedulers; type folders and placements; tag metadata; attempts and graded answers; reviews; card suspension, burial and explicit reset/due controls; media and type assets. Shipped defaults are supplied by the app; custom edits and resets of edited definitions are logged.
 
-Synced settings are dayStartHour, learnAheadMinutes, selected theme and custom themes. All AI configuration stays local, including provider URLs, model selection, language, env-key names and agent effort. Device-local content also includes ChatGPT credentials and host ids, API keys, update state, window/sidebar state, Market installation receipts, Ask Etude conversations, attachments and snapshots, server authentication options, Sync tokens, vault keys and cursors. The market catalog address remains local.
+Synced settings are dayStartHour, learnAheadMinutes, selected theme and custom themes. All AI configuration stays local, including provider URLs, model selection, language, env-key names and agent effort. Device-local content also includes ChatGPT credentials and host ids, API keys, update state, window/sidebar state, Market installation receipts, Ask Wikae conversations, attachments and snapshots, server authentication options, Sync tokens, vault keys and cursors. The market catalog address remains local.
 
-Reviews and attempts have independent identities, so simultaneous offline answers both survive. Removing an item hides its orphan history from the relational view; the event log retains it. Explicit review undo records a retraction tombstone. Snapshot-based Ask Etude undo is refused in synced collections because a whole-database restore would overwrite sync identity and causality. Ask Etude can inspect status and request sync; credential-entry commands remain outside its tool access.
+Reviews and attempts have independent identities, so simultaneous offline answers both survive. Removing an item hides its orphan history from the relational view; the event log retains it. Explicit review undo records a retraction tombstone. Snapshot-based Ask Wikae undo is refused in synced collections because a whole-database restore would overwrite sync identity and causality. Ask Wikae can inspect status and request sync; credential-entry commands remain outside its tool access.
 
 ## Scheduling
 
@@ -32,7 +32,7 @@ The client implements etude-cloud's version-1 scheme: a random 256-bit vault key
 
 Account sign-in uses email start → code → verify → revocable device token. Reading the key envelope requires that token. Unlocking requires the separate Sync password or recovery key. The first unlock creates the envelope with a conditional initial PUT; cloud envelope updates support If-Match through the transport. The UI shows the generated recovery key once and asks for an explicit saved-key confirmation. Passwords stay in memory for the request. Neither passwords nor recovery keys are saved.
 
-Desktop tokens and the unwrapped vault key live in a collection-device-specific JSON file under `$ETUDE_HOME/sync/`, beside the existing credentials area, with directory mode 700 and file mode 600. The browser uses the worker's credential filesystem mirrored into OPFS. Both depend on the security of the local device and application origin. The local collection and caches contain plaintext. An account takeover alone cannot open the cloud data. Malicious same-origin code, a compromised app build, local OS access or browser-profile access can obtain the saved key. Browser eviction can remove the local copy; the app requests persistent storage. Transport metadata still reveals sizes, event counts and timing.
+Desktop tokens and the unwrapped vault key live in a collection-device-specific JSON file under `$WIKAE_HOME/sync/`, beside the existing credentials area, with directory mode 700 and file mode 600. The browser uses the worker's credential filesystem mirrored into OPFS. Both depend on the security of the local device and application origin. The local collection and caches contain plaintext. An account takeover alone cannot open the cloud data. Malicious same-origin code, a compromised app build, local OS access or browser-profile access can obtain the saved key. Browser eviction can remove the local copy; the app requests persistent storage. Transport metadata still reveals sizes, event counts and timing.
 
 ## Running
 

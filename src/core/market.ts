@@ -16,6 +16,7 @@ import { mediaType } from "./media.ts";
 import { BUILTIN_THEMES, THEME_ID, ThemeError, freeThemeId, normalizeTheme, type Theme } from "./themes.ts";
 import { validateType } from "./types.ts";
 import type { CardTypeDef } from "./model.ts";
+import { appEnv } from "./util.ts";
 
 export const MARKET_REPO = "Sidali-Djeghbal/wikae-market";
 export const DEFAULT_MARKET = { url: `https://raw.githubusercontent.com/${MARKET_REPO}/main`, repo: MARKET_REPO };
@@ -145,7 +146,12 @@ async function readMarketFile(url: string, path: string, opts: { fresh?: boolean
     if (buf.length > MAX_ENTRY_BYTES) throw new MarketError(`${path} is larger than ${MAX_ENTRY_BYTES} bytes`);
     return { text: buf.toString("utf8"), bytes: buf.length, body: buf };
   }
-  const full = `${(opts.fresh ? await pinnedUrl(url) : url).replace(/\/+$/, "")}/${path}`;
+  const base = opts.fresh ? await pinnedUrl(url) : pinnedUrls.get(url) ?? url;
+  if (opts.fresh) {
+    if (base === url) pinnedUrls.delete(url);
+    else pinnedUrls.set(url, base);
+  }
+  const full = `${base.replace(/\/+$/, "")}/${path}`;
   let res: Response;
   try {
     res = await fetch(full, { signal: AbortSignal.timeout(20_000), headers: { Accept: "application/json, text/plain" } });
@@ -203,7 +209,7 @@ export function checkEntry(file: any): string[] {
     }
     if (BUILTIN_THEMES.some((t) => t.id === c.id)) errors.push(`theme id "${c.id}" is a built-in theme; pick another`);
   } else if (file.kind === "deck" || file.kind === "type") {
-    if (c.etude !== "pack/1") errors.push('content must be an Etude pack ("etude": "pack/1")');
+    if (c.etude !== "pack/1") errors.push('content must be a Wikae pack ("etude": "pack/1")');
     if (!Array.isArray(c.items ?? [])) errors.push("content.items must be a list");
     if (!Array.isArray(c.types ?? [])) errors.push("content.types must be a list");
     for (const t of c.types ?? []) {
@@ -257,6 +263,8 @@ export function marketSettings(e: Etude): MarketSettings {
 }
 
 const indexCache = new Map<string, { at: number; index: MarketIndex }>();
+/** A refreshed index is pinned to a commit; entries must come from that same commit for sha256 to match. */
+const pinnedUrls = new Map<string, string>();
 
 const COVER_EXT = ["webp", "png", "jpg"] as const;
 export const MAX_COVER_BYTES = 600 * 1024;
@@ -308,7 +316,7 @@ export async function fetchIndex(url: string, opts: { refresh?: boolean } = {}):
   if (hit && !opts.refresh && Date.now() - hit.at < 60_000) return hit.index;
   const { text } = await readMarketFile(url, "index.json", { fresh: opts.refresh });
   const index = parseJson(text, "index.json");
-  if (index?.etude !== "market/1" || !Array.isArray(index.entries)) throw new MarketError("index.json isn't an Etude market index");
+  if (index?.etude !== "market/1" || !Array.isArray(index.entries)) throw new MarketError("index.json isn't a Wikae market index");
   indexCache.set(url, { at: Date.now(), index });
   return index;
 }
@@ -341,27 +349,36 @@ export interface InstalledEntry {
   ids: string[];
 }
 
+export const installKey = (kind: MarketKind, id: string) => `${kind}:${id}`;
+/** Entries saved before installs were namespaced are keyed by the bare id. */
+export const installedRec = (map: Record<string, InstalledEntry>, kind: MarketKind, id: string) => {
+  const rec = map[installKey(kind, id)] ?? map[id];
+  return rec?.kind === kind ? rec : undefined;
+};
+
 export function installedEntries(e: Etude): Record<string, InstalledEntry> {
   return e.db.setting<{ installed?: Record<string, InstalledEntry> }>("market", {}).installed ?? {};
 }
 
 function recordInstall(e: Etude, id: string, rec: InstalledEntry) {
   const cur = e.db.setting<{ installed?: Record<string, InstalledEntry> }>("market", {});
-  e.db.setSetting("market", { ...cur, installed: { ...(cur.installed ?? {}), [id]: rec } });
+  e.db.setSetting("market", { ...cur, installed: { ...(cur.installed ?? {}), [installKey(rec.kind, id)]: rec } });
 }
 
 export function forgetInstall(e: Etude, id: string): boolean {
   const cur = e.db.setting<{ installed?: Record<string, InstalledEntry> }>("market", {});
-  if (!cur.installed?.[id]) return false;
-  const { [id]: _gone, ...rest } = cur.installed;
+  // Old collections hold bare ids; accept those too.
+  const key = Object.keys(cur.installed ?? {}).find((k) => k === id || k.endsWith(`:${id}`));
+  if (!key) return false;
+  const { [key]: _gone, ...rest } = cur.installed!;
   e.db.setSetting("market", { ...cur, installed: rest });
   return true;
 }
 
 /** "installed", "update" (the market has a newer version), or null. */
 export function installState(e: Etude, entry: MarketMeta, installed = installedEntries(e)): "installed" | "update" | null {
-  const rec = installed[entry.id];
-  if (!rec || rec.kind !== entry.kind) return null;
+  const rec = installedRec(installed, entry.kind, entry.id);
+  if (!rec) return null;
   return rec.version !== entry.version || (entry.updated && rec.updated !== entry.updated) ? "update" : "installed";
 }
 
@@ -382,7 +399,7 @@ export function installFile(e: Etude, file: MarketFile, opts: { dryRun?: boolean
   const errors = checkEntry(file);
   if (errors.length) throw new MarketError(`invalid market entry: ${errors.join("; ")}`);
   const meta = metaOf(file);
-  const prev = installedEntries(e)[meta.id];
+  const prev = installedRec(installedEntries(e), meta.kind, meta.id);
   let result: "created" | "updated" | "unchanged";
   let ids: string[];
   let report: any;
@@ -447,14 +464,15 @@ function inlineMedia(e: Etude, pack: any) {
   const root = resolve(e.mediaDir);
   for (const it of pack.items ?? []) {
     for (const [k, v] of Object.entries(it.fields ?? {})) {
-      if (typeof v !== "string") continue;
-      const m = /^\/media\/(.+)$/.exec(v);
-      if (!m) continue;
-      const full = resolve(root, m[1]);
-      if (!full.startsWith(root + sep) || !existsSync(full)) continue;
-      const type = mediaType(full);
-      if (!type) continue;
-      it.fields[k] = `data:${type.mime};base64,${readFileSync(full).toString("base64")}`;
+      if (typeof v !== "string" || !v.includes("/media/")) continue;
+      // Also rewrite embeds inside Markdown/HTML, not just fields that are only a media path.
+      it.fields[k] = v.replace(/(?<![\w/])\/media\/[\w./-]+/g, (ref) => {
+        const full = resolve(root, ref.slice("/media/".length));
+        if (!full.startsWith(root + sep) || !existsSync(full)) return ref;
+        const type = mediaType(full);
+        if (!type) return ref;
+        return `data:${type.mime};base64,${readFileSync(full).toString("base64")}`;
+      });
     }
   }
   return pack;
@@ -471,7 +489,7 @@ export function buildSubmission(e: Etude, input: SubmissionInput): MarketFile {
 
   if (kind === "theme") {
     const t = e.theme(ref);
-    if (t.builtin) throw new MarketError(`"${t.name}" ships with Etude already; publish a copy you made from it`);
+    if (t.builtin) throw new MarketError(`"${t.name}" ships with Wikae already; publish a copy you made from it`);
     const { builtin: _b, ...plain } = t;
     content = plain;
     name ||= t.name;
@@ -486,7 +504,7 @@ export function buildSubmission(e: Etude, input: SubmissionInput): MarketFile {
     const def = e.typeWithAssets(ref) as CardTypeDef & { builtin?: boolean };
     def.builtin = e.type(ref).builtin;
     const shipped = e.listTypes().find((t) => t.id === ref);
-    if (def.builtin && !shipped?.edited) throw new MarketError(`"${def.name}" ships with Etude already; publish your own type`);
+    if (def.builtin && !shipped?.edited) throw new MarketError(`"${def.name}" ships with Wikae already; publish your own type`);
     const n = Math.max(0, Math.min(20, input.examples ?? 3));
     const sample = n ? inlineMedia(e, e.exportPack({ query: `type:${ref}` })) : { items: [], decks: [], presets: [] };
     const items = sample.items.slice(0, n);
@@ -533,7 +551,7 @@ export function manualPublishUrl(repo: string, file: MarketFile): string {
 
 type Gh = (args: string[], input?: unknown) => any;
 
-function ghRunner(bin = process.env.ETUDE_GH || "gh"): Gh {
+function ghRunner(bin = appEnv(process.env, "GH") || "gh"): Gh {
   return (args, input) => {
     let out: string;
     try {
@@ -571,8 +589,9 @@ export function ghStatus(gh: Gh = ghRunner()): { ok: boolean; login?: string; re
  * Opens a pull request adding (or updating) the entry file. Uses the signed-in `gh`: forks the
  * market repository when you can't push to it, commits the file on a new branch, opens the PR.
  */
-export function publishFile(file: MarketFile, opts: { repo?: string; gh?: Gh } = {}) {
+export async function publishFile(file: MarketFile, opts: { repo?: string; gh?: Gh } = {}) {
   const repo = opts.repo ?? MARKET_REPO;
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new MarketError("market repo must be owner/name", 400);
   const gh = opts.gh ?? ghRunner();
   const status = ghStatus(gh);
   if (!status.ok) throw new MarketError(status.reason ?? "gh isn't available", 424);
@@ -591,7 +610,7 @@ export function publishFile(file: MarketFile, opts: { repo?: string; gh?: Gh } =
         gh(["api", "-X", "POST", `repos/${target}/merge-upstream`, "--input", "-"], { branch: base });
         break;
       } catch {
-        execFileSync("sleep", ["2"]);
+        await new Promise((r) => setTimeout(r, 2000));
       }
     }
   }
@@ -618,7 +637,7 @@ export function publishFile(file: MarketFile, opts: { repo?: string; gh?: Gh } =
     "",
     file.description || "",
     "",
-    `Published from Etude with \`etude market publish\`. The check on this pull request validates the file; the index updates itself after merge.`,
+    `Published from Wikae with \`wikae market publish\`. The check on this pull request validates the file; the index updates itself after merge.`,
   ].join("\n");
   const pr = gh(["api", "-X", "POST", `repos/${repo}/pulls`, "--input", "-"], {
     title: `${verb} ${label}: ${file.name}`,

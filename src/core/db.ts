@@ -205,14 +205,19 @@ export class Db {
   /** Runs `fn` in a transaction; nested calls join the outer one. */
   tx<T>(fn: () => T): T {
     if (this.depth > 0) return fn();
-    this.depth++;
+    // BEGIN before depth++: a busy database must not leave depth stuck above zero.
     this.sql.exec("BEGIN IMMEDIATE");
+    this.depth++;
     try {
       const out = fn();
       this.sql.exec("COMMIT");
       return out;
     } catch (e) {
-      this.sql.exec("ROLLBACK");
+      try {
+        this.sql.exec("ROLLBACK");
+      } catch {
+        // The original error is the useful one.
+      }
       throw e;
     } finally {
       this.depth--;
@@ -222,7 +227,12 @@ export class Db {
 
   setting<T>(key: string, fallback: T): T {
     const row = this.get("SELECT value FROM settings WHERE key = ?", key);
-    return row ? (JSON.parse(row.value) as T) : fallback;
+    if (!row) return fallback;
+    try {
+      return JSON.parse(row.value) as T;
+    } catch {
+      return fallback;
+    }
   }
 
   setSetting(key: string, value: unknown) {

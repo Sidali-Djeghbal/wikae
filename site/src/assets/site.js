@@ -396,7 +396,7 @@ if (exam) {
     const { fsrs, generatorParameters, createEmptyCard, Rating } = await loadFsrs();
     const f = fsrs(generatorParameters({ enable_fuzz: false, learning_steps: ["1m", "10m"], relearning_steps: ["10m"], request_retention: 0.9 }));
     const DAY = 864e5, H = 36e5;
-    // Etude's rule (src/core/scheduler.ts capToDeadline), with the default 12-hour margin.
+    // Wikae's rule (src/core/scheduler.ts capToDeadline), with the default 12-hour margin.
     const cap = (due, now, deadline) => {
       const latest = new Date(deadline - 12 * H);
       if (due <= latest) return due;
@@ -419,6 +419,15 @@ if (exam) {
         now = new Date(next);
       }
       return { reviews, examAt, recall: f.get_retrievability(card, new Date(examAt), false) };
+    }
+    // A drag asks for the same runs many times; keep them for the current slider value only.
+    let cacheD = null, cached = new Map();
+    function sim(D, withDeadline, startDay) {
+      if (cacheD !== D) { cacheD = D; cached = new Map(); }
+      const key = `${withDeadline}:${startDay}`;
+      let run = cached.get(key);
+      if (!run) { run = study(D, withDeadline, startDay); cached.set(key, run); }
+      return run;
     }
     const slider = $("#days", exam), chart = $("[data-chart]", exam);
     const R = (card, t) => Number(f.get_retrievability(card, new Date(t), false));
@@ -465,7 +474,7 @@ if (exam) {
       const D = Number(slider.value);
       slider.style.setProperty("--p", `${((D - Number(slider.min)) / (Number(slider.max) - Number(slider.min))) * 100}%`);
       $("[data-days]", exam).textContent = String(D);
-      const off = study(D, false, 0), on = study(D, true, 0);
+      const off = sim(D, false, 0), on = sim(D, true, 0);
       last = [D, off, on];
       draw(D, off, on);
       const count = (run) => new Set(run.reviews.map((r) => Math.round((r.t - t0) / DAY))).size;
@@ -483,14 +492,18 @@ if (exam) {
       let rOff = 0, rOn = 0;
       for (let i = 0; i < 40; i++) {
         const s = Math.floor((i * D * 0.6) / 40);
-        rOff += study(D, false, s).recall;
-        rOn += study(D, true, s).recall;
+        rOff += sim(D, false, s).recall;
+        rOn += sim(D, true, s).recall;
       }
       $("[data-recall-off]", exam).textContent = pct(rOff / 40);
       $("[data-recall-on]", exam).textContent = pct(rOn / 40);
     }
     new ResizeObserver(() => last && draw(...last)).observe(chart);
-    slider.addEventListener("input", render);
+    let pending = 0;
+    slider.addEventListener("input", () => {
+      if (pending) return;
+      pending = requestAnimationFrame(() => { pending = 0; render(); });
+    });
     window.addEventListener("wikae-lang-change", render);
     render();
   });
@@ -1217,9 +1230,9 @@ if (rep && GALLERY?.length) {
       const isAr = getCurrentLang() === "ar";
       const s = [["--t-bg", v(t, "--background", "#111")], ["--t-side", v(t, "--sidebar", v(t, "--background"))], ["--t-card", v(t, "--card", "#222")], ["--t-fg", v(t, "--foreground", "#eee")],
         ["--t-muted", v(t, "--muted-foreground", "#999")], ["--t-hl", v(t, "--highlight", v(t, "--primary", "#10b981"))], ["--t-border", v(t, "--border", "#ffffff22")]]
-        .map(([k, val]) => `${k}:${val}`).join(";");
-      const rate = ["--again", "--hard", "--good", "--easy"].map((k) => `<i style="background:${v(t, k, "#888")}"></i>`).join("");
-      const chips = ["--highlight", "--chart-2", "--chart-3", "--chart-4"].map((k) => `<i style="background:${v(t, k, v(t, "--highlight", "#10b981"))}"></i>`).join("");
+        .map(([k, val]) => `${k}:${esc(val)}`).join(";");
+      const rate = ["--again", "--hard", "--good", "--easy"].map((k) => `<i style="background:${esc(v(t, k, "#888"))}"></i>`).join("");
+      const chips = ["--highlight", "--chart-2", "--chart-3", "--chart-4"].map((k) => `<i style="background:${esc(v(t, k, v(t, "--highlight", "#10b981")))}"></i>`).join("");
       const t1 = isAr ? "<b>وِ</b>كَاء" : "<b>W</b>ikae";
       const t2 = isAr ? "رِباط <b>المحفوظ</b>" : "Spaced <b>Practice</b>";
       return `<div class="mk-theme" style="${esc(s)}" aria-hidden="true"><div class="rail"><i></i><i></i><i></i><i></i></div><div class="pane"><div class="t1">${t1}</div><div class="t2">${t2}</div><div class="chips">${chips}</div><div class="rates">${rate}</div></div></div>`;

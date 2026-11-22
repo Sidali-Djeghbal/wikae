@@ -34,7 +34,7 @@ command({
   name: "settings set",
   summary: "Change settings with dotted key=value pairs (JSON values when they parse).",
   description:
-    "Examples of keys: dayStartHour, learnAheadMinutes, ai.autoFeedback (ai-graded|always|never), ai.language, ai.decision (null disables the decision model), ai.decision.model, ai.feedback.model, ai.feedback.url, ai.feedback.apiKeyEnv, ai.vision, onboarding.level (simple|standard|tinker), onboarding.done. API keys themselves live in the environment or $ETUDE_HOME/.env (see `etude settings key set`), never in settings.",
+    "Examples of keys: dayStartHour, learnAheadMinutes, ai.autoFeedback (ai-graded|always|never), ai.language, ai.decision (null disables the decision model), ai.decision.model, ai.feedback.model, ai.feedback.url, ai.feedback.apiKeyEnv, ai.vision, onboarding.level (simple|standard|tinker), onboarding.done. API keys themselves live in the environment or $WIKAE_HOME/.env (see `etude settings key set`), never in settings.",
   args: [{ name: "pairs", description: "key=value pairs.", required: true, variadic: true }],
   writes: true,
   dryRun: true,
@@ -110,7 +110,7 @@ command({
 
 command({
   name: "settings key set",
-  summary: "Save one API key to $ETUDE_HOME/.env (owner-only), read from stdin so it never appears in the shell history.",
+  summary: "Save one API key to $WIKAE_HOME/.env (owner-only), read from stdin so it never appears in the shell history.",
   description:
     "The name is the environment variable the settings point at (ai.feedback.apiKeyEnv, ai.decision.apiKeyEnv), e.g. OPENROUTER_API_KEY or OPENAI_API_KEY. Other lines in the file are kept. A running server picks the key up when it is set through Settings; one started earlier needs a restart to see a key set here.",
   args: [{ name: "name", description: "Variable name: capital letters, digits and _, at most 64.", required: true }],
@@ -127,7 +127,7 @@ command({
 
 command({
   name: "settings key unset",
-  summary: "Remove one API key from $ETUDE_HOME/.env.",
+  summary: "Remove one API key from $WIKAE_HOME/.env.",
   args: [{ name: "name", description: "Variable name.", required: true }],
   writes: true,
   noDb: true,
@@ -154,7 +154,7 @@ command({
   name: "settings chatgpt login",
   summary: "Sign in with ChatGPT, so grading uses the user's ChatGPT Plus or Pro plan instead of an API key.",
   description:
-    "Opens OpenAI's sign-in page in the system browser and waits for the loopback callback on 127.0.0.1. The browser must run on this machine: a 127.0.0.1 callback never reaches a server on another host. Tokens are saved to $ETUDE_HOME/chatgpt.json with owner-only permissions.",
+    "Opens OpenAI's sign-in page in the system browser and waits for the loopback callback on 127.0.0.1. The browser must run on this machine: a 127.0.0.1 callback never reaches a server on another host. Tokens are saved to $WIKAE_HOME/chatgpt.json with owner-only permissions.",
   flags: [
     { name: "no-open", type: "boolean", description: "Don't launch a browser; the URL is printed instead." },
     { name: "timeout", type: "number", description: "Seconds to wait for the callback. Default 600." },
@@ -221,7 +221,7 @@ command({
   args: [{ name: "file", description: "The credential file copied from the other machine.", required: true }],
   writes: true,
   noDb: true,
-  examples: ["scp laptop:~/.etude/chatgpt.json /tmp/ && etude settings chatgpt import /tmp/chatgpt.json"],
+  examples: ["scp laptop:~/.wikae/chatgpt.json /tmp/ && etude settings chatgpt import /tmp/chatgpt.json"],
   output: "{ signedIn, email, hostId, credentialsPath, plan }",
   run(ctx) {
     try {

@@ -1,7 +1,7 @@
 // Builds the static website into site/dist.
 //   node site/build.ts            (run `npm run build` first: the card runtime needs web/dist/kit)
 //
-// The landing page runs real Etude card types with no server: the card frames, runtime and
+// The landing page runs real Wikae card types with no server: the card frames, runtime and
 // vendor files are copied here, and each demo's prepare and grade scripts run in the page with
 // the same helpers (`std`, `rng`) the server's sandbox gives them.
 import { execFileSync } from "node:child_process";

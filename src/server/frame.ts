@@ -19,7 +19,10 @@ const esc = (s: string) => s.replace(/<\/(script|style)/gi, "<\\/$1");
 export function frameCsp(base: string): string {
   let origin: string;
   try {
-    origin = new URL(base).origin;
+    const u = new URL(base);
+    // capacitor:// and ionic:// are custom schemes: their URL origin is "null", but the frames
+    // still load assets from that host, so a literal source is needed instead of 'none'.
+    origin = u.origin === "null" && u.host && /^(?:capacitor|ionic):/.test(u.protocol) ? `${u.protocol}//${u.host}` : u.origin;
   } catch {
     // A relative base (the static website's prebuilt frames) is served from the page's own origin.
     origin = "'self'";

@@ -18,29 +18,54 @@ test("arabicNormalizer: diacritic stripping, tatweel and alef normalization", ()
   assert.equal(stripTashkeel("بَلَدًا"), "بلدا");
 
   // 2. Alef variants normalization [أإآٱٲٳ] -> ا
-  assert.equal(normalizeArabic("إِبْرَٰهِيمُ"), "ابراهيم");
+  assert.equal(normalizeArabic("إِبْرَٰهِيمُ"), "ابرهيم");
   assert.equal(normalizeArabic("ٱلْبَلَدَ"), "البلد");
   assert.equal(normalizeArabic("آَمِنًا"), "امنا");
-  assert.equal(normalizeArabic("أَوْلَـٰدَكُمْ"), "اولادكم");
+  assert.equal(normalizeArabic("أَوْلَـٰدَكُمْ"), "اولدكم");
 
   // 3. Isolated Hamza + Alef: ءا -> ا
   assert.equal(normalizeArabic("ءَامِنًا"), "امنا");
 
-  // 4. Dagger Alef (\u0670) to standard Alef conversion
-  assert.equal(normalizeArabic("إِمْلَـٰقٍ"), "املاق");
-  assert.equal(normalizeArabic("هَـٰذَا"), "هاذا");
+  // 4. Dagger Alef (\u0670) is silent rasm; Imla'i alefs come back via areArabicTokensEqual
+  assert.equal(normalizeArabic("إِمْلَـٰقٍ"), "املق");
+  assert.equal(normalizeArabic("هَـٰذَا"), "هذا");
 
   // 5. Alef Maksura to Ya (ى -> ي) and Teh Marbuta to Ha (ة -> ه)
   assert.equal(normalizeArabic("خَشْيَةَ"), "خشيه");
   assert.equal(normalizeArabic("بَنِىَّ"), "بني");
 
   // 6. Tatweel stripping
-  assert.equal(normalizeArabic("مِّنْ إِمْلَــــٰقٍ"), "من املاق");
+  assert.equal(normalizeArabic("مِّنْ إِمْلَــــٰقٍ"), "من املق");
 
   // 7. Quranic Waqf & Sajda marks stripping (e.g. ۖ ۗ ۚ ۛ ۜ)
-  assert.equal(normalizeArabic("مِّنْ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُكُمْ"), "من املاق نحن نرزقكم");
+  assert.equal(normalizeArabic("مِّنْ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُكُمْ"), "من املق نحن نرزقكم");
   // 8. End-of-Ayah and Arabic letter mark stripping
   assert.equal(normalizeArabic("بَلَدًا ءَامِنًا ۝١\u061C"), "بلدا امنا ١");
+});
+
+test("arabicNormalizer: Uthmani rasm matches Imla'i typing", () => {
+  const pairs: [string, string][] = [
+    ["على", "عَلَىٰ"],
+    ["موسى", "مُوسَىٰ"],
+    ["الصلاة", "ٱلصَّلَوٰةَ"],
+    ["ذلك", "ذَٰلِكَ"],
+    ["هذا", "هَـٰذَا"],
+    ["الرحمن", "ٱلرَّحْمَـٰنِ"],
+    ["إله", "إِلَـٰهٌ"],
+    ["إملاق", "إِمْلَـٰقٍ"],
+    ["أولادكم", "أَوْلَـٰدَكُمْ"],
+    ["إبراهيم", "إِبْرَٰهِـۧمُ"],
+  ];
+  for (const [imlai, uthmani] of pairs) {
+    assert.ok(areArabicTokensEqual(imlai, uthmani), `${imlai} should match ${uthmani}`);
+  }
+
+  // Interrogative hamza and dual alef stay distinct.
+  assert.equal(areArabicTokensEqual("أنتم", "ءَأَنتُمْ"), false);
+  assert.equal(normalizeArabic("جَآءَا"), "جاءا");
+
+  // Directional marks and Quranic brackets never reach the comparison.
+  assert.equal(normalizeArabic("﴿بَلَدًا﴾\u200F"), "بلدا");
 });
 
 test("arabicNormalizer: equality matching for canonical Mutashabihat clusters", () => {
@@ -67,9 +92,9 @@ test("arabicNormalizer: equality matching for canonical Mutashabihat clusters", 
   assert.ok(areArabicTokensEqual(anamUser1, anamUthmani));
   assert.ok(areArabicTokensEqual(anamUser2, anamUthmani));
 
-  const israUthmani = "خَشْيَةَ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُهُمْ وَإِيَّاهُمْ";
-  const israUser1 = "خشية إملاق نحن نرزقهم وإياهم";
-  const israUser2 = "خشيه املاق نحن نرزقهم واياهم";
+  const israUthmani = "خَشْيَةَ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُهُمْ وَإِيَّاكُمْ";
+  const israUser1 = "خشية إملاق نحن نرزقهم وإياكم";
+  const israUser2 = "خشيه املاق نحن نرزقهم واياكم";
   assert.ok(areArabicTokensEqual(israUser1, israUthmani));
   assert.ok(areArabicTokensEqual(israUser2, israUthmani));
 
@@ -189,19 +214,22 @@ test("prepare: the view never reveals the active mode's answer", async () => {
   e.close();
 });
 
-test("prepare: rejects a target that is not in the cluster", async () => {
+test("a bad targetVerseId is rejected at save time, not at study time", async () => {
   const e = await Etude.open(":memory:");
-  e.upsertItem({
-    id: "bad.cluster",
-    type: "quran-mutashabihat",
-    deck: "Deck",
-    fields: {
-      mode: "pivotal_completion",
-      targetVerseId: "missing",
-      siblings: VERIFIED_SEED_CLUSTERS[0].siblings,
-    },
-  });
-  assert.throws(() => e.prepare("bad.cluster", "main", 1), /targetVerseId/);
+  assert.throws(
+    () =>
+      e.upsertItem({
+        id: "bad.cluster",
+        type: "quran-mutashabihat",
+        deck: "Deck",
+        fields: {
+          mode: "pivotal_completion",
+          targetVerseId: "missing",
+          siblings: VERIFIED_SEED_CLUSTERS[0].siblings,
+        },
+      }),
+    /targetVerseId/,
+  );
   e.close();
 });
 
@@ -396,7 +424,7 @@ test("simplified bracket syntax: accepts simple bracket strings and objects with
     fields: {
       siblings: [
         "[الأنعام: 151] وَلَا تَقْتُلُوٓا۟ أَوْلَـٰدَكُم [مِّنْ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُكُمْ وَإِيَّاهُمْ] وَلَا تَقْرَبُوا۟ ٱلْفَوَٰحِشَ",
-        "[الإسراء: 31] وَلَا تَقْتُلُوٓا۟ أَوْلَـٰدَكُمْ [خَشْيَةَ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُهُمْ وَإِيَّاهُمْ] إِنَّ قَتْلَهُمْ",
+        "[الإسراء: 31] وَلَا تَقْتُلُوٓا۟ أَوْلَـٰدَكُمْ [خَشْيَةَ إِمْلَـٰقٍ ۖ نَّحْنُ نَرْزُقُهُمْ وَإِيَّاكُمْ] إِنَّ قَتْلَهُمْ",
       ],
       mode: "surah_identification",
     },

@@ -2,7 +2,7 @@
   {
     "id": "showcase.numeric.train",
     "type": "numeric",
-    "deck": "Etude Showcase::2 Calculate",
+    "deck": "Wikae Showcase::2 Calculate",
     "tags": [
       "showcase",
       "topic::physics"
@@ -19,7 +19,7 @@
   {
     "id": "showcase.math.derivative",
     "type": "math",
-    "deck": "Etude Showcase::2 Calculate",
+    "deck": "Wikae Showcase::2 Calculate",
     "tags": [
       "showcase",
       "topic::calculus",
@@ -38,7 +38,7 @@
   {
     "id": "showcase.estimate.everest",
     "type": "estimate",
-    "deck": "Etude Showcase::2 Calculate",
+    "deck": "Wikae Showcase::2 Calculate",
     "tags": [
       "showcase",
       "topic::estimation"
@@ -59,7 +59,7 @@
   {
     "id": "showcase.balance.combustion",
     "type": "balance",
-    "deck": "Etude Showcase::2 Calculate",
+    "deck": "Wikae Showcase::2 Calculate",
     "tags": [
       "showcase",
       "topic::chemistry"
@@ -82,7 +82,7 @@
   {
     "id": "showcase.unit-circle.mixed",
     "type": "unit-circle",
-    "deck": "Etude Showcase::2 Calculate",
+    "deck": "Wikae Showcase::2 Calculate",
     "tags": [
       "showcase",
       "topic::math"
@@ -98,7 +98,7 @@
   {
     "id": "showcase.plot.parabola",
     "type": "plot",
-    "deck": "Etude Showcase::2 Calculate",
+    "deck": "Wikae Showcase::2 Calculate",
     "tags": [
       "showcase",
       "topic::math"

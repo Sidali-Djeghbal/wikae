@@ -44,6 +44,11 @@ test("sanitizeCss strips remote imports and urls, keeps data: and local ones", (
   assert.match(css, /e \{ color: red \}/);
   assert.throws(() => sanitizeCss("a { background: \\75 rl(https://x.example/i.png) }"), /escapes/);
   assert.throws(() => sanitizeCss("@\\69mport 'https://x.example/a.css';"), /escapes/);
+  // The bypasses: comments inside url(), escaped image-set(), nested parens, and </style> breakout.
+  assert.doesNotMatch(sanitizeCss('a { background: url(/*x*/ "https://x.example/i.png") }').css, /x\.example/);
+  assert.doesNotMatch(sanitizeCss('a { background: image-set(url("https://x.example/i.png") 1x) }').css, /x\.example/);
+  assert.doesNotMatch(sanitizeCss('a { background: image-set("https://x.example/i.png" 1x, url("/media/ok.png") 2x) }').css, /x\.example/);
+  assert.throws(() => sanitizeCss("a { color: red } </style><script>alert(1)</script>"), /<\/style/);
 });
 
 test("normalizeTheme validates and fills in", () => {

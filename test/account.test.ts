@@ -143,5 +143,5 @@ test("account: Ask Etude may read the account but not sign in or delete", () => 
   const cmd = (name: string) => COMMANDS.find((c) => c.name === name)!;
   const g = (name: string) => agentRefusal({ cmd: cmd(name), values: {}, named: {}, attachmentDir: (process.env.TMPDIR ?? tmpdir()) });
   for (const ok of ["account status", "account devices", "account passkeys"]) assert.equal(g(ok), null, ok);
-  for (const no of ["account delete", "account signin", "account revoke", "account server"]) assert.match(g(no) ?? "", /can't change the Etude account/, no);
+  for (const no of ["account delete", "account signin", "account revoke", "account server"]) assert.match(g(no) ?? "", /can't change the Wikae account/, no);
 });

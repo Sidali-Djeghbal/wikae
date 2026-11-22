@@ -169,7 +169,7 @@ export class Adaptive {
     const seen = new Map<string, number>();
     const scores = new Map<number, { ts: string; score: number }[]>();
     // Probes per placement session (answers from before sessions had names count as one session).
-    const sessions = new Map<string, { first: string; probes: Map<string, { band: number; score: number }[]>; reviews: Set<number> }>();
+    const sessions = new Map<string, { first: string; last: string; probes: Map<string, { band: number; score: number }[]>; reviews: Set<number> }>();
     let maxTs = "";
     for (const r of this.host.db.all(
       `SELECT a.ts, a.card_id, a.grade, a.review_id, rv.rating FROM attempts a JOIN cards c ON c.id = a.card_id JOIN items i ON i.id = c.item_id JOIN decks d ON d.id = i.deck_id LEFT JOIN reviews rv ON rv.id = a.review_id WHERE ${scope} ORDER BY a.ts, a.id`,
@@ -188,8 +188,9 @@ export class Adaptive {
       if (ad?.goal === "teach" && r.rating !== 4) continue;
       attempts.push({ ts: r.ts, a: { cardId: r.card_id, key: ad?.variant ? `${card.itemId}#${ad.variant}` : `card:${r.card_id}`, skills: card.skills, score: g.score, prior: ad?.difficulty } });
       if (ad?.placement) {
-        const key = String(ad.placement);
-        const sess = sessions.get(key) ?? sessions.set(key, { first: r.ts, probes: new Map(), reviews: new Set() }).get(key)!;
+        const key = placementSession(ad.placement);
+        const sess = sessions.get(key) ?? sessions.set(key, { first: r.ts, last: r.ts, probes: new Map(), reviews: new Set() }).get(key)!;
+        sess.last = r.ts;
         sess.reviews.add(r.review_id);
         const skill = card.skills[0];
         (sess.probes.get(skill) ?? sess.probes.set(skill, []).get(skill)!).push({ band: bands.get(skill)?.indexOf(card.band) ?? -1, score: g.score });
@@ -197,11 +198,17 @@ export class Adaptive {
     }
     const placementOf = (session: string) => {
       const probes = sessions.get(session)?.probes;
+      const fresh = new Map<string, Set<number>>();
+      for (const c of cards.values()) if (c.active && c.state === 0) (fresh.get(c.skills[0]) ?? fresh.set(c.skills[0], new Set()).get(c.skills[0])!).add(c.band);
       const out = new Map<string, { bands: number[]; state: learn.PlacementState }>();
-      for (const [skill, list] of bands) out.set(skill, { bands: list, state: learn.placementState(list.length, probes?.get(skill) ?? []) });
+      for (const [skill, list] of bands) {
+        const have = fresh.get(skill);
+        const exhausted = new Set(list.map((_, i) => i).filter((i) => !have?.has(list[i])));
+        out.set(skill, { bands: list, state: learn.placementState(list.length, probes?.get(skill) ?? [], exhausted) });
+      }
       return out;
     };
-    const latest = [...sessions.entries()].sort((a, b) => b[1].first.localeCompare(a[1].first))[0]?.[0];
+    const latest = [...sessions.entries()].sort((a, b) => b[1].last.localeCompare(a[1].last))[0]?.[0];
     const placement: RootData["placement"] = new Map([...placementOf(latest ?? "")].map(([skill, p]) => [skill, { ...p, frontier: p.state.frontier, checks: { done: 0, passed: 0 } }]));
     // Quick checks: first answers since the session began to cards in the bands it passed. Too many
     // wrong in a band revises the frontier down to it.
@@ -235,7 +242,7 @@ export class Adaptive {
     // or, until one of its cards is rated Again or misses the target, the latest placement passed its band.
     const failed = new Set(
       this.host.db
-        .all<{ item_id: string }>(`SELECT DISTINCT c.item_id FROM reviews r JOIN cards c ON c.id = r.card_id JOIN items i ON i.id = c.item_id JOIN decks d ON d.id = i.deck_id WHERE ${scope} AND r.rating = 1`, ...sp)
+        .all<{ item_id: string }>(`SELECT DISTINCT c.item_id FROM reviews r JOIN cards c ON c.id = r.card_id JOIN items i ON i.id = c.item_id JOIN decks d ON d.id = i.deck_id WHERE ${scope} AND r.practice = 0 AND r.rating = 1`, ...sp)
         .map((r) => r.item_id),
     );
     for (const c of cards.values()) if (c.answers.some((a) => !a.pass)) failed.add(c.itemId);
@@ -353,14 +360,17 @@ export class Adaptive {
       young.reviews++;
       if (pass) young.passed++;
     }
-    // Reviews without a recorded duration count as 15 seconds.
-    const rv = this.host.db.get(
-      `SELECT SUM(COALESCE(x.duration_ms, 15000)) AS ms, COUNT(DISTINCT substr(x.ts, 1, 10)) AS days FROM reviews x ${join} WHERE x.practice = 0 AND x.ts >= ? AND x.ts < ? AND ${scope}`,
+    // Reviews without a recorded duration count as 15 seconds. Days are study days, not UTC dates.
+    const rows = this.host.db.all<{ ts: string; ms: number }>(
+      `SELECT x.ts, COALESCE(x.duration_ms, 15000) AS ms FROM reviews x ${join} WHERE x.practice = 0 AND x.ts >= ? AND x.ts < ? AND ${scope}`,
       from,
       to,
       ...sp,
-    )!;
-    const pace = learn.pace(cfg, { activeDays: Number(rv.days ?? 0), young, minutes: Number(rv.ms ?? 0) / 60000, newCards: news });
+    );
+    let ms = 0;
+    const days = new Set<string>();
+    for (const r of rows) { ms += r.ms; days.add(this.host.dayStart(new Date(r.ts)).toISOString()); }
+    const pace = learn.pace(cfg, { activeDays: days.size, young, minutes: ms / 60000, newCards: news });
     this.paceCache.set(root, { key, pace });
     return pace;
   }
@@ -503,6 +513,6 @@ export function variantPrior(def: CardTypeDef, fields: Record<string, unknown>, 
 }
 
 function bandLabel(cfg: PresetConfig, band: number | undefined): string {
-  if (band === undefined) return cfg.levels.length ? "beyond the last level" : "the end of the deck";
-  return cfg.levels.length ? cfg.levels[band].tag : `${band * 10}% into the deck`;
+  if (!cfg.levels.length) return band == null || band < 0 || band >= 10 ? "the end of the deck" : `${band * 10}% into the deck`;
+  return band == null || band < 0 || band >= cfg.levels.length ? "beyond the last level" : cfg.levels[band].tag;
 }

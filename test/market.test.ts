@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Etude } from "../src/core/engine.ts";
-import { buildIndex, buildSubmission, checkEntry, entryJson, entryPath, fetchIndex, installEntry, installFile, installState, installedEntries, publishFile, MARKET_REPO, type MarketFile } from "../src/core/market.ts";
+import { buildIndex, buildSubmission, checkEntry, entryJson, entryPath, fetchIndex, forgetInstall, installEntry, installFile, installState, installedEntries, publishFile, MARKET_REPO, type MarketFile } from "../src/core/market.ts";
 
 const dir = () => mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), "etude-market-"));
 const SHOWCASE = JSON.parse(readFileSync(new URL("../examples/showcase.pack.json", import.meta.url), "utf8"));
@@ -37,7 +37,7 @@ test("submissions: themes, decks and types become valid entries", async () => {
   assert.deepEqual(theme.tags, ["dark"]);
   assert.deepEqual(checkEntry(theme), []);
 
-  const deck = buildSubmission(e, { kind: "deck", ref: "Etude Showcase", author: "ana" });
+  const deck = buildSubmission(e, { kind: "deck", ref: "Wikae Showcase", author: "ana" });
   assert.equal(deck.content.etude, "pack/1");
   assert.equal(deck.content.items.length, SHOWCASE.items.length);
   assert.ok(deck.content.types.length > 0, "custom types the deck uses come along");
@@ -48,8 +48,8 @@ test("submissions: themes, decks and types become valid entries", async () => {
   assert.equal(type.content.items.length, 1);
   assert.equal(type.content.types[0].updated, undefined);
 
-  assert.throws(() => buildSubmission(e, { kind: "theme", ref: "midnight" }), /ships with Etude/);
-  assert.throws(() => buildSubmission(e, { kind: "type", ref: "numeric" }), /ships with Etude/);
+  assert.throws(() => buildSubmission(e, { kind: "theme", ref: "midnight" }), /ships with Wikae/);
+  assert.throws(() => buildSubmission(e, { kind: "type", ref: "numeric" }), /ships with Wikae/);
 });
 
 test("submissions: item media travels inside the entry and installs into media", async () => {
@@ -83,7 +83,7 @@ test("checkEntry rejects bad files", () => {
 test("install from a market folder, reinstall, update detection", async () => {
   const src = await source();
   const theme = buildSubmission(src, { kind: "theme", ref: "sea", author: "ana" });
-  const deck = buildSubmission(src, { kind: "deck", ref: "Etude Showcase", id: "showcase", author: "ana" });
+  const deck = buildSubmission(src, { kind: "deck", ref: "Wikae Showcase", id: "showcase", author: "ana" });
   const type = buildSubmission(src, { kind: "type", ref: "chess", id: "chess-move", author: "ana" });
   const url = await market([theme, deck, type]);
   const index = await fetchIndex(url, { refresh: true });
@@ -102,13 +102,13 @@ test("install from a market folder, reinstall, update detection", async () => {
 
   const dry = await installEntry(e, "showcase", { url, dryRun: true });
   assert.equal((dry.report as any).items.created, SHOWCASE.items.length);
-  assert.ok(!e.deckTree().some((d) => d.name === "Etude Showcase"), "dry run writes nothing");
-  assert.equal(installedEntries(e).showcase, undefined);
+  assert.ok(!e.deckTree().some((d) => d.name === "Wikae Showcase"), "dry run writes nothing");
+  assert.equal(installedEntries(e)["deck:showcase"], undefined);
 
   const d = await installEntry(e, "showcase", { url });
   assert.equal(d.result, "created");
-  assert.deepEqual(d.ids, ["Etude Showcase"]);
-  assert.equal(e.watchList({ deck: "Etude Showcase" }).length, SHOWCASE.items.length);
+  assert.deepEqual(d.ids, ["Wikae Showcase"]);
+  assert.equal(e.watchList({ deck: "Wikae Showcase" }).length, SHOWCASE.items.length);
   const again = await installEntry(e, "showcase", { url });
   assert.equal(again.result, "unchanged");
   assert.equal((again.report as any).items.unchanged, SHOWCASE.items.length);
@@ -147,7 +147,7 @@ test("publish opens a pull request through a fork when you can't push", async ()
     if (path.endsWith("/pulls")) return { html_url: `https://github.com/${MARKET_REPO}/pull/7`, number: 7 };
     return {};
   };
-  const r = publishFile(file, { gh });
+  const r = await publishFile(file, { gh });
   assert.equal(r.number, 7);
   assert.equal(r.fork, `ana/${marketName}`);
   const put = calls.find((c) => c.args.includes("PUT"))!;
@@ -172,4 +172,36 @@ test("index records sha256 and install rejects a tampered entry", async () => {
 
   const e = await Etude.open(":memory:");
   await assert.rejects(() => installEntry(e, "sea", { url }), /doesn't match the index/);
+});
+
+test("installs are tracked by kind and id, so a deck and a type with the same id don't collide", async () => {
+  const src = await source();
+  const deck = buildSubmission(src, { kind: "deck", ref: "Wikae Showcase", id: "shared", author: "ana" });
+  const type = buildSubmission(src, { kind: "type", ref: "chess", id: "shared", author: "ana", examples: 0 });
+  const e = await Etude.open(":memory:");
+  installFile(e, deck);
+  installFile(e, type);
+  assert.equal(installedEntries(e)["deck:shared"].kind, "deck");
+  assert.equal(installedEntries(e)["type:shared"].kind, "type");
+  assert.equal(installState(e, deck), "installed");
+  assert.equal(installState(e, type), "installed");
+  assert.equal(forgetInstall(e, "shared"), true);
+  assert.equal(installState(e, deck), null);
+  assert.equal(installState(e, type), "installed");
+
+  // Collections saved before installs were namespaced still read.
+  e.db.setSetting("market", { installed: { shared: { kind: "deck", name: deck.name, version: deck.version, updated: deck.updated, at: "", ids: [] } } });
+  assert.equal(installState(e, deck), "installed");
+});
+
+test("publishing inlines /media/ embeds inside Markdown and HTML fields", async () => {
+  const e = await Etude.open(":memory:");
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+  const m = e.storeMedia("dot.png", png);
+  e.upsertItem({ id: "embed", type: "basic", deck: "Embed Deck", fields: { front: `![dot](${m.url}) and <img src="${m.url}">`, back: "x" } });
+  const deck = buildSubmission(e, { kind: "deck", ref: "Embed Deck", author: "ana" });
+  const front = deck.content.items[0].fields.front;
+  assert.match(front, /^!\[dot\]\(data:image\/png;base64,/);
+  assert.match(front, /<img src="data:image\/png;base64,/);
+  assert.ok(!front.includes("/media/"));
 });

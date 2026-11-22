@@ -9,4 +9,5 @@ const state = {
 };
 const doneToday = ctx.doneToday + 1;
 if (options.perDay === 0 || doneToday < options.perDay) return { due: ctx.now, state };
-return { due: ctx.day[Math.min(options.everyDays, ctx.day.length - 1)], state };
+const days = Math.min(Math.max(1, Math.floor(Number(options.everyDays) || 1)), ctx.day.length - 1);
+return { due: ctx.day[days], state };

@@ -1,4 +1,4 @@
-import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 import type { Etude } from "../engine.ts";
 import { bootstrap, drain, install, localEvent, receive, rows, type Change } from "./log.ts";
@@ -80,7 +80,7 @@ export class SyncClient {
   async probe() {const c=this.config();if(c?.kind!=="cloud"||!this.token())return this.status();try{const k=await this.transport().keys();this.set("config",{...this.config(),hasKeys:!!k});this.error=null;}catch(e){this.error=(e as Error).message;}return this.status();}
   async signin(email:string) {const c=this.config();if(c?.kind!=="cloud")throw new Error("choose a Sync server first");await new CloudTransport(c.server!,"").json("/v1/auth/email/start",{email});this.set("config",{...c,email});return this.status();}
   /** Redeems the email's 6-digit code (with the address from `signin`) or the link's long token. */
-  async verify(input:string) {const c=this.config();if(c?.kind!=="cloud")throw new Error("choose a Sync server first");const code=signInCode(input);if(code&&!c.email)throw new Error("ask for a code first: the code goes with the email address it was sent to");const r:any=await new CloudTransport(c.server!,"").json("/v1/auth/email/verify",{...(code?{email:c.email,code}:{token:input.trim()}),deviceName:process.versions?.node?"Etude desktop":"Etude browser"}).catch((e:any)=>{throw e?.code?new AccountError(e.message,401,e.code):e;});this.saveSecrets({token:r.token});accountFor(this.e).adopt(c.server!,r.token,r.account);this.set("config",{...c,email:r.account.email});return this.probe();}
+  async verify(input:string) {const c=this.config();if(c?.kind!=="cloud")throw new Error("choose a Sync server first");const code=signInCode(input);if(code&&!c.email)throw new Error("ask for a code first: the code goes with the email address it was sent to");const r:any=await new CloudTransport(c.server!,"").json("/v1/auth/email/verify",{...(code?{email:c.email,code}:{token:input.trim()}),deviceName:process.versions?.node?"Wikae desktop":"Wikae browser"}).catch((e:any)=>{throw e?.code?new AccountError(e.message,401,e.code):e;});this.saveSecrets({...this.secrets(),token:r.token});accountFor(this.e).adopt(c.server!,r.token,r.account);this.set("config",{...c,email:r.account.email});return this.probe();}
   async unlock(input:{password?:string;recovery?:string}) {
     const transport=this.transport();const found=await transport.keys();
     let vk:Uint8Array;let recoveryKey:string|undefined;
@@ -117,7 +117,7 @@ export class SyncClient {
     }
     // Hash the media on disk first, so a file another device already uploaded is neither downloaded nor uploaded again.
     const files:[string,string][]=[];
-    const list=(dir:string,prefix="") => {if(!existsSync(dir))return;for(const name of readdirSync(dir)){const p=join(dir,name),relative=prefix+name;if(statSync(p).isDirectory())list(p,relative+"/");else if(safeMediaPath(relative))files.push([p,relative]);}};
+    const list=(dir:string,prefix="") => {if(!existsSync(dir))return;for(const name of readdirSync(dir)){const p=join(dir,name),relative=prefix+name;const st=lstatSync(p);if(st.isSymbolicLink())continue;if(st.isDirectory())list(p,relative+"/");else if(safeMediaPath(relative))files.push([p,relative]);}};
     list(this.e.mediaDir);
     this.step("check",files.length);
     const onDisk=new Map<string,string>(),local=new Map<string,string>();
@@ -131,7 +131,14 @@ export class SyncClient {
       if(!hash){hash=await sha256Hex(new Uint8Array(readFileSync(p)));fresh.push([relative,st.size,st.mtimeMs,hash]);}
       onDisk.set(relative,hash);local.set(hash,p);this.moved(1);
     }
-    db.tx(()=>{for(const f of fresh)db.run("INSERT INTO sync_media_hashes VALUES(?,?,?,?) ON CONFLICT(file) DO UPDATE SET size=excluded.size,mtime=excluded.mtime,hash=excluded.hash",...f);for(const file of known.keys())if(!onDisk.has(file))db.run("DELETE FROM sync_media_hashes WHERE file=?",file);});
+    db.tx(()=>{
+      for(const f of fresh)db.run("INSERT INTO sync_media_hashes VALUES(?,?,?,?) ON CONFLICT(file) DO UPDATE SET size=excluded.size,mtime=excluded.mtime,hash=excluded.hash",...f);
+      for(const file of known.keys())if(!onDisk.has(file)){
+        db.run("DELETE FROM sync_media_hashes WHERE file=?",file);
+        // Without a tombstone, other devices (and this one) keep restoring a file deleted here.
+        localEvent(db,"media",file,{},true);
+      }
+    });
     this.step(down);
     // Read the registers once: a collection can hold tens of thousands of media files.
     const blobs=rows(db,"blob"),media=rows(db,"media");

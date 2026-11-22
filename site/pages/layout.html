@@ -25,6 +25,10 @@
 <link rel="alternate" hreflang="ar" href="https://sidali-djeghbal.github.io/wikae/{{SLUG}}.html?lang=ar">
 <link rel="alternate" hreflang="en" href="https://sidali-djeghbal.github.io/wikae/{{SLUG}}.html?lang=en">
 <link rel="alternate" hreflang="x-default" href="https://sidali-djeghbal.github.io/wikae/{{SLUG}}.html">
+<script>
+  // Without JS the bare URL stays the x-default; with JS each language points at itself.
+  (function () { var c = document.querySelector('link[rel="canonical"]'); if (c) c.href = c.href.replace(/\?.*$/, '') + '?lang=' + document.documentElement.lang; })();
+</script>
 <meta property="og:title" content="{{TITLE}} · وِكَاء (Wikae)">
 <meta property="og:description" content="{{DESCRIPTION}}">
 <meta property="og:type" content="website">

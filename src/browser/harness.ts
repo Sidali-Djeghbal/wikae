@@ -31,7 +31,7 @@ try {
     const rated = await core.call("rate", card.cardId, 1, { attemptId: g.attemptId });
     log("rated", { state: rated?.state ?? rated?.card?.state, due: rated?.due ?? rated?.card?.due });
     // Script graders run in QuickJS: grade a right and a wrong answer on a Showcase card, in watch mode.
-    const list = await core.call("watchList", { deck: "Etude Showcase" });
+    const list = await core.call("watchList", { deck: "Wikae Showcase" });
     const typed = list.find((c: any) => c.type === "typed") ?? list.find((c: any) => c.type === "numeric") ?? list[0];
     const w = await core.call("watchCard", typed.cardId);
     const right = await core.call("watchGrade", typed.cardId, w.card.seed, w.demo.answer);

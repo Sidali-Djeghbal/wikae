@@ -17,7 +17,7 @@ import type { SqlConnection, SqlValue as SQLInputValue } from "./sql.ts";
 
 export class QueryError extends Error {}
 
-type Token = { kind: "term"; text: string; neg: boolean } | { kind: "or" } | { kind: "open"; neg: boolean } | { kind: "close" };
+type Token = { kind: "term"; text: string; neg: boolean; quoted: boolean } | { kind: "or" } | { kind: "open"; neg: boolean } | { kind: "close" };
 
 function tokenize(q: string): Token[] {
   const out: Token[] = [];
@@ -29,28 +29,34 @@ function tokenize(q: string): Token[] {
     if (ch === "-" && i + 1 < q.length && !/\s/.test(q[i + 1])) { neg = true; i++; }
     if (q[i] === "(") { out.push({ kind: "open", neg }); i++; continue; }
     if (q[i] === ")") { out.push({ kind: "close" }); i++; continue; }
-    let text = "";
+    let text = "", quoted = false;
     while (i < q.length && !/[\s()]/.test(q[i])) {
       if (q[i] === '"') {
+        quoted = true;
         const end = q.indexOf('"', i + 1);
         if (end === -1) throw new QueryError("unclosed quote");
         text += q.slice(i + 1, end);
         i = end + 1;
       } else text += q[i++];
     }
-    if (!neg && (text === "OR" || text === "or")) out.push({ kind: "or" });
-    else if (text) out.push({ kind: "term", text, neg });
+    if (!neg && !quoted && (text === "OR" || text === "or")) out.push({ kind: "or" });
+    else if (text) out.push({ kind: "term", text, neg, quoted });
   }
   return out;
 }
 
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
-const entity = (m: string, e: string) =>
-  e[0] === "#" ? String.fromCodePoint(e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1))) : ENTITIES[e.toLowerCase()] ?? m;
+const entity = (m: string, e: string) => {
+  if (e[0] !== "#") return ENTITIES[e.toLowerCase()] ?? m;
+  const n = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : Number(e.slice(1));
+  return Number.isInteger(n) && n >= 0 && n <= 0x10ffff && !(n >= 0xd800 && n <= 0xdfff) ? String.fromCodePoint(n) : m;
+};
 
 /** Text without HTML: real tags dropped (block tags become spaces; a bare < or > is text), entities decoded. */
 export function stripHtml(text: string): string {
   return text
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, " ")
     .replace(/<\/?(?:br|div|p|li|tr|td|th|h\d)\b[^<>]*>/gi, " ")
     .replace(/<\/?[a-zA-Z][\w:-]*(?:\s[^<>]*)?\/?>/g, "")
     .replace(/&(#\d+|#x[\da-f]+|[a-z]+);/gi, entity);
@@ -136,9 +142,10 @@ export function compile(query: string, now = new Date(), lookup: SearchLookup = 
     const val = m[2];
     switch (key) {
       case "deck": {
-        if (val.includes("*")) { params.push(like(val), like(val) + "::%"); return "(d.name LIKE ? ESCAPE '\\' OR d.name LIKE ? ESCAPE '\\')"; }
-        params.push(val, like(val) + "::%");
-        return "(d.name = ? COLLATE NOCASE OR d.name LIKE ? ESCAPE '\\')";
+        const name = fold(val);
+        if (val.includes("*")) { params.push(like(name), like(name) + "::%"); return "(etude_fold(d.name) LIKE ? ESCAPE '\\' OR etude_fold(d.name) LIKE ? ESCAPE '\\')"; }
+        params.push(name, like(name) + "::%");
+        return "(etude_fold(d.name) = ? OR etude_fold(d.name) LIKE ? ESCAPE '\\')";
       }
       case "tag": {
         params.push(like(val), like(val) + "::%");
@@ -172,8 +179,11 @@ export function compile(query: string, now = new Date(), lookup: SearchLookup = 
         const p = /^([a-z]+)(<=|>=|!=|=|<|>)(-?\d+(?:\.\d+)?)$/i.exec(val);
         if (!p) throw new QueryError(`bad prop:${val}`);
         const [, name, op, num] = p;
-        if (name === "due") {
-          params.push(new Date(now.getTime() + Number(num) * 86400_000).toISOString());
+        if (name.toLowerCase() === "due") {
+          if (op === "!=") throw new QueryError(`bad prop:${val}`);
+          const d = new Date(now.getTime() + Number(num) * 86400_000);
+          if (!Number.isFinite(d.getTime())) throw new QueryError(`bad prop:${val}`);
+          params.push(d.toISOString());
           return `(c.state != 0 AND c.due ${op === "=" ? "<=" : op} ?)`;
         }
         const col = PROPS[name.toLowerCase()];
@@ -185,9 +195,16 @@ export function compile(query: string, now = new Date(), lookup: SearchLookup = 
         const [days, rating] = val.split(":");
         const n = Number(days);
         if (!Number.isFinite(n) || n <= 0) throw new QueryError(`bad rated:${val}`);
-        params.push(new Date(now.getTime() - n * 86400_000).toISOString());
+        const d = new Date(now.getTime() - n * 86400_000);
+        if (!Number.isFinite(d.getTime())) throw new QueryError(`bad rated:${val}`);
+        params.push(d.toISOString());
         let extra = "";
-        if (rating) { params.push(Number(rating)); extra = " AND r.rating = ?"; }
+        if (rating) {
+          const r = Number(rating);
+          if (!Number.isInteger(r) || r < 1 || r > 4) throw new QueryError(`bad rated:${val}`);
+          params.push(r);
+          extra = " AND r.rating = ?";
+        }
         return `EXISTS (SELECT 1 FROM reviews r WHERE r.card_id = c.id AND r.ts >= ?${extra})`;
       }
       default: {

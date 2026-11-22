@@ -53,9 +53,8 @@ export function setLocale(id: LocaleId) {
   if (typeof document !== "undefined" && document.body) {
     walkAndTranslate(document.body);
   }
+  // useLocale listens to all three names for compatibility; one dispatch is enough.
   window.dispatchEvent(new Event("wikae:locale"));
-  window.dispatchEvent(new Event("wikaa:locale"));
-  window.dispatchEvent(new Event("etude:locale"));
 }
 
 /** Look up a translation key. Falls back to English, then to the key itself. */

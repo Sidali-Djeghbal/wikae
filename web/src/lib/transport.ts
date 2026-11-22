@@ -13,6 +13,9 @@ const TOKEN = (() => {
       localStorage.setItem("wikae.token", fromUrl);
       localStorage.setItem("wikaa.token", fromUrl);
       localStorage.setItem("etude.token", fromUrl);
+      const clean = new URL(location.href);
+      clean.searchParams.delete("token");
+      history.replaceState(null, "", clean.pathname + clean.search + clean.hash);
     }
     return fromUrl ?? localStorage.getItem("wikae.token") ?? localStorage.getItem("wikaa.token") ?? localStorage.getItem("etude.token");
   } catch {

@@ -5,6 +5,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Etude } from "../src/core/engine.ts";
 import { loadTypeDir } from "../src/core/types.ts";
+import { capToDeadline, replay } from "../src/core/scheduler.ts";
+import { DEFAULT_PRESET, type PresetConfig } from "../src/core/model.ts";
+import { loadBuiltinSchedulers, runSchedule } from "../src/core/schedulers.ts";
 
 const TYPING = join(import.meta.dirname, "..", "examples", "showcase", "types", "typing");
 
@@ -393,4 +396,36 @@ test("stats and the optimizer treat a type's drill cards as drills, inside an FS
   e.savePreset({ id: "p", name: "P", config: {} });
   e.updateDeck("Solo", { presetId: "p" });
   await assert.rejects(() => e.optimizeWeights({ preset: "p" }), /needs at least \d+ reviews; this deck has 0/, "the drill runs don't feed FSRS");
+});
+
+test("exam deadlines keep short steps, replay ignores drill ratings, and scripts can't use extended years", () => {
+  const now = new Date("2026-01-01T10:00:00.000Z");
+  const cfg: PresetConfig = { ...DEFAULT_PRESET, deadline: "2026-01-01T12:00:00.000Z", deadlineMargin: 0 };
+  const soon = new Date("2026-01-01T10:10:00.000Z");
+  assert.equal(capToDeadline(soon, now, cfg).toISOString(), soon.toISOString());
+  assert.equal(capToDeadline(new Date("2026-01-01T11:00:00.000Z"), now, cfg).toISOString(), "2026-01-01T11:00:00.000Z");
+
+  const history = [
+    { ts: "2025-12-01T10:00:00.000Z", rating: 3 },
+    { ts: "2025-12-02T10:00:00.000Z", rating: 0 },
+    { ts: "2025-12-03T10:00:00.000Z", rating: 4 },
+  ];
+  assert.ok(replay(history, new Date("2025-12-01T00:00:00.000Z"), DEFAULT_PRESET).stability > 0);
+
+  const def = { id: "bad-year", name: "Bad year", schedule: 'return { due: "+033658-01-01T00:00:00.000Z", state: null };' } as never;
+  assert.throws(() => runSchedule(def, { state: null, reps: 0, due: now.toISOString(), lastReview: null, created: now.toISOString() }, { rating: 3, score: null, verdict: null, details: null, ms: null, at: now.toISOString() }, {}, { now: now.toISOString(), day: [], doneToday: 0, history: [] }), /normal ISO date/);
+});
+
+test("drill and leitner clamp day gaps to whole days of at least one", () => {
+  const defs = loadBuiltinSchedulers(join(import.meta.dirname, "..", "schedulers"));
+  const now = new Date("2026-01-01T10:00:00.000Z");
+  const day = Array.from({ length: 10 }, (_, i) => { const d = new Date(now); d.setUTCDate(d.getUTCDate() + i); return d.toISOString(); });
+  const card = { state: null, reps: 0, due: now.toISOString(), lastReview: null, created: now.toISOString() };
+  const attempt = { rating: 3, score: null, verdict: null, details: null, ms: null, at: now.toISOString() };
+  const ctx = { now: now.toISOString(), day, doneToday: 1, history: [] };
+  const drill = defs.find((s) => s.id === "drill")!;
+  assert.equal(runSchedule(drill, card, attempt, { perDay: 1, everyDays: 0 }, ctx).due, day[1]);
+  assert.equal(runSchedule(drill, card, attempt, { perDay: 1, everyDays: 2.5 }, ctx).due, day[2]);
+  const leitner = defs.find((s) => s.id === "leitner")!;
+  assert.equal(runSchedule(leitner, card, attempt, { boxes: "0.4, 0.6" }, ctx).due, day[1]);
 });

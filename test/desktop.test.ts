@@ -1,19 +1,22 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 import { choose, collectionPath, lastError, samePath, usualPort } from "../desktop/find.ts";
 import { parseShellEnv } from "../desktop/shell-env.ts";
 
 test("desktop: the collection is the one the CLI would open", () => {
-  assert.equal(collectionPath({}), join(homedir(), ".etude", "etude.db"));
+  assert.equal(collectionPath({ WIKAE_HOME: "/data/wikae" }), resolve("/data/wikae", "etude.db"));
   assert.equal(collectionPath({ ETUDE_HOME: "/data/etude" }), resolve("/data/etude", "etude.db"));
-  assert.equal(collectionPath({ ETUDE_HOME: "/data/etude", ETUDE_DB: "/elsewhere/x.db" }), resolve("/elsewhere/x.db"));
+  assert.equal(collectionPath({ WIKAE_HOME: "/data/wikae", ETUDE_HOME: "/data/etude" }), resolve("/data/wikae", "etude.db"));
+  assert.equal(collectionPath({ WIKAE_HOME: "/data/wikae", WIKAE_DB: "/elsewhere/x.db" }), resolve("/elsewhere/x.db"));
+  assert.equal(collectionPath({ WIKAE_HOME: "/data/wikae", ETUDE_DB: "/elsewhere/y.db" }), resolve("/elsewhere/y.db"));
   assert.equal(usualPort({}), 4610);
-  assert.equal(usualPort({ ETUDE_PORT: "4700" }), 4700);
+  assert.equal(usualPort({ WIKAE_PORT: "4700" }), 4700);
+  assert.equal(usualPort({ ETUDE_PORT: "4800" }), 4800);
+  assert.equal(usualPort({ WIKAE_PORT: "4700", ETUDE_PORT: "4800" }), 4700);
 });
 
-test("desktop: an engine is reused only when it opens this same collection", () => {
+test("desktop: the usual port is used only when nothing is listening", () => {
   const mine = "/home/ana/.etude/etude.db";
   assert.deepEqual(choose({ kind: "etude", db: mine, version: "2.5.0" }, mine), { reuse: true });
   // Another account's engine, or another collection: start our own beside it.

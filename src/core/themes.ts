@@ -402,22 +402,57 @@ const isRemote = (target: string) => {
 const unescapeCss = (s: string) =>
   s.replace(/\\([0-9a-f]{1,6})\s?/gi, (_, h) => String.fromCodePoint(Math.min(parseInt(h, 16), 0x10ffff) || 0xfffd)).replace(/\\(.)/g, "$1");
 
+/** A target is safe when it stays on this origin or is a raster data URL. */
+const cssTargetAllowed = (target: string) => {
+  const t = target.trim();
+  return !/^data:image\/svg\+xml/i.test(t) && (!isRemote(t) || /^\/media\//i.test(t));
+};
+
+/** Rewrites `url()` / `src()` / `image-set()` with balanced parens, so nested calls and quotes can't hide a target. */
+function stripRemoteFunctions(css: string, drop: (m: string, repl?: string) => string): string {
+  const fn = /\b(?:url|src|(?:-webkit-)?image-set)\s*\(/gi;
+  let out = "";
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = fn.exec(css))) {
+    let depth = 1;
+    let i = fn.lastIndex;
+    for (; i < css.length && depth > 0; i++) {
+      const c = css[i];
+      if (c === '"' || c === "'") {
+        const q = c;
+        while (i + 1 < css.length && css[++i] !== q) {
+          // skip quoted text
+        }
+      } else if (c === "(") depth++;
+      else if (c === ")") depth--;
+    }
+    if (depth > 0) break;
+    const whole = css.slice(m.index, i);
+    const inner = css.slice(fn.lastIndex, i - 1);
+    const targets = [...inner.matchAll(/"([^"]*)"|'([^']*)'|([^\s,()]+)/g)].map((x) => x[1] ?? x[2] ?? x[3]);
+    out += css.slice(last, m.index) + (targets.some((t) => !cssTargetAllowed(t)) ? drop(whole, "none") : whole);
+    last = i;
+    fn.lastIndex = i;
+  }
+  return out + css.slice(last);
+}
+
 /** Removes `@import`s and `url()` / `src()` / `image-set()` references to other hosts. */
 export function sanitizeCss(css: string): { css: string; removed: string[] } {
+  if (/<\/style/i.test(css)) throw new ThemeError("extra CSS can't contain </style>");
   const removed: string[] = [];
   const drop = (m: string, repl = "") => {
     removed.push(m.trim().slice(0, 120));
     return repl;
   };
-  let out = css.replace(/\/\*[\s\S]*?\*\//g, (m) => (/@import|url\s*\(|src\s*\(|image-set/i.test(m) ? "" : m));
+  // Strip every comment: a comment inside url() would otherwise hide the target from the scan.
+  let out = css.replace(/\/\*[\s\S]*?\*\//g, "");
   out = out.replace(/@import\b[^;]*;?/gi, (m) => drop(m));
-  out = out.replace(/\b(url|src)\s*\(\s*("[^"]*"|'[^']*'|[^)]*)\s*\)/gi, (m, _fn, target: string) => (isRemote(target) ? drop(m, "none") : m));
-  out = out.replace(/image-set\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/gi, (m, inner: string) =>
-    (inner.match(/"[^"]*"|'[^']*'/g) ?? []).some(isRemote) ? drop(m, "none") : m,
-  );
+  out = stripRemoteFunctions(out, drop);
   // Escapes can spell an import or a remote url that the patterns above don't see; refuse those outright.
   const plain = unescapeCss(out);
-  if (plain !== out && (/@import/i.test(plain) || /\b(?:url|src)\s*\(\s*['"]?\s*(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(plain.replace(/\b(?:url|src)\s*\(\s*['"]?\s*data:/gi, "")))) {
+  if (plain !== out && (/@import/i.test(plain) || /\b(?:url|src|(?:-webkit-)?image-set)\s*\(\s*['"]?\s*(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(plain.replace(/\b(?:url|src|(?:-webkit-)?image-set)\s*\(\s*['"]?\s*data:image\/(?:png|jpe?g|gif|webp|avif|bmp)/gi, "")))) {
     throw new ThemeError("extra CSS uses escapes to load something from another host; write it plainly");
   }
   return { css: out.trim(), removed };

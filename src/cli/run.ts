@@ -1,9 +1,10 @@
 // The command runner: finds the command, parses flags, opens the collection, prints JSON.
 import { existsSync, readSync } from "node:fs";
-import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { Etude, EtudeError } from "../core/engine.ts";
+import { appEnv, resolveAppHome } from "../core/util.ts";
+import { ThemeError } from "../core/themes.ts";
 import { ScriptError } from "../core/sandbox.ts";
 import { AiError } from "../core/ai.ts";
 import { CliError, COMMANDS, Failed, GLOBAL_FLAGS, GROUPS, KEEP_OPEN, flagsOf, type CommandSpec, type Ctx, type FlagSpec } from "./registry.ts";
@@ -128,6 +129,18 @@ function normalize(args: string[], flags: FlagSpec[], dynamic: boolean): { args:
   return { args: out, extra };
 }
 
+/** Help tokens count only outside flag values: `--name -h` uses -h as a value. */
+function wantsHelp(argv: string[], cmd?: CommandSpec): boolean {
+  let args: string[];
+  try {
+    args = normalize(argv, cmd ? [...flagsOf(cmd), ...GLOBAL_FLAGS] : GLOBAL_FLAGS, !!cmd?.dynamicFlags).args;
+  } catch {
+    args = argv;
+  }
+  const at = args.indexOf("--");
+  return (at < 0 ? args : args.slice(0, at)).includes("--help");
+}
+
 function convert(spec: FlagSpec, raw: string): unknown {
   if (spec.type === "number") {
     const n = Number(raw);
@@ -139,7 +152,9 @@ function convert(spec: FlagSpec, raw: string): unknown {
 }
 
 function parse(cmd: CommandSpec, rest: string[], pre: string[]) {
-  const flags = [...flagsOf(cmd), ...GLOBAL_FLAGS];
+  const own = flagsOf(cmd);
+  // A command's own flag wins over a global one of the same name (e.g. `export --json`).
+  const flags = [...GLOBAL_FLAGS.filter((f) => !own.some((o) => o.name === f.name)), ...own];
   const { args, extra } = normalize([...pre, ...rest], flags, !!cmd.dynamicFlags);
   const options: Record<string, { type: "string" | "boolean"; multiple?: boolean }> = {};
   for (const f of flags) options[f.name] = { type: f.type === "boolean" ? "boolean" : "string", ...(f.multiple ? { multiple: true } : {}) };
@@ -181,7 +196,7 @@ export function usageLine(c: CommandSpec): string {
   return ["etude", c.name, ...args, flagsOf(c).length ? "[flags]" : ""].filter(Boolean).join(" ");
 }
 
-function errorCode(e: unknown): CliError {
+function errorCode(e: unknown, commandName?: string): CliError {
   if (e instanceof CliError) return e;
   if (e instanceof EtudeError) {
     const m = e.message;
@@ -190,8 +205,12 @@ function errorCode(e: unknown): CliError {
     if (e.status === 502 || /^feedback failed/.test(m)) return new CliError(m, "external");
     return new CliError(m, "validation");
   }
+  if (e instanceof ThemeError) return new CliError(e.message, "validation");
   if (e instanceof ScriptError) return new CliError(e.message, "validation");
   if (e instanceof AiError) return new CliError(e.message, "external");
+  // Sync's transport throws plain Errors carrying the server's error code.
+  if (e instanceof Error && typeof (e as any).code === "string") return new CliError(e.message, "external", { code: (e as any).code });
+  if (e instanceof Error && commandName?.startsWith("sync ")) return new CliError(e.message, "validation");
   return new CliError((e as Error)?.message ?? String(e), "internal");
 }
 
@@ -242,16 +261,16 @@ export function resolveCommand(argv: string[]): CommandSpec | undefined {
 export interface RunOptions {
   /** Run against this open collection instead of opening one; it is left open. */
   etude?: Etude;
-  /** Ask Etude is running the command, not the user: commands that weigh trust (settings set) see `ctx.agent`. */
+  /** Ask Wikae is running the command, not the user: commands that weigh trust (settings set) see `ctx.agent`. */
   agent?: boolean;
 }
 
 /** The command an argv names with its parsed flags and arguments, exactly as `run` would parse them. Throws CliError on bad arguments. */
-export function parseInvocation(argv: string[]): { cmd: CommandSpec; values: Record<string, any>; named: Record<string, any> } | null {
+export function parseInvocation(argv: string[]): { cmd: CommandSpec; values: Record<string, any>; named: Record<string, any>; extra: [string, string][] } | null {
   const loc = locate(argv);
   if (!loc.cmd) return null;
-  const { values, named } = parse(loc.cmd, loc.rest, loc.pre);
-  return { cmd: loc.cmd, values, named };
+  const { values, named, extra } = parse(loc.cmd, loc.rest, loc.pre);
+  return { cmd: loc.cmd, values, named, extra };
 }
 
 /** Runs one invocation. Returns the exit code; the collection stays open only for `serve`. */
@@ -260,16 +279,25 @@ export async function run(argv: string[], io: Io = defaultIo(), opts: RunOptions
   const shared = opts.etude ?? null;
   let keepOpen = false;
   let pretty = io.isTTY;
+  let commandName: string | undefined;
   try {
     const loc = locate(argv);
-    const wantsHelp = argv.includes("--help") || argv.includes("-h");
-    if (loc.unknown) throw new CliError(`unknown command "${loc.unknown}". Run \`etude --help\` or \`etude commands\`.`);
+    const help = wantsHelp(argv, loc.cmd);
+    if (loc.unknown) {
+      const g = loc.unknown.split(" ")[0];
+      if (help && GROUPS.some((x) => x.name === g)) {
+        io.stdout(groupHelp(g));
+        return 0;
+      }
+      throw new CliError(`unknown command "${loc.unknown}". Run \`wikae --help\` or \`wikae commands\`.`);
+    }
     if (!loc.cmd) {
       io.stdout(loc.group ? groupHelp(loc.group) : topHelp(VERSION));
       return 0;
     }
     const cmd = loc.cmd;
-    if (wantsHelp && !argv.slice(0, argv.indexOf("--help") >= 0 ? argv.indexOf("--help") : argv.indexOf("-h")).includes("--")) {
+    commandName = cmd.name;
+    if (help) {
       io.stdout(commandHelp(cmd));
       return 0;
     }
@@ -279,10 +307,10 @@ export async function run(argv: string[], io: Io = defaultIo(), opts: RunOptions
     if (values.compact) pretty = false;
     if (cmd.confirm && !values.yes && !values["dry-run"]) throw new CliError(`\`etude ${cmd.name}\` is destructive; add --yes to confirm (or --dry-run to preview)`);
 
-    const home = shared ? shared.home : resolve(io.env.WIKAE_HOME ?? io.env.WIKAA_HOME ?? io.env.ETUDE_HOME ?? (existsSync(join(homedir(), ".wikae")) ? join(homedir(), ".wikae") : existsSync(join(homedir(), ".wikaa")) ? join(homedir(), ".wikaa") : join(homedir(), ".etude")));
+    const home = shared ? shared.home : resolveAppHome(io.env);
     const envFile = join(home, ".env");
     if (!shared && existsSync(envFile) && io.env === process.env) process.loadEnvFile(envFile);
-    const dbPath = shared ? shared.path : resolve(values.db ?? io.env.WIKAE_DB ?? io.env.WIKAA_DB ?? io.env.ETUDE_DB ?? join(home, existsSync(join(home, "wikae.db")) ? "wikae.db" : existsSync(join(home, "wikaa.db")) ? "wikaa.db" : "etude.db"));
+    const dbPath = shared ? shared.path : resolve(values.db ?? appEnv(io.env, "DB") ?? join(home, existsSync(join(home, "wikae.db")) ? "wikae.db" : existsSync(join(home, "wikaa.db")) ? "wikaa.db" : "etude.db"));
     if (shared) etude = shared;
     else if (!cmd.noDb) etude = await Etude.open(dbPath, { home });
 
@@ -335,10 +363,10 @@ export async function run(argv: string[], io: Io = defaultIo(), opts: RunOptions
     if (result !== undefined) print(io, result, values.format, pretty);
     return 0;
   } catch (e) {
-    const err = errorCode(e);
+    const err = errorCode(e, commandName);
     const body: Record<string, unknown> = { error: err.message, code: err.code };
     if (err.details !== undefined) body.details = err.details;
-    if (err.code === "internal" && io.env.ETUDE_DEBUG) body.stack = (e as Error)?.stack;
+    if (err.code === "internal" && appEnv(io.env, "DEBUG")) body.stack = (e as Error)?.stack;
     io.stderr(JSON.stringify(body) + "\n");
     return err.exit;
   } finally {
@@ -346,7 +374,8 @@ export async function run(argv: string[], io: Io = defaultIo(), opts: RunOptions
   }
 }
 
-function withDryRun(r: unknown) {
+function withDryRun(r: unknown): unknown {
+  if (r instanceof Failed) return new Failed(withDryRun(r.output), r.error);
   if (r && typeof r === "object" && !Array.isArray(r)) return { dryRun: true, ...(r as object) };
   return { dryRun: true, result: r };
 }

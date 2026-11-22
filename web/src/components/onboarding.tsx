@@ -54,7 +54,7 @@ type SyncChoice = "cloud" | "folder" | "server" | "device";
 type AiOutcome = { preset: PresetId | null; tested: boolean } | "off" | "later";
 type SyncOutcome = { choice: SyncChoice; next: string | null } | "skipped";
 
-const DEFAULT_SYNC_SERVER = "https://sync.etude.study";
+const DEFAULT_SYNC_SERVER = "https://sync.wikae.study";
 const OPENROUTER_KEYS = "https://openrouter.ai/keys";
 const OPENAI_KEYS = "https://platform.openai.com/api-keys";
 

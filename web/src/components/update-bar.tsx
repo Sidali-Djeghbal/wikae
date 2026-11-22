@@ -19,7 +19,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const versionOf = (st: UpdateStatus) => (st.kind === "git" ? `${st.version} (${st.commit})` : st.version);
 const behindOf = (st: UpdateStatus) => (st.kind === "git" ? st.behind : st.kind === "desktop" && st.mode === "self" ? (st.ready ? 1 : 0) : st.latest ? 1 : 0);
-const DOWNLOAD = "https://etude.study/download";
+const DOWNLOAD = "https://sidali-djeghbal.github.io/wikae/download";
 
 /** The news in a few words: "3 updates available", "Etude 2.5.1 is out", "Etude 2.5.1 is ready". */
 const headline = (st: UpdateStatus) =>

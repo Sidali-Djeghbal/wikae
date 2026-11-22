@@ -2,6 +2,7 @@
  * The SQLite connection the core talks to. `node:sqlite`'s DatabaseSync already has this shape;
  * `sql-wasm.ts` gives the same shape over SQLite compiled to WebAssembly, so the core runs in a browser.
  */
+import { appEnv } from "./util.ts";
 
 export type SqlValue = null | number | bigint | string | Uint8Array;
 
@@ -29,11 +30,11 @@ export interface SqlConnection {
 
 export type SqlDriver = "node" | "wasm";
 
-/** `ETUDE_SQL=wasm` runs the core on the WebAssembly build; the default is node:sqlite. */
+/** `WIKAE_SQL=wasm` runs the core on the WebAssembly build; the default is node:sqlite. */
 export function defaultDriver(): SqlDriver {
   // Outside Node (a browser, a worker) only the WebAssembly build exists.
   if (typeof process === "undefined" || !process.versions?.node) return "wasm";
-  return process.env.ETUDE_SQL === "wasm" ? "wasm" : "node";
+  return appEnv(process.env, "SQL") === "wasm" ? "wasm" : "node";
 }
 
 /** Opens a collection file (or ":memory:") with the given driver. */

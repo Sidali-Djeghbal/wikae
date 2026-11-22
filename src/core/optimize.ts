@@ -28,7 +28,7 @@ function binding(): Promise<any> {
   const name = OPTIMIZER_PACKAGE;
   return (loaded ??= import(name).catch(() => {
     loaded = null;
-    throw new OptimizerMissing(`the FSRS optimizer isn't installed: run \`npm install ${OPTIMIZER_PACKAGE}\` in the Etude folder`);
+    throw new OptimizerMissing(`the FSRS optimizer isn't installed: run \`npm install ${OPTIMIZER_PACKAGE}\` in the Wikae folder`);
   }));
 }
 
@@ -51,7 +51,9 @@ export async function fitWeights(
   const b = await binding();
   // review_state uses the same codes Etude stores (the card's state before the review), not Anki's revlog kinds:
   // reading reviews as learning steps leaves fsrs-rs with too few long-term reviews and wildly long stabilities.
-  const csv = "card_id,review_time,review_rating,review_state,review_duration\n" + reviews.map((r) => `${r.cardId},${Date.parse(r.ts)},${r.rating},${r.state},${r.durationMs ?? 0}`).join("\n");
+  // Drill/practice rows and invalid timestamps would poison the CSV passed to fsrs-rs.
+  const usable = reviews.filter((r) => Number.isInteger(r.rating) && r.rating >= 1 && r.rating <= 4 && Number.isInteger(r.state) && r.state >= 0 && r.state <= 3 && Number.isFinite(Date.parse(r.ts)));
+  const csv = "card_id,review_time,review_rating,review_state,review_duration\n" + usable.map((r) => `${r.cardId},${Date.parse(r.ts)},${r.rating},${r.state},${Math.max(0, r.durationMs ?? 0)}`).join("\n");
   const items = b.convertCsvToFsrsItems(Buffer.from(csv), opts.dayStartHour, opts.timeZone, offsetMinutes(opts.timeZone));
   const weights: number[] = await b.computeParameters(items, { enableShortTerm: opts.enableShortTerm, numRelearningSteps: opts.relearningSteps });
   const fit = (w: number[]): Fit => {

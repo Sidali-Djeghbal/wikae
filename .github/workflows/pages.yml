@@ -27,6 +27,17 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run site
+      - name: Check links, anchors and release assets
+        run: node site/tools/check-links.mjs
+      - name: Check pages at phone and desktop widths
+        run: |
+          node site/tools/serve.mjs 4620 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4620/wikae/ > /dev/null 2>&1 && break; sleep 0.25; done
+          for w in 320 390 1440; do
+            node site/tools/check.mjs http://127.0.0.1:4620/wikae/ /tmp/wikae-check-$w index.html $w
+          done
+          node site/tools/check.mjs http://127.0.0.1:4620/wikae/ /tmp/wikae-check-download download.html 1440
+          node site/tools/check.mjs http://127.0.0.1:4620/wikae/ /tmp/wikae-check-sync sync.html 390
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: site/dist

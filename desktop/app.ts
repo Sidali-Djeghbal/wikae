@@ -1,4 +1,4 @@
-// The Etude desktop app: one window showing the engine (`etude serve` from this folder), plus the few
+// The Wikae desktop app: one window showing the engine (`wikae serve` from this folder), plus the few
 // things a browser tab can't do. Card frames keep exactly the access they have in a browser.
 import { app, BrowserWindow, dialog, ipcMain, Menu, screen, session, shell, type IpcMainInvokeEvent, type MenuItemConstructorOptions } from "electron";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -6,7 +6,6 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { commandState, installCommand, refreshAppImageCommand } from "./command.ts";
 import { Engine } from "./engine.ts";
-import { probe } from "./find.ts";
 import { offerAppMenuEntry, offerApplicationsFolder } from "./integrate.ts";
 import { log, logDir, logEngine } from "./log.ts";
 import { loginShellEnv } from "./shell-env.ts";
@@ -18,7 +17,7 @@ const PAGES = pathToFileURL(join(HERE, "pages")).href + "/";
 const VERSION: string = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version;
 const DEFAULT_BG = "#0f0f0f";
 const isMac = process.platform === "darwin";
-/** What Etude's own pages may use. Everything else (camera, microphone, location, notifications…) is refused. */
+/** What Wikae's own pages may use. Everything else (camera, microphone, location, notifications…) is refused. */
 const PERMISSIONS = new Set(["clipboard-read", "clipboard-sanitized-write", "fullscreen"]);
 
 let win: BrowserWindow | null = null;
@@ -27,7 +26,6 @@ let env: Record<string, string | undefined> = process.env;
 let bg = DEFAULT_BG;
 let booting = false;
 let lastCrash = 0;
-let watching: NodeJS.Timeout | null = null;
 
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
@@ -39,9 +37,9 @@ else {
   });
   app.on("window-all-closed", () => app.quit());
   app.on("before-quit", stopEngine);
-  app.setAboutPanelOptions({ applicationName: "Etude", applicationVersion: VERSION, website: "https://etude.study" });
+  app.setAboutPanelOptions({ applicationName: "Wikae", applicationVersion: VERSION, website: "https://sidali-djeghbal.github.io/wikae" });
   app.whenReady().then(async () => {
-    log(`Etude ${VERSION} starting (Electron ${process.versions.electron}, ${process.platform})`);
+    log(`Wikae ${VERSION} starting (Electron ${process.versions.electron}, ${process.platform})`);
     protect();
     answer();
     Menu.setApplicationMenu(menu());
@@ -56,7 +54,7 @@ else {
     }
     await boot();
     startUpdates((s) => win?.webContents.send("etude:update", s));
-    // Niceties: if one fails, Etude still works.
+    // Niceties: if one fails, Wikae still works.
     try {
       refreshAppImageCommand();
       if (win) await offerAppMenuEntry(win, ROOT);
@@ -79,12 +77,11 @@ async function boot(path = "/") {
       throw new Error(`The web app isn't built yet. Run \`npm run build\` in ${ROOT}, then try again.`);
     engine = await Engine.start({ root: ROOT, env, log, output: logEngine });
     engine.onExit = stopped;
-    log(engine.owned ? `engine ${engine.version} ready at ${engine.origin}` : `using the engine already running at ${engine.origin} (${engine.version}) for the same collection`);
-    if (!engine.owned) watch(engine);
+    log(`engine ${engine.version} ready at ${engine.origin}`);
     await win?.loadURL(engine.url(path));
   } catch (e) {
     log(`couldn't start: ${(e as Error).message}`);
-    showError("Etude couldn't start.", (e as Error).message);
+    showError("Wikae couldn't start.", (e as Error).message);
   } finally {
     booting = false;
   }
@@ -103,22 +100,10 @@ function stopped(code: number) {
     lastCrash = Date.now();
     return void boot(path);
   }
-  showError("Etude stopped.", `It stopped twice in a minute (exit code ${code}). The logs say why.`);
-}
-
-/** An engine started in a terminal can stop at any time; show it instead of a page that no longer answers. */
-function watch(e: Engine) {
-  const port = Number(new URL(e.origin).port);
-  watching = setInterval(async () => {
-    if ((await probe(port)).kind === "etude") return;
-    stopEngine();
-    showError("The Etude engine stopped.", "This window was using the engine started in a terminal (etude serve), which stopped. Try again starts one here.");
-  }, 5000);
+  showError("Wikae stopped.", `It stopped twice in a minute (exit code ${code}). The logs say why.`);
 }
 
 function stopEngine() {
-  if (watching) clearInterval(watching);
-  watching = null;
   if (engine?.owned) engine.stop();
   engine = null;
 }
@@ -165,7 +150,7 @@ function createWindow() {
     height: state.height,
     minWidth: 360,
     minHeight: 480,
-    title: "Etude",
+    title: "Wikae",
     backgroundColor: bg,
     show: false,
     autoHideMenuBar: !isMac,
@@ -190,13 +175,15 @@ function createWindow() {
   wc.on("did-change-theme-color", (_e, color) => {
     if (color && /^#[0-9a-f]{6}$/i.test(color)) bg = color;
   });
-  // Etude's pages stay in the window; every other link opens in the browser.
+  // Wikae's pages stay in the window; every other link opens in the browser.
   wc.setWindowOpenHandler(({ url }) => {
+    if (isUntrustedPage(url)) return { action: "deny" };
     if (engine?.contains(url)) void wc.loadURL(url);
     else openOutside(url);
     return { action: "deny" };
   });
   const keepInside = (e: { preventDefault(): void }, url: string) => {
+    if (isUntrustedPage(url)) return e.preventDefault();
     if (isOwnPage(url)) return;
     e.preventDefault();
     openOutside(url);
@@ -214,7 +201,17 @@ function showError(title: string, detail: string) {
   showPage("error.html", { title, detail });
 }
 
-const isOwnPage = (url: string) => url.startsWith(PAGES) || !!engine?.contains(url);
+/** Card frames, previews, media and type assets are untrusted content: they must never hold the preload bridge in the top-level window. */
+const UNTRUSTED_PATH = /^\/(?:frame|frame-doc|media|type-assets)(?:\/|$)/;
+const isUntrustedPage = (url: string) => {
+  if (!engine?.contains(url)) return false;
+  try {
+    return UNTRUSTED_PATH.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+};
+const isOwnPage = (url: string) => (url.startsWith(PAGES) || !!engine?.contains(url)) && !isUntrustedPage(url);
 
 /** Where the window is in the engine, without the password, to come back to after a restart. */
 function currentPath(): string {
@@ -240,12 +237,12 @@ function openOutside(url: string) {
 
 function protect() {
   const ses = session.defaultSession;
-  ses.setPermissionRequestHandler((_wc, permission, done, details) => done(PERMISSIONS.has(permission) && details.isMainFrame && !!engine?.contains(details.requestingUrl)));
+  ses.setPermissionRequestHandler((_wc, permission, done, details) => done(PERMISSIONS.has(permission) && details.isMainFrame && isOwnPage(details.requestingUrl)));
   // Card frames are on the engine's address too, so "top frame only" is what keeps them out.
-  ses.setPermissionCheckHandler((_wc, permission, origin, details) => PERMISSIONS.has(permission) && details.isMainFrame && !!engine?.contains(details.requestingUrl || origin));
+  ses.setPermissionCheckHandler((_wc, permission, origin, details) => PERMISSIONS.has(permission) && details.isMainFrame && isOwnPage(details.requestingUrl || origin));
 }
 
-/** The requests in preload.cjs, taken only from this window's top frame showing Etude or the app's own pages. */
+/** The requests in preload.cjs, taken only from this window's top frame showing Wikae or the app's own pages. */
 function answer() {
   const fromWindow = (e: IpcMainInvokeEvent) => !!win && e.sender === win.webContents && e.senderFrame === win.webContents.mainFrame && isOwnPage(e.senderFrame.url);
   ipcMain.handle("etude:retry", (e) => {
@@ -264,7 +261,7 @@ function answer() {
     try {
       return await installCommand(env);
     } catch (err) {
-      log(`couldn't install the etude command: ${(err as Error).message}`);
+      log(`couldn't install the wikae command: ${(err as Error).message}`);
       return { ...commandState(env), error: (err as Error).message };
     }
   });
@@ -277,7 +274,7 @@ function answer() {
 
 // ---------------------------------------------------------------- menus
 
-/** Shows an Etude screen: inside the running app when it's open, else by loading it. */
+/** Shows a Wikae screen: inside the running app when it's open, else by loading it. */
 function go(path: string) {
   if (!win || !engine) return;
   if (engine.contains(win.webContents.getURL())) void win.webContents.executeJavaScript(`history.pushState(null, "", ${JSON.stringify(path)}); dispatchEvent(new PopStateEvent("popstate"))`);
@@ -293,7 +290,7 @@ function menu(): Menu {
   const settings: MenuItemConstructorOptions = { label: isMac ? "Settings…" : "Settings", accelerator: "CmdOrCtrl+,", click: () => go("/settings") };
   const template: MenuItemConstructorOptions[] = [
     ...(isMac
-      ? [{ label: "Etude", submenu: [{ role: "about" }, { type: "separator" }, settings, { type: "separator" }, { role: "services" }, { type: "separator" }, { role: "hide" }, { role: "hideOthers" }, { role: "unhide" }, { type: "separator" }, { role: "quit" }] } as MenuItemConstructorOptions]
+      ? [{ label: "Wikae", submenu: [{ role: "about" }, { type: "separator" }, settings, { type: "separator" }, { role: "services" }, { type: "separator" }, { role: "hide" }, { role: "hideOthers" }, { role: "unhide" }, { type: "separator" }, { role: "quit" }] } as MenuItemConstructorOptions]
       : []),
     {
       label: "File",
@@ -327,8 +324,8 @@ function menu(): Menu {
     {
       role: "help",
       submenu: [
-        { label: "Etude Website", click: () => void shell.openExternal("https://etude.study") },
-        { label: "Report a Problem", click: () => void shell.openExternal("https://github.com/Zibhelina/etude/issues") },
+        { label: "Wikae Website", click: () => void shell.openExternal("https://sidali-djeghbal.github.io/wikae") },
+        { label: "Report a Problem", click: () => void shell.openExternal("https://github.com/Sidali-Djeghbal/wikae/issues") },
         { type: "separator" },
         { label: "Show Logs", click: () => void shell.openPath(logDir()) },
         ...(isMac ? [] : ([{ type: "separator" }, { role: "about" }] as MenuItemConstructorOptions[])),

@@ -2,7 +2,7 @@
   {
     "id": "showcase.chess.smothered",
     "type": "chess",
-    "deck": "Etude Showcase::5 Play and listen",
+    "deck": "Wikae Showcase::5 Play and listen",
     "tags": [
       "showcase",
       "topic::chess"
@@ -20,7 +20,7 @@
   {
     "id": "showcase.chord.triads",
     "type": "chord",
-    "deck": "Etude Showcase::5 Play and listen",
+    "deck": "Wikae Showcase::5 Play and listen",
     "tags": [
       "showcase",
       "topic::music"
@@ -40,7 +40,7 @@
   {
     "id": "showcase.staff.treble",
     "type": "staff",
-    "deck": "Etude Showcase::5 Play and listen",
+    "deck": "Wikae Showcase::5 Play and listen",
     "tags": [
       "showcase",
       "topic::music"
@@ -56,7 +56,7 @@
   {
     "id": "showcase.interval.basic",
     "type": "interval",
-    "deck": "Etude Showcase::5 Play and listen",
+    "deck": "Wikae Showcase::5 Play and listen",
     "tags": [
       "showcase",
       "topic::music"
@@ -71,7 +71,7 @@
   {
     "id": "showcase.color.hex",
     "type": "color",
-    "deck": "Etude Showcase::5 Play and listen",
+    "deck": "Wikae Showcase::5 Play and listen",
     "tags": [
       "showcase",
       "topic::color"
@@ -85,7 +85,7 @@
   {
     "id": "showcase.sprint.mixed",
     "type": "sprint",
-    "deck": "Etude Showcase::5 Play and listen",
+    "deck": "Wikae Showcase::5 Play and listen",
     "tags": [
       "showcase",
       "topic::arithmetic"
@@ -100,7 +100,7 @@
   {
     "id": "showcase.typing.english",
     "type": "typing",
-    "deck": "Etude Showcase::5 Play and listen",
+    "deck": "Wikae Showcase::5 Play and listen",
     "tags": [
       "showcase",
       "topic::typing"

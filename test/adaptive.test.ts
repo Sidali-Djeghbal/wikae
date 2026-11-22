@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { Etude } from "../src/core/engine.ts";
 import { DEFAULT_PRESET } from "../src/core/model.ts";
 import { validateConfig } from "../src/core/scheduler.ts";
-import { validateType } from "../src/core/types.ts";
+import { validateFields, validateType } from "../src/core/types.ts";
 import { initSandbox } from "../src/core/sandbox.ts";
 import { checkPack } from "../src/cli/pack-check.ts";
 import { fitSkills, levelState, pace, placementState, revisedFrontier } from "../src/core/learner.ts";
@@ -76,6 +76,9 @@ test("adaptive settings are off by default, validated, and a plain deck behaves 
   assert.deepEqual(validateType(CONTEXT_TYPE), []);
   assert.ok(validateType({ ...CONTEXT_TYPE, variants: { field: "word" } }).some((m) => m.includes("variants.field")));
   assert.ok(validateType({ ...CONTEXT_TYPE, skills: { read: 3 } }).some((m) => m.includes("skills")));
+  assert.ok(validateType({ ...CONTEXT_TYPE, faces: ["read", "read"] }).some((m) => m.includes("unique")));
+  const numDef = { fields: [{ name: "n", kind: "number" }] } as never;
+  for (const bad of [NaN, Infinity]) assert.equal(validateFields(numDef, { n: bad }).length, 1);
 
   const { e, done } = await setup();
   const c = e.present(cardOf(e, "w1"), 5);
@@ -158,8 +161,19 @@ test("learner math: Elo-style skills, pace, placement bisection and levels", () 
   assert.ok(busy.value < 10, `cards holding well doesn't outweigh being over the time budget: ${JSON.stringify(busy)}`);
   const steady = pace(cfg, { activeDays: 7, young: { reviews: 100, passed: 90 }, minutes: 20, newCards: 70 });
   assert.equal(steady.value, 10, "holding at the desired retention on budget: keep the pace");
+  const withTarget = pace({ ...cfg, targetSuccess: 0.8 }, { activeDays: 7, young: { reviews: 100, passed: 85 }, minutes: 70, newCards: 70 });
+  assert.equal(withTarget.value, 12, "targetSuccess overrides desiredRetention");
+  const noBudget = pace({ ...cfg, minutesPerDay: 0 }, { activeDays: 7, young: { reviews: 100, passed: 90 }, minutes: 70, newCards: 70 });
+  assert.equal(noBudget.value, 10, "no time budget doesn't slow the pace");
+  assert.match(noBudget.reason, /no time budget/);
+  const dedup = fitSkills([{ cardId: 1, key: "k", skills: ["reading", "reading", ""], score: 1 }]);
+  assert.equal(dedup.answers.reading, 1, "a repeated or empty skill tag counts once");
+  assert.equal(dedup.answers[""], undefined);
+  assert.equal(levelState([], [], cfg).done, true, "no levels: nothing to advance to");
 
   assert.deepEqual(placementState(6, []), { bands: 6, probes: 0, frontier: 0, next: 2 });
+  assert.equal(placementState(2, [], new Set([0])).next, 1, "a band with no fresh cards is skipped");
+  assert.equal(placementState(1, [], new Set([0])).next, null, "the last band exhausted: placement is done");
   assert.equal(placementState(6, [{ band: 2, score: 1 }, { band: 2, score: 1 }]).frontier, 0, "two answers aren't enough to pass a band");
   const passLow = placementState(6, [{ band: 2, score: 1 }, { band: 2, score: 1 }, { band: 2, score: 1 }]);
   assert.equal(passLow.frontier, 3);

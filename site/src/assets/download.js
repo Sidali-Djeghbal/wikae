@@ -37,7 +37,7 @@ const OS = {
     cmd: ["brew install node", "node --version   # v24 or newer"],
     cmdAr: ["brew install node", "node --version   # الإصدار 24 أو أحدث"],
     ps: "$ ",
-    home: "~/.wikae/wikae.db",
+    home: "~/.wikae/etude.db",
     env: "~/.wikae/.env",
   },
   windows: {
@@ -46,7 +46,7 @@ const OS = {
     cmd: ["winget install OpenJS.NodeJS Git.Git", "node --version   # v24 or newer"],
     cmdAr: ["winget install OpenJS.NodeJS Git.Git", "node --version   # الإصدار 24 أو أحدث"],
     ps: "> ",
-    home: "%USERPROFILE%\\.wikae\\wikae.db",
+    home: "%USERPROFILE%\\.wikae\\etude.db",
     env: "%USERPROFILE%\\.wikae\\.env",
   },
   linux: {
@@ -55,7 +55,7 @@ const OS = {
     cmd: ["mise use -g node@24", "node --version   # v24 or newer"],
     cmdAr: ["mise use -g node@24", "node --version   # الإصدار 24 أو أحدث"],
     ps: "$ ",
-    home: "~/.wikae/wikae.db",
+    home: "~/.wikae/etude.db",
     env: "~/.wikae/.env",
   },
 };

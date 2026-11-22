@@ -58,8 +58,6 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
   useEffect(() => {
     try {
       localStorage.setItem(FOCUS_KEY, focus ? "1" : "0");
-      localStorage.setItem("wikaa.study.focus", focus ? "1" : "0");
-      localStorage.setItem("etude.study.focus", focus ? "1" : "0");
     } catch { /* storage blocked */ }
   }, [focus]);
   const mainRef = useRef<HTMLElement>(null);

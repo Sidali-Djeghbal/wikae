@@ -1,4 +1,4 @@
-// The in-app agent: a chat that can run any Etude command in-process, with confirmation for
+// The in-app agent: a chat that can run any Wikae command in-process, with confirmation for
 // destructive commands, a snapshot before the first write of each turn, and undo.
 // Conversations are stored in the collection (agent_* tables); undo leaves those tables alone,
 // so restoring a snapshot never rewinds the chat itself.
@@ -6,11 +6,12 @@ import type { SqlConnection } from "./sql.ts";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { AiError, type AgentEffort, type ChatProvider } from "./ai.ts";
+import { AiError, providerHost, type AgentEffort, type ChatProvider } from "./ai.ts";
 import { cheatSheet } from "./agent-cheatsheet.ts";
 import { agentRefusal } from "./agent-guard.ts";
 import { chatGptStatus, listChatGptModels } from "./chatgpt.ts";
 import { llmTurn, type LlmMessage, type ToolCall, type ToolSpec } from "./agent-llm.ts";
+import { appEnv, parse } from "./util.ts";
 import type { Etude } from "./engine.ts";
 
 export const AGENT_MAX_TOOL_CALLS = 25;
@@ -24,7 +25,7 @@ const OPENROUTER_CHAT = "https://openrouter.ai/api/v1/chat/completions";
 
 /** Commands the agent may never run: they restart or replace things, or touch credentials. */
 // `media prune` deletes files, which an undo (a database snapshot) can't bring back.
-export const AGENT_DENY = ["serve", "update", "settings chatgpt login", "settings chatgpt logout", "settings chatgpt import", "settings key set", "settings key unset", "db restore", "market publish", "sync unlock", "sync verify", "media prune", "agent"];
+export const AGENT_DENY = ["serve", "update", "settings chatgpt login", "settings chatgpt logout", "settings chatgpt import", "settings key set", "settings key unset", "db restore", "db backup", "market publish", "sync unlock", "sync verify", "sync setup", "sync signin", "sync now", "sync off", "media prune", "agent"];
 
 export class AgentError extends Error {
   status: number;
@@ -54,7 +55,7 @@ export type AgentItem =
       type: "tool";
       id: string;
       tool: string;
-      /** `etude …` command line, or the tool's arguments for the other tools. */
+      /** `wikae …` command line, or the tool's arguments for the other tools. */
       label: string;
       argv?: string[];
       status: "running" | "done" | "error" | "denied" | "waiting";
@@ -185,17 +186,17 @@ const TOOLS: ToolSpec[] = [
   {
     name: "etude_help",
     description:
-      "Search Etude's command catalog. Without a query, lists the command groups. With a query (words, or an exact command like 'deck move'), returns matching commands with their arguments, flags and examples. Look a command up here before running it.",
+      "Search Wikae's command catalog. Without a query, lists the command groups. With a query (words, or an exact command like 'deck move'), returns matching commands with their arguments, flags and examples. Look a command up here before running it.",
     parameters: { type: "object", properties: { query: { type: "string", description: "Words to search for, or a command name." } }, additionalProperties: false },
   },
   {
     name: "etude_run",
     description:
-      "Run one Etude CLI command against the open collection and get its JSON output. Pass the words after `etude` as separate argv strings, e.g. [\"deck\",\"create\",\"Spanish::Verbs\"]. Use `-` as a file argument with `stdin` to pass a pack or other JSON inline. Add --dry-run to preview a write. Destructive commands ask the user first.",
+      "Run one Wikae CLI command against the open collection and get its JSON output. Pass the words after `wikae` as separate argv strings, e.g. [\"deck\",\"create\",\"Spanish::Verbs\"]. Use `-` as a file argument with `stdin` to pass a pack or other JSON inline. Add --dry-run to preview a write. Destructive commands ask the user first.",
     parameters: {
       type: "object",
       properties: {
-        argv: { type: "array", items: { type: "string" }, description: "Command words, arguments and flags, without the leading `etude`." },
+        argv: { type: "array", items: { type: "string" }, description: "Command words, arguments and flags, without the leading `wikae`." },
         json: { type: "object", description: "JSON given to the command as stdin (for `-` arguments), as an object: a pack for pack import, fields for item add. Prefer this over stdin for JSON.", additionalProperties: true },
         stdin: { type: "string", description: "Plain text given to the command as stdin (for `-` arguments), when it isn't JSON." },
       },
@@ -235,7 +236,7 @@ const ROUTES = ["/", "/deck", "/browse", "/types", "/market", "/stats", "/settin
 function quote(a: string) {
   return /^[\w@%+=:,./-]+$/.test(a) ? a : `"${a.replace(/(["\\$`])/g, "\\$1")}"`;
 }
-export const commandLine = (argv: string[]) => ["etude", ...argv.map(quote)].join(" ");
+export const commandLine = (argv: string[]) => ["wikae", ...argv.map(quote)].join(" ");
 
 function truncate(s: string, n = OUTPUT_LIMIT) {
   return s.length > n ? `${s.slice(0, n)}\n… (${s.length - n} more characters cut)` : s;
@@ -409,13 +410,13 @@ export class Agent {
     const model = r.slice(i + 1);
     if (kind === "chatgpt") return { kind: "chatgpt", model, vision: true, ...(fb?.kind === "chatgpt" && fb.baseUrl ? { baseUrl: fb.baseUrl } : {}), timeoutMs: 180_000 };
     if (kind === "openrouter") {
-      const env = fb?.kind === "openai-chat" && /openrouter\.ai/.test(fb.url) ? fb.apiKeyEnv : "OPENROUTER_API_KEY";
-      const url = fb?.kind === "openai-chat" && /openrouter/.test(fb.url) ? fb.url : OPENROUTER_CHAT;
+      const env = fb?.kind === "openai-chat" && providerHost(fb.url) === "openrouter.ai" ? fb.apiKeyEnv : "OPENROUTER_API_KEY";
+      const url = fb?.kind === "openai-chat" && providerHost(fb.url) === "openrouter.ai" ? fb.url : OPENROUTER_CHAT;
       return { kind: "openai-chat", url, model, apiKeyEnv: env ?? "OPENROUTER_API_KEY", vision: this.visionOf(r), timeoutMs: 180_000 };
     }
     if (kind === "groq") {
-      const env = fb?.kind === "openai-chat" && /groq\.com/.test(fb.url) ? fb.apiKeyEnv : "GROQ_API_KEY";
-      const url = fb?.kind === "openai-chat" && /groq\.com/.test(fb.url) ? fb.url : "https://api.groq.com/openai/v1/chat/completions";
+      const env = fb?.kind === "openai-chat" && providerHost(fb.url).endsWith("groq.com") ? fb.apiKeyEnv : "GROQ_API_KEY";
+      const url = fb?.kind === "openai-chat" && providerHost(fb.url).endsWith("groq.com") ? fb.url : "https://api.groq.com/openai/v1/chat/completions";
       return { kind: "openai-chat", url, model, apiKeyEnv: env ?? "GROQ_API_KEY", vision: false, timeoutMs: 180_000 };
     }
     if (kind === "custom") {
@@ -435,8 +436,8 @@ export class Agent {
     const fb = this.etude.settings().ai.feedback;
     if (!fb) return null;
     if (fb.kind === "chatgpt") return `chatgpt:${fb.model}`;
-    if (/groq\.com/.test(fb.url)) return `groq:${fb.model}`;
-    return /openrouter\.ai/.test(fb.url) ? `openrouter:${fb.model}` : `custom:${fb.model}`;
+    if (providerHost(fb.url).endsWith("groq.com")) return `groq:${fb.model}`;
+    return providerHost(fb.url) === "openrouter.ai" ? `openrouter:${fb.model}` : `custom:${fb.model}`;
   }
 
   /** Models the user can pick, from every configured provider. */
@@ -456,11 +457,12 @@ export class Agent {
       }
       groups.push(g);
     }
-    const orEnv = fb?.kind === "openai-chat" && /openrouter\.ai/.test(fb.url) ? fb.apiKeyEnv : "OPENROUTER_API_KEY";
+    const orEnv = fb?.kind === "openai-chat" && providerHost(fb.url) === "openrouter.ai" ? fb.apiKeyEnv : "OPENROUTER_API_KEY";
     if (orEnv && process.env[orEnv]) {
       const g: ModelGroup = { provider: "openrouter", label: "OpenRouter", models: [] };
       try {
         const res = await fetch(this.openRouterModelsUrl, { signal: AbortSignal.timeout(15_000) });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const body = (await res.json()) as { data?: any[] };
         g.models = (body.data ?? [])
           .filter((m) => Array.isArray(m.supported_parameters) && m.supported_parameters.includes("tools"))
@@ -470,7 +472,7 @@ export class Agent {
       }
       groups.push(g);
     }
-    const groqEnv = fb?.kind === "openai-chat" && /groq\.com/.test(fb.url) ? fb.apiKeyEnv : "GROQ_API_KEY";
+    const groqEnv = fb?.kind === "openai-chat" && providerHost(fb.url).endsWith("groq.com") ? fb.apiKeyEnv : "GROQ_API_KEY";
     if (groqEnv && process.env[groqEnv]) {
       const g: ModelGroup = { provider: "groq", label: "Groq", models: [] };
       try {
@@ -478,6 +480,7 @@ export class Agent {
           headers: { Authorization: `Bearer ${process.env[groqEnv]}` },
           signal: AbortSignal.timeout(15_000),
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const body = (await res.json()) as { data?: any[] };
         g.models = (body.data ?? [])
           .filter((m) => m.active !== false && !m.id.includes("whisper") && !m.id.includes("guard"))
@@ -485,12 +488,12 @@ export class Agent {
       } catch (e) {
         g.error = `couldn't load Groq's models: ${(e as Error).message}`;
       }
-      if (g.models.length === 0 && fb?.kind === "openai-chat" && /groq\.com/.test(fb.url)) {
+      if (g.models.length === 0 && fb?.kind === "openai-chat" && providerHost(fb.url).endsWith("groq.com")) {
         g.models = [{ ref: `groq:${fb.model}`, name: fb.model, vision: false }];
       }
       groups.push(g);
     }
-    if (fb?.kind === "openai-chat" && !/openrouter\.ai|groq\.com/.test(fb.url)) groups.push({ provider: "custom", label: new URL(fb.url).host, models: [{ ref: `custom:${fb.model}`, name: fb.model, vision: !!fb.vision }] });
+    if (fb?.kind === "openai-chat" && providerHost(fb.url) !== "openrouter.ai" && !providerHost(fb.url).endsWith("groq.com")) groups.push({ provider: "custom", label: new URL(fb.url).host, models: [{ ref: `custom:${fb.model}`, name: fb.model, vision: !!fb.vision }] });
     this.modelCache = { at: Date.now(), groups };
     return { configured: this.configured(), default: this.defaultModel() ?? this.feedbackRef(), groups };
   }
@@ -560,6 +563,7 @@ export class Agent {
   }
 
   attachment(convId: string, id: string): AttachmentMeta {
+    if (!/^[a-z0-9-]+$/i.test(convId)) throw new AgentError(`no conversation "${convId}"`, 404);
     if (!/^a[\w-]+$/.test(id)) throw new AgentError(`no attachment "${id}"`, 404);
     const f = join(this.attachmentDir, convId, `${id}.json`);
     if (!existsSync(f)) throw new AgentError(`no attachment "${id}"`, 404);
@@ -613,7 +617,8 @@ export class Agent {
   /** Copies every table back from a snapshot, on the open connection. */
   private restore(file: string) {
     const sync = this.etude.db.get("SELECT 1 FROM sqlite_master WHERE name='sync_meta'");
-    if (sync && this.etude.db.get("SELECT value FROM sync_meta WHERE key='config'")?.value) throw new AgentError("Snapshot undo is unavailable in a synced collection. Edit the affected items to reverse the change.",409);
+    const syncConfig = parse<{ enabled?: boolean }>(sync ? this.etude.db.get("SELECT value FROM sync_meta WHERE key='config'")?.value ?? "{}" : "{}", {});
+    if (syncConfig.enabled) throw new AgentError("Snapshot undo is unavailable in a synced collection. Edit the affected items to reverse the change.",409);
     const db = this.etude.db.sql;
     if (db.attachImage) db.attachImage("snap", new Uint8Array(readFileSync(file)));
     else db.exec(`ATTACH DATABASE '${file.replace(/'/g, "''")}' AS snap`);
@@ -686,12 +691,15 @@ export class Agent {
 
   /** Market theme ids, from the market index when it answers quickly (cached for a minute). */
   private async marketThemes(): Promise<string[]> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       const { fetchIndex, marketSettings } = await import("./market.ts");
-      const idx = await Promise.race([fetchIndex(marketSettings(this.etude).url), new Promise<null>((r) => setTimeout(() => r(null), 1500))]);
+      const idx = await Promise.race([fetchIndex(marketSettings(this.etude).url), new Promise<null>((r) => { timer = setTimeout(() => r(null), 1500); })]);
       return idx ? idx.entries.filter((x) => x.kind === "theme").map((x) => x.id) : [];
     } catch {
       return [];
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -707,9 +715,9 @@ export class Agent {
     const installed = new Set(themes.map((t) => t.id));
     const market = (await this.marketThemes()).filter((id) => !installed.has(id));
     // Stable text first, so providers can cache the prefix across turns.
-    return `You are the assistant inside Etude, a spaced-repetition practice app. You change the user's collection by running Etude CLI commands with etude_run, in-process, on the open collection.
+    return `You are the assistant inside Wikae, a spaced-repetition practice app. You change the user's collection by running Wikae CLI commands with etude_run, in-process, on the open collection.
 
-How Etude works: an item is one piece of content (fields) of a card type; each item makes one or more cards, scheduled by FSRS (or another scheduler per deck). Card types define fields, a template and a grader. Decks form a tree written A::B::C. Themes color the app; the Market has more themes, decks and card types.
+How Wikae works: an item is one piece of content (fields) of a card type; each item makes one or more cards, scheduled by FSRS (or another scheduler per deck). Card types define fields, a template and a grader. Decks form a tree written A::B::C. Themes color the app; the Market has more themes, decks and card types.
 
 ${await cheatSheet(e)}
 
@@ -745,7 +753,8 @@ Today: ${new Date().toISOString().slice(0, 10)}${page ? `\nThe user is looking a
       } else {
         const c = m.content as AssistantContent;
         out.push(...(c.llm ?? []));
-        out.push({ role: "assistant", content: c.text || (c.error ? `(error: ${c.error})` : c.stopped ? "(stopped)" : "") + (m.undone ? "\n\n(The user undid the changes made in this reply.)" : "") });
+        const text = c.text || (c.error ? `(error: ${c.error})` : c.stopped ? "(stopped)" : "");
+        out.push({ role: "assistant", content: text + (m.undone ? "\n\n(The user undid the changes made in this reply.)" : "") });
       }
     }
     return out;
@@ -851,6 +860,7 @@ Today: ${new Date().toISOString().slice(0, 10)}${page ? `\nThe user is looking a
     const system = await this.systemPrompt(input.page);
     const effort: AgentEffort = this.etude.settings().ai.agent?.effort ?? "low";
     const changes: string[] = [];
+    let inFlight: ToolCall[] = [];
     // Retitle from the whole conversation after the 2nd and 4th message, alongside the turn.
     const userCount = (this.store.get("SELECT COUNT(*) AS n FROM agent_messages WHERE conversation_id = ? AND role = 'user'", convId)?.n ?? 0) as number;
     const titleText = [text, ...atts.map((a) => `[attached ${a.name}${a.kind === "text" ? `: ${readFileSync(a.path, "utf8").slice(0, 400)}` : ""}]`)].join("\n");
@@ -877,13 +887,14 @@ Today: ${new Date().toISOString().slice(0, 10)}${page ? `\nThe user is looking a
           },
         });
         modelName = res.model;
-        if (process.env.ETUDE_AGENT_TRACE) process.stderr.write(`[agent] step ${round + 1}: ${res.ms} ms, ${res.toolCalls.length} call(s), ${res.text.length} chars\n`);
+        if (appEnv(process.env, "AGENT_TRACE")) process.stderr.write(`[agent] step ${round + 1}: ${res.ms} ms, ${res.toolCalls.length} call(s), ${res.text.length} chars\n`);
         if (res.text && !textItem) items.push({ type: "text", text: res.text });
         if (!res.toolCalls.length) {
           finalText = res.text;
           break;
         }
         messages.push({ role: "assistant", content: res.text, toolCalls: res.toolCalls });
+        inFlight = res.toolCalls;
         // Calls in one step run together when none of them writes or asks the user; otherwise in order.
         const runOne = async (call: ToolCall): Promise<string> => {
           if (turn.abort.signal.aborted) throw new AiError("stopped");
@@ -909,14 +920,20 @@ Today: ${new Date().toISOString().slice(0, 10)}${page ? `\nThe user is looking a
           for (const call of res.toolCalls) outputs.push(await runOne(call));
         }
         res.toolCalls.forEach((call, i) => messages.push({ role: "tool", toolCallId: call.id, name: call.name, content: outputs[i] }));
+        inFlight = [];
         if (uiOnly && outputs.every((o) => o === "ok")) {
           finalText = res.text;
           break;
         }
       }
     } catch (e) {
-      if (turn.abort.signal.aborted) stopped = true;
-      else error = (e as Error).message;
+      if (turn.abort.signal.aborted) {
+        stopped = true;
+        // The provider expects one result per call; leaving one out breaks later turns.
+        for (const call of inFlight)
+          if (!messages.some((m) => m.role === "tool" && m.toolCallId === call.id))
+            messages.push({ role: "tool", toolCallId: call.id, name: call.name, content: "Stopped by the user." });
+      } else error = (e as Error).message;
     } finally {
       this.turns.delete(turn.id);
     }
@@ -941,7 +958,14 @@ Today: ${new Date().toISOString().slice(0, 10)}${page ? `\nThe user is looking a
     this.store.run("UPDATE agent_conversations SET updated = ? WHERE id = ?", now(), convId);
     const saved = this.message(this.store.get("SELECT * FROM agent_messages WHERE id = ?", aid));
     // A title still being written gets a few more seconds, so it reaches this stream.
-    if (titling) await Promise.race([titling, new Promise((r) => setTimeout(r, 4000))]);
+    if (titling) {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([titling, new Promise((r) => { timer = setTimeout(r, 4000); })]);
+      } finally {
+        clearTimeout(timer);
+      }
+    }
     if (error) emit({ type: "error", error });
     emit({ type: "done", message: saved });
     return saved;
@@ -955,7 +979,7 @@ Today: ${new Date().toISOString().slice(0, 10)}${page ? `\nThe user is looking a
       const args = JSON.parse(call.arguments || "{}");
       const argv: string[] = Array.isArray(args.argv) ? args.argv.map(String) : typeof args.argv === "string" ? splitArgs(args.argv) : [];
       const { resolveCommand } = await import("../cli/run.ts");
-      const cmd = resolveCommand(argv[0] === "etude" ? argv.slice(1) : argv);
+      const cmd = resolveCommand(["etude", "wikae", "wikaa"].includes(argv[0]?.toLowerCase()) ? argv.slice(1) : argv);
       return !!cmd && (!cmd.writes || argv.includes("--dry-run") || argv.includes("--help")) && !cmd.confirm;
     } catch {
       return false;
@@ -1021,7 +1045,7 @@ Today: ${new Date().toISOString().slice(0, 10)}${page ? `\nThe user is looking a
     if (call.name !== "etude_run") return { output: `unknown tool "${call.name}"`, wrote: false };
 
     let argv: string[] = Array.isArray(args.argv) ? args.argv.map((a: unknown) => String(a)) : typeof args.argv === "string" ? splitArgs(args.argv) : [];
-    if (argv[0] === "etude") argv = argv.slice(1);
+    if (["etude", "wikae", "wikaa"].includes(argv[0]?.toLowerCase())) argv = argv.slice(1);
     const stdin = args.json !== undefined && args.json !== null ? (typeof args.json === "string" ? args.json : JSON.stringify(args.json)) : typeof args.stdin === "string" ? args.stdin : "";
     const item: AgentItem & { type: "tool" } = { type: "tool", id: call.id, tool: "etude_run", label: commandLine(argv), argv, status: "running" };
     items.push(item);
@@ -1038,20 +1062,23 @@ Today: ${new Date().toISOString().slice(0, 10)}${page ? `\nThe user is looking a
     }
     if (denied) {
       item.status = "denied";
-      item.output = `\`etude ${cmd!.name}\` isn't available to the assistant. Ask the user to do it themselves.`;
+      item.output = `\`wikae ${cmd!.name}\` isn't available to the assistant. Ask the user to do it themselves.`;
       emit({ type: "tool_start", item });
       emit({ type: "tool_end", item });
       return { output: item.output, wrote: false };
     }
-    const isHelp = argv.includes("--help") || argv.includes("-h");
+    const endOfFlags = argv.indexOf("--");
+    const flagArgv = endOfFlags === -1 ? argv : argv.slice(0, endOfFlags);
+    const isHelp = flagArgv.includes("--help") || flagArgv.includes("-h");
     if (cmd && !isHelp) {
       const { parseInvocation } = await import("../cli/run.ts");
       let refusal: string | null = null;
       try {
         const inv = parseInvocation(argv);
-        if (inv) refusal = agentRefusal({ cmd: inv.cmd, values: inv.values, named: inv.named, attachmentDir: this.attachmentDir });
-      } catch {
-        // Bad arguments: let the real run report them.
+        if (inv) refusal = agentRefusal({ cmd: inv.cmd, values: inv.values, named: inv.named, extra: inv.extra, attachmentDir: this.attachmentDir });
+      } catch (e) {
+        // Fail closed: a command the guard can't inspect must not run unchecked.
+        refusal = `the assistant couldn't check this command safely (${(e as Error).message}). Ask the user to run it themselves.`;
       }
       if (refusal) {
         item.status = "denied";
@@ -1061,7 +1088,7 @@ Today: ${new Date().toISOString().slice(0, 10)}${page ? `\nThe user is looking a
         return { output: `${item.output} Don't work around this; tell the user.`, wrote: false };
       }
     }
-    const dry = argv.includes("--dry-run");
+    const dry = flagArgv.includes("--dry-run");
     const writes = !!cmd?.writes && !dry && !isHelp;
     item.writes = writes;
     if (isHelp || cmd?.name === "commands") item.lookup = true;
@@ -1098,7 +1125,7 @@ Today: ${new Date().toISOString().slice(0, 10)}${page ? `\nThe user is looking a
       }
       let allow: boolean;
       if (input.autoConfirm === true) allow = true;
-      else if (input.autoConfirm === "deny") allow = false;
+      else if (input.autoConfirm === "deny" || turn.abort.signal.aborted) allow = false;
       else {
         item.status = "waiting";
         emit({ type: "confirm", item });
@@ -1161,7 +1188,7 @@ export async function helpText(query: string): Promise<string> {
   const { COMMANDS, GROUPS, flagsOf } = await import("../cli/registry.ts");
   await import("../cli/commands/index.ts");
   const visible = COMMANDS.filter((c) => !c.legacy && !AGENT_DENY.some((d) => c.name === d || c.name.startsWith(d + " ")));
-  const q = query.trim().toLowerCase().replace(/^etude\s+/, "");
+  const q = query.trim().toLowerCase().replace(/^(etude|wikae|wikaa)\s+/, "");
   if (!q) {
     return [
       "Command groups (run etude_help with a group or words to see commands):",
@@ -1171,7 +1198,7 @@ export async function helpText(query: string): Promise<string> {
   }
   const spec = (c: (typeof COMMANDS)[number], full: boolean) => {
     const args = (c.args ?? []).map((a) => (a.required ? `<${a.name}${a.variadic ? "..." : ""}>` : `[${a.name}${a.variadic ? "..." : ""}]`)).join(" ");
-    const lines = [`## etude ${c.name} ${args}`.trim(), c.summary];
+    const lines = [`## wikae ${c.name} ${args}`.trim(), c.summary];
     if (full && c.description) lines.push(c.description);
     for (const a of c.args ?? []) lines.push(`  <${a.name}>: ${a.description}`);
     for (const f of flagsOf(c)) lines.push(`  --${f.name}${f.short ? ` (-${f.short})` : ""} ${f.type}${f.multiple ? "[]" : ""}${f.values ? ` {${f.values.join("|")}}` : ""}: ${full ? f.description : f.description.slice(0, 140)}`);
@@ -1212,7 +1239,8 @@ export function copyAttachment(src: string, dest: string) {
 // ------------------------------------------------------------ plain words
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-const positional = (argv: string[], words: number, i = 0) => argv.slice(words).filter((a) => !a.startsWith("-"))[i];
+const VALUE_FLAGS = new Set(["--db", "--home", "--deck", "--type", "--preset", "--file", "--out", "--server", "--folder", "--tag", "--id", "--key", "--value", "--prefix", "--q", "--limit", "--offset", "--at", "--note", "-d", "-t", "-o"]);
+const positional = (argv: string[], words: number, i = 0) => argv.slice(words).filter((a, n, all) => !a.startsWith("-") && !VALUE_FLAGS.has(all[n - 1]))[i];
 const lastPart = (deck: string) => deck.split("::").pop() ?? deck;
 const short = (s: string, n = 40) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
@@ -1296,7 +1324,7 @@ export function consequence(e: Etude, name: string, argv: string[], dry: any, fa
     }
   } catch {}
   const verb = name.split(" ").pop() ?? "run";
-  return { summary: `Runs etude ${name}${arg ? ` on ${arg}` : ""}.`, action: verb[0].toUpperCase() + verb.slice(1) };
+  return { summary: `Runs wikae ${name}${arg ? ` on ${arg}` : ""}.`, action: verb[0].toUpperCase() + verb.slice(1) };
 }
 
 /** A few words on what a successful write changed, for "Undo: …". */

@@ -2,7 +2,7 @@
   {
     "id": "showcase.order.quran",
     "type": "order",
-    "deck": "Etude Showcase::3 Arrange",
+    "deck": "Wikae Showcase::3 Arrange",
     "tags": [
       "showcase",
       "topic::quran"
@@ -27,7 +27,7 @@
   {
     "id": "showcase.timeline.computing",
     "type": "timeline",
-    "deck": "Etude Showcase::3 Arrange",
+    "deck": "Wikae Showcase::3 Arrange",
     "tags": [
       "showcase",
       "topic::history"
@@ -96,7 +96,7 @@
   {
     "id": "showcase.graph-walk.bfs",
     "type": "graph-walk",
-    "deck": "Etude Showcase::3 Arrange",
+    "deck": "Wikae Showcase::3 Arrange",
     "tags": [
       "showcase",
       "topic::algorithms"

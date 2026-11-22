@@ -156,7 +156,7 @@ command({
     TAG_FLAG,
   ],
   writes: true,
-  dryRun: true,
+  dryRun: "self",
   examples: [
     'etude item generate basic "Key facts about photosynthesis" --count 3',
     'etude item generate quran-mutashabihat "متشابهات البقرة 126 مع إبراهيم 35" --deck quran --save',
@@ -165,12 +165,13 @@ command({
   async run(ctx) {
     if (ctx.flags.save && !ctx.flags.deck) throw new CliError("--deck is required when using --save");
     const save = Boolean(ctx.flags.save && !ctx.flags["dry-run"]);
-    return ctx.e.aiGenerateItems(ctx.args.type, ctx.args.prompt, {
+    const result = await ctx.e.aiGenerateItems(ctx.args.type, ctx.args.prompt, {
       count: ctx.flags.count,
       deck: ctx.flags.deck,
       save,
-      tags: ctx.flags.tag,
+      tags: splitTags(ctx.flags.tag),
     });
+    return ctx.flags["dry-run"] ? { dryRun: true, ...result } : result;
   },
 });
 

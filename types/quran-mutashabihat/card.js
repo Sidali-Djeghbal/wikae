@@ -67,7 +67,7 @@ function renderVerse() {
     const slotContent = typedText.trim()
       ? etude.escape(typedText.trim())
       : (selectedOptionId
-          ? (view.pivotalOptions?.find((o) => o.id === selectedOptionId)?.textUthmani || "..........")
+          ? etude.escape(view.pivotalOptions?.find((o) => o.id === selectedOptionId)?.textUthmani || "..........")
           : "..........");
     const isFilled = !!(typedText.trim() || selectedOptionId);
 
@@ -99,7 +99,7 @@ function renderOptions() {
     const label = activeMode === "surah_identification" ? o.labelAr : o.textUthmani;
     const isSelected = selectedOptionId === o.id;
     return `
-      <button type="button" class="mutashabih-option ${isSelected ? "is-selected" : ""}" data-id="${o.id}">
+      <button type="button" class="mutashabih-option ${isSelected ? "is-selected" : ""}" data-id="${etude.escape(o.id)}">
         <span class="opt-key">${keys[idx] || ""}</span>
         <span class="opt-text ${activeMode === "surah_identification" ? "" : "quran-text"}">${etude.escape(label)}</span>
       </button>

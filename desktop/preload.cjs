@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld("etudeDesktop", {
     },
   },
   command: {
-    /** Where `etude` is on the PATH and whether the app can install its own. */
+    /** Where `wikae` is on the PATH and whether the app can install its own. */
     status: () => ipcRenderer.invoke("etude:command-status"),
     install: () => ipcRenderer.invoke("etude:command-install"),
   },

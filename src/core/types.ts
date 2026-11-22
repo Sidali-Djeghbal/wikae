@@ -69,8 +69,8 @@ export function validateType(def: unknown): string[] {
   }
   if (t.titleField !== undefined && Array.isArray(t.fields) && !t.fields.some((f) => f?.name === t.titleField && TITLE_KINDS.has(f.kind)))
     errors.push(`titleField must name a ${[...TITLE_KINDS].join(", ")} field of the type`);
-  if (t.faces !== undefined && (!Array.isArray(t.faces) || !t.faces.length || !t.faces.every((f) => typeof f === "string" && /^[\w-]+$/.test(f))))
-    errors.push("faces must be a non-empty list of simple names");
+  if (t.faces !== undefined && (!Array.isArray(t.faces) || !t.faces.length || !t.faces.every((f) => typeof f === "string" && /^[\w-]+$/.test(f)) || new Set(t.faces).size !== t.faces.length))
+    errors.push("faces must be a non-empty list of unique simple names");
   if (t.facesWhen !== undefined && typeof t.facesWhen !== "string") errors.push("facesWhen must be a script");
   else if (t.facesWhen && !t.faces?.length) errors.push("facesWhen needs a faces list to choose from");
   if (!t.template || typeof t.template.html !== "string") errors.push("template.html is required");
@@ -118,12 +118,9 @@ export function validateType(def: unknown): string[] {
     if (e) errors.push(e);
   }
   if (t.template?.js) {
-    try {
-      // Card scripts run in the browser, as the body of an async function.
-      new Function(`return async function (etude) {\n${t.template.js}\n}`);
-    } catch (e) {
-      errors.push(`${t.id}/card.js: ${(e as Error).message}`);
-    }
+    // Card scripts run in the browser, as the body of an async function.
+    const e = checkSyntax(`return async function (etude) {\n${t.template.js}\n}`, [], `${t.id}/card.js`);
+    if (e) errors.push(e);
   }
   return errors;
 }
@@ -142,7 +139,7 @@ export function validateFields(def: CardTypeDef, fields: Record<string, unknown>
       continue;
     }
     const bad =
-      (f.kind === "number" && typeof v !== "number") ||
+      (f.kind === "number" && (typeof v !== "number" || !Number.isFinite(v))) ||
       (f.kind === "boolean" && typeof v !== "boolean") ||
       (f.kind === "list" && !Array.isArray(v)) ||
       ((f.kind === "markdown" || f.kind === "text" || f.kind === "code" || f.kind === "html") && typeof v !== "string");

@@ -83,6 +83,8 @@ export async function hkdf(ikm: Uint8Array, salt: Uint8Array, info: string): Pro
 }
 
 export async function argon2Key(password: string, salt: Uint8Array, p: Argon2Params): Promise<Uint8Array> {
+  // KDF params can arrive from a remote vault: bound them so a hostile vault can't exhaust memory or CPU.
+  if (![p.m, p.t, p.p].every((n) => Number.isInteger(n) && n > 0) || p.m > 1024 * 1024 || p.t > 100 || p.p > 16) throw new Error("invalid Argon2id parameters");
   return argon2id({ password: password.normalize("NFKC"), salt, iterations: p.t, memorySize: p.m, parallelism: p.p, hashLength: KEY_BYTES, outputType: "binary" });
 }
 
@@ -119,6 +121,7 @@ export async function unwrapWithPassword(w: Wrap, password: string): Promise<Uin
 const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 const RECOVERY_ENTROPY = 30;
 const RECOVERY_CHECK = 5;
+const RECOVERY_CHARS = Math.ceil((RECOVERY_ENTROPY + RECOVERY_CHECK) * 8 / 5); // 56; a 57th character is non-canonical
 
 function base32(bytes: Uint8Array): string {
   let bits = 0, value = 0, out = "";
@@ -158,7 +161,9 @@ export async function generateRecoveryKey(): Promise<string> {
 
 /** Parses a typed recovery key (case, dashes and O/0, I/L/1 confusion forgiven) and checks its checksum. */
 export async function parseRecoveryKey(s: string): Promise<Uint8Array> {
-  const bytes = unbase32(s);
+  const clean = s.toUpperCase().replace(/[\s-]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");
+  if (clean.length !== RECOVERY_CHARS || ![...clean].every((ch) => CROCKFORD.includes(ch))) throw new Error("a recovery key has 56 characters");
+  const bytes = unbase32(clean);
   if (bytes.length !== RECOVERY_ENTROPY + RECOVERY_CHECK) throw new Error("a recovery key has 56 characters");
   const entropy = bytes.slice(0, RECOVERY_ENTROPY);
   const check = new Uint8Array(await subtle.digest("SHA-256", buf(entropy))).slice(0, RECOVERY_CHECK);
@@ -200,7 +205,7 @@ function pack(nonce: Uint8Array, ct: Uint8Array) {
   return concat(Uint8Array.of(VERSION), nonce, ct);
 }
 function unpack(b: Uint8Array) {
-  if (b.length < 1 + NONCE_BYTES + 16 || b[0] !== VERSION) throw new Error("not an Etude Sync ciphertext (or an unknown version)");
+  if (b.length < 1 + NONCE_BYTES + 16 || b[0] !== VERSION) throw new Error("not a Wikae Sync ciphertext (or an unknown version)");
   return { nonce: b.slice(1, 1 + NONCE_BYTES), ct: b.slice(1 + NONCE_BYTES) };
 }
 

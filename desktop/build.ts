@@ -44,8 +44,8 @@ writeFileSync(
   join(APP, "package.json"),
   JSON.stringify(
     {
-      name: "etude",
-      productName: "Etude",
+      name: "wikae",
+      productName: "Wikae",
       version: pkg.version,
       description: pkg.description,
       author: pkg.author,
@@ -54,7 +54,7 @@ writeFileSync(
       type: "module",
       main: "desktop/main.mjs",
       // Linux desktops match the window to its menu entry by this name.
-      desktopName: "etude-desktop.desktop",
+      desktopName: "wikae-desktop.desktop",
       dependencies: { ...pkg.dependencies, ...desktopPkg.dependencies },
       optionalDependencies: pkg.optionalDependencies,
       // How this build updates on a Mac: by itself once signed, else through a link.
@@ -88,16 +88,16 @@ const hasRpmbuild = (() => {
 if (process.platform === "linux" && !hasRpmbuild) console.warn("rpmbuild isn't installed: skipping the .rpm");
 
 const config: Configuration = {
-  appId: "study.etude.desktop",
-  productName: "Etude",
-  copyright: "© 2026 Etude contributors",
+  appId: "app.wikae.desktop",
+  productName: "Wikae",
+  copyright: "© 2026 Wikae contributors",
   directories: { app: "dist/app", output: "dist/out", buildResources: "build" },
   // The engine reads its own files from disk, as in a checkout.
   asar: false,
   // The only native package (the optimizer) ships prebuilt for each system.
   npmRebuild: false,
   electronFuses: {
-    // The etude command runs the app's program in Node mode.
+    // The wikae command runs the app's program in Node mode.
     runAsNode: true,
     enableCookieEncryption: true,
     enableNodeOptionsEnvironmentVariable: false,
@@ -108,6 +108,8 @@ const config: Configuration = {
     category: "public.app-category.education",
     target: [
       { target: "dmg", arch: ["arm64", "x64"] },
+      // electron-updater needs a zip on every platform; a dmg alone can't be applied to an installed app.
+      { target: "zip", arch: ["arm64", "x64"] },
     ],
     artifactName: "Wikae-mac-${arch}.${ext}",
     minimumSystemVersion: "12.0",
@@ -123,10 +125,10 @@ const config: Configuration = {
   nsis: { oneClick: true, perMachine: false, artifactName: "Wikae-windows-setup.${ext}" },
   linux: {
     target: ["AppImage", "deb", ...(hasRpmbuild ? ["rpm"] : [])],
-    // /usr/bin/etude is the etude command; the app's program gets another name.
-    executableName: "etude-desktop",
+    // /usr/bin/wikae is the wikae command; the app's program gets another name.
+    executableName: "wikae-desktop",
     category: "Education",
-    maintainer: "Etude <hello@etude.study>",
+    maintainer: "Sidali Djeghbal <contact@djeghbal.me>",
     synopsis: "Spaced repetition with programmable card types",
     syncDesktopName: true,
   },
@@ -141,11 +143,11 @@ if (process.platform === "darwin") {
   const yml = join(OUT, "latest-mac.yml");
   let text = readFileSync(yml, "utf8");
   for (const [arch, name] of Object.entries(MAC_NAMES)) {
-    for (const ext of [".dmg", ".dmg.blockmap"]) {
+    for (const ext of [".dmg", ".dmg.blockmap", ".zip", ".zip.blockmap"]) {
       const from = join(OUT, `Wikae-mac-${arch}${ext}`);
       if (existsSync(from)) renameSync(from, join(OUT, `Wikae-mac-${name}${ext}`));
+      text = text.replaceAll(`Wikae-mac-${arch}${ext}`, `Wikae-mac-${name}${ext}`);
     }
-    text = text.replaceAll(`Wikae-mac-${arch}.dmg`, `Wikae-mac-${name}.dmg`);
   }
   writeFileSync(yml, text);
 }

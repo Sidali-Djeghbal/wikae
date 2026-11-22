@@ -5,8 +5,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { join } from "node:path";
 import { Etude } from "../src/core/engine.ts";
 import { syncFor } from "../src/core/sync/client.ts";
-import { compare, tick, rows, drain, receive, type Change } from "../src/core/sync/log.ts";
-import { generateVaultKey, encryptBlob, decryptBlob, encryptEvent, decryptEvent } from "../src/core/sync/crypto.ts";
+import { compare, tick, rows, drain, receive, localEvent, type Change } from "../src/core/sync/log.ts";
+import { generateVaultKey, generateRecoveryKey, parseRecoveryKey, encryptBlob, decryptBlob, encryptEvent, decryptEvent } from "../src/core/sync/crypto.ts";
 
 const temp=()=>mkdtempSync(join((process.env.TMPDIR ?? tmpdir()),"sync-test-"));
 const password="a test Sync password";
@@ -30,7 +30,7 @@ test("ciphertext binds event ids and checks blob integrity",async()=>{
   const blob=await encryptBlob(key,new TextEncoder().encode("picture"));assert.equal(new TextDecoder().decode(await decryptBlob(key,blob.ciphertext,blob.hash)),"picture");
   blob.ciphertext[14]^=1;await assert.rejects(decryptBlob(key,blob.ciphertext,blob.hash));
 });
-test("LWW fields, permanent entity tombstones, idempotence and no echo",async()=>{
+test("LWW fields, tombstones, re-creation, idempotence and no echo",async()=>{
   const dir=temp();const e=await Etude.open(join(dir,"a.db"),{home:join(dir,"home")});
   try {
     syncFor(e).setup({folder:join(dir,"shared")});
@@ -38,9 +38,25 @@ test("LWW fields, permanent entity tombstones, idempotence and no echo",async()=
     assert.equal(receive(e.db,"remote-1",event),true);assert.equal(receive(e.db,"remote-1",event),false);
     receive(e.db,"remote-2",{...event,stamp:[99,0,"z"],fields:{"/fields/front":"old","/fields/back":"second"}});
     assert.deepEqual(rows(e.db,"items").get("missing"),{fields:{back:"second",front:"first"}});
-    receive(e.db,"remote-3",{...event,deleted:true});receive(e.db,"remote-4",{...event,stamp:[1000,0,"b"]});
-    assert.equal(rows(e.db,"items").has("missing"),false);drain(e.db);
-    assert.equal(e.db.get("SELECT count(*) n FROM sync_events WHERE sent=0")!.n,0);
+    receive(e.db,"remote-3",{...event,deleted:true});
+    assert.equal(rows(e.db,"items").has("missing"),false);
+    drain(e.db);
+    assert.equal(e.db.get("SELECT count(*) n FROM sync_events WHERE sent=0")!.n,0,"received events don't echo");
+    localEvent(e.db,"items","missing",{"/fields/front":"first"});
+    assert.deepEqual(rows(e.db,"items").get("missing"),{fields:{back:"second",front:"first"}});
+    // A stale delete must not erase the newer row.
+    receive(e.db,"remote-5",{...event,stamp:[90,0,"c"],deleted:true});
+    assert.equal(rows(e.db,"items").has("missing"),true);
+  }finally{e.close();rmSync(dir,{recursive:true,force:true});}
+});
+test("a scalar field wins over stale child registers",async()=>{
+  const dir=temp();const e=await Etude.open(join(dir,"a.db"),{home:join(dir,"home")});
+  try {
+    syncFor(e).setup({folder:join(dir,"shared")});
+    receive(e.db,"s-1",{v:1,table:"items",key:"k",stamp:[100,0,"a"],fields:{"/config/a":1,"/config/b":2}});
+    assert.deepEqual(rows(e.db,"items").get("k"),{config:{a:1,b:2}});
+    receive(e.db,"s-2",{v:1,table:"items",key:"k",stamp:[200,0,"a"],fields:{"/config":42}});
+    assert.deepEqual(rows(e.db,"items").get("k"),{config:42});
   }finally{e.close();rmSync(dir,{recursive:true,force:true});}
 });
 test("media names with spaces and accents sync; unsafe paths from another device are skipped",async()=>{
@@ -153,4 +169,10 @@ test("synced settings can't carry provider URLs or unsanitized theme CSS from an
     assert.equal(s.theme,"evil");
     assert.ok(!(s.themes[0].css??"").includes("attacker.example"),"theme CSS went through the sanitizer");
   }finally{e.close();rmSync(dir,{recursive:true,force:true});}
+});
+
+test("a recovery key with a non-canonical 57th character is rejected",async()=>{
+  const key=await generateRecoveryKey();
+  assert.equal((await parseRecoveryKey(key)).length,30);
+  await assert.rejects(()=>parseRecoveryKey(key+"0"),/56 characters/);
 });

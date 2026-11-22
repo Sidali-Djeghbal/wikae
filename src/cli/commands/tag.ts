@@ -53,14 +53,6 @@ command({
     const tags = [...new Set([...affected(ctx.e, from), ...metaOnly])].sort();
     if (!tags.length) throw new CliError(`no item or tag setting uses "${from}"`, "not_found");
     ctx.e.renameTag(from, to);
-    // Keep instructions and descriptions with the renamed tags.
-    for (const t of tags) {
-      const m = ctx.e.db.get("SELECT instructions, description FROM tag_meta WHERE tag = ?", t);
-      if (m && (m.instructions || m.description)) {
-        ctx.e.setTagMeta(to + t.slice(from.length), m);
-        ctx.e.db.run("DELETE FROM tag_meta WHERE tag = ?", t);
-      }
-    }
     return { from, to, tags: tags.map((t: string) => ({ from: t, to: to + t.slice(from.length) })) };
   },
 });

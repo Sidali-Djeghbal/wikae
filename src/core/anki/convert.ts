@@ -27,7 +27,8 @@ export interface PlannedCard {
   itemId: string;
   face: string;
   state: number;
-  due: string;
+  /** null for new cards: Anki's `due` is a queue position, not a date. */
+  due: string | null;
   stability: number;
   difficulty: number;
   elapsedDays: number;
@@ -442,7 +443,8 @@ function buildType(nt: AnkiNotetype, ids: Map<number, string>, used: Set<string>
     cloze: nt.cloze,
   };
 
-  const prepare = RENDERER.replace("__ANKI__", JSON.stringify(data));
+  // A replacer function: template LaTeX can contain $$ / $& / $', which a string replacement would expand.
+  const prepare = RENDERER.replace("__ANKI__", () => JSON.stringify(data));
 
   // Cloze types get one face per cloze number used; standard ones only the templates that can exist.
   let facesWhen: string | undefined;
@@ -587,18 +589,19 @@ function planCard(
     row = { ...row, ...next };
   }
 
-  const due = isDayDue(card)
+  const state = card.type === 2 ? 2 : card.type === 3 ? 3 : card.type === 1 ? 1 : 0;
+  const due = state === 0 ? null : isDayDue(card)
     ? dayDate(created, card.originalDeckId ? card.originalDue : card.due, dayStartHour)
     : new Date((card.originalDeckId ? card.originalDue : card.due) * 1000);
-  const dueIso = (Number.isNaN(due.getTime()) ? new Date() : due).toISOString();
+  const dueIso = due ? (Number.isNaN(due.getTime()) ? new Date() : due).toISOString() : null;
 
-  const state = card.type === 2 ? 2 : card.type === 3 ? 3 : card.type === 1 ? 1 : 0;
   const fsrs = fsrsState(card);
   const lastReview = fsrs ? new Date(fsrs.lrt * 1000).toISOString() : (row.last_review ?? null);
   const stability = fsrs ? fsrs.s : row.stability;
   const difficulty = fsrs ? fsrs.d : row.difficulty;
   const totalSteps = state === 3 ? cfg.relearningSteps.length : cfg.learningSteps.length;
-  const learningSteps = state === 1 || state === 3 ? Math.max(0, totalSteps - Math.max(0, card.left)) : 0;
+  // Anki packs "left today" into the thousands, so only the remainder is the steps left.
+  const learningSteps = state === 1 || state === 3 ? Math.max(0, totalSteps - Math.max(0, card.left % 1000)) : 0;
 
   const buried = card.queue === -2 || card.queue === -3;
   const tomorrow = addDays(new Date(), 1);
@@ -699,7 +702,17 @@ export function convertCollection(col: AnkiCollection, opts: ConvertOptions): Im
   }
   for (const d of col.decks) if (d.filtered) skipped.push({ what: "deck", name: d.name, reason: "filtered deck; its cards go to their home deck" });
 
-  const presetFor = (cfg: AnkiDeckConfig | undefined) => (cfg ? `anki-${slug(cfg.name)}` : null);
+  // Non-Latin names all slug to "imported"; keep each config distinct instead of collapsing them.
+  const presetIds = new Map<number, string>();
+  const takenPresets = new Set<string>();
+  for (const cfg of col.configs) {
+    const base = `anki-${slug(cfg.name)}`;
+    let id = base;
+    for (let i = 2; takenPresets.has(id); i++) id = `${base}-${i}`;
+    takenPresets.add(id);
+    presetIds.set(cfg.id, id);
+  }
+  const presetFor = (cfg: AnkiDeckConfig | undefined) => (cfg ? presetIds.get(cfg.id) ?? null : null);
   const presets = new Map<string, { id: string; name: string; config: Partial<PresetConfig> }>();
   const decks: { name: string; presetId: string | null; description: string }[] = [];
   const seenDecks = new Set<string>();

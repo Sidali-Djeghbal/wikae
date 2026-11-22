@@ -43,7 +43,7 @@ import {
 import { fitWeights, MIN_REVIEWS, OptimizerMissing, type Fit } from "./optimize.ts";
 import type { Learner } from "./learner.ts";
 import { Adaptive, annotateVariants, placementSession, variantPrior, type AdaptContext } from "./adaptive.ts";
-import { deckParts, hashString, interleave, parse } from "./util.ts";
+import { deckParts, hashString, interleave, parse, resolveAppHome } from "./util.ts";
 import { compile, isMediaRef, itemSearchText, QueryError, stripHtml, type Compiled } from "./query.ts";
 import { AGENT_EFFORTS, aiEditFields, aiGenerateItems, aiFeedback, aiVerdict, AiError, DEFAULT_AI, type AiSettings, type GradingContext } from "./ai.ts";
 import {
@@ -67,6 +67,7 @@ import { convertCollection, type PlannedCard } from "./anki/convert.ts";
 import { collectFileNames, MAX_MEDIA_BYTES, mediaType } from "./media.ts";
 import { decodeAssets, hashBytes, type AssetInfo } from "./assets.ts";
 import { imagePixels, normalizeBoxes, OcclusionError } from "./occlusion.ts";
+import { findSurah } from "./mutashabihat.ts";
 import { LOCAL_TYPE_DEFAULTS_KEY, localTypeDefaults, type LocalTypeDefault } from "./sync/log.ts";
 
 export class EtudeError extends Error {
@@ -359,8 +360,8 @@ export class Etude {
   static async open(path: string, opts: { builtinTypesDir?: string; builtinSchedulersDir?: string; home?: string } = {}): Promise<Etude> {
     await initSandbox();
     const db = await Db.open(path);
-    const media = path === ":memory:" ? join(process.env.TMPDIR ?? "/tmp", `etude-media-${process.pid}`) : join(dirname(path), "media");
-    const home = resolve(opts.home ?? process.env.WIKAE_HOME ?? process.env.WIKAA_HOME ?? process.env.ETUDE_HOME ?? (existsSync(join(homedir(), ".wikae")) ? join(homedir(), ".wikae") : existsSync(join(homedir(), ".wikaa")) ? join(homedir(), ".wikaa") : join(homedir(), ".etude")));
+    const media = path === ":memory:" ? join(process.env.TMPDIR ?? "/tmp", `etude-media-${process.pid}-${randomUUID()}`) : join(dirname(path), "media");
+    const home = opts.home ? resolve(opts.home) : resolveAppHome();
     const e = new Etude(db, media, path, home);
     e.syncBuiltinTypes(opts.builtinTypesDir ?? BUILTIN_TYPES_DIR);
     e.applyBuiltinTypeFolders();
@@ -883,7 +884,7 @@ export class Etude {
   private checkSchedulerRef(config: Partial<PresetConfig> | undefined) {
     const id = config?.scheduler;
     if (!id || id === FSRS) return;
-    if (!this.db.get("SELECT 1 AS x FROM schedulers WHERE id = ?", id)) throw new EtudeError(`unknown scheduler "${id}" (see \`etude scheduler list\`)`);
+    if (!this.db.get("SELECT 1 AS x FROM schedulers WHERE id = ?", id)) throw new EtudeError(`unknown scheduler "${id}" (see \`wikae scheduler list\`)`);
   }
 
   /** Day starts from `at`'s study day onward: what a scheduler script gets as `ctx.day`. */
@@ -902,7 +903,7 @@ export class Etude {
   private runScheduler(def: SchedulerDef, cfg: PresetConfig, card: CardRow & { created?: string }, attempt: ScriptAttempt, t: Date) {
     const dayStart = iso(this.dayStart(t));
     const history = this.db
-      .all<{ ts: string; rating: number; score: number | null }>("SELECT ts, rating, score FROM reviews WHERE card_id = ? AND practice = 0 AND ts <= ? ORDER BY ts DESC LIMIT 50", card.id, iso(t))
+      .all<{ ts: string; rating: number; score: number | null }>("SELECT ts, rating, score FROM reviews WHERE card_id = ? AND practice = 0 AND ts < ? ORDER BY ts DESC LIMIT 50", card.id, iso(t))
       .reverse();
     const doneToday = history.filter((h) => h.ts >= dayStart).length;
     const sc: ScriptCard = { state: parse(card.sched_state ?? null, null), reps: card.reps, due: card.due, lastReview: card.last_review, created: card.created ?? card.due };
@@ -1329,7 +1330,8 @@ export class Etude {
    */
   deleteType(id: string, opts: { items?: boolean } = {}): { items: number; cards: number; reviews: number } {
     const row = this.db.get("SELECT builtin FROM types WHERE id = ?", id);
-    if (row?.builtin) throw new EtudeError("built-in types can't be deleted");
+    if (!row) throw new EtudeError(`unknown type "${id}"`, 404);
+    if (row.builtin) throw new EtudeError("built-in types can't be deleted");
     const used = this.typeUsage(id);
     if (used.items && !opts.items)
       throw new EtudeError(`type "${id}" is used by ${used.items} item(s)${used.archived === used.items ? ", all archived" : used.archived ? `, ${used.archived} of them archived` : ""}`);
@@ -1378,7 +1380,7 @@ export class Etude {
     if (!def.facesWhen) return def.faces ?? ["main"];
     try {
       const out = runScript<string[]>(def.facesWhen!, { params: ["fields"], args: { fields }, where: `${def.id}/facesWhen` });
-      return Array.isArray(out) ? [...new Set(out.filter((f) => typeof f === "string" && /^[\w-]+$/.test(f)))] : null;
+      return Array.isArray(out) ? [...new Set(out.filter((f) => typeof f === "string" && /^[\p{L}\p{N}-]+$/u.test(f)))] : null;
     } catch {
       return null;
     }
@@ -1736,19 +1738,25 @@ export class Etude {
     );
   }
 
-  /** Renames a tag and every tag below it. */
+  /** Renames a tag and every tag below it, carrying their instruction metadata. */
   renameTag(from: string, to: string) {
     const src = normTag(from), dst = normTag(to);
+    if (!src || !dst || src === dst) return;
+    const like = src.replace(/[\\%_]/g, "\\$&") + "::%";
     this.db.tx(() => {
-      const rows = this.db.all("SELECT item_id, tag FROM item_tags WHERE tag = ? OR tag LIKE ? ESCAPE '\\'", src, src.replace(/[\\%_]/g, "\\$&") + "::%");
-      for (const r of rows) {
-        const tag = dst + r.tag.slice(src.length);
-        const item = this.db.get("SELECT tags FROM items WHERE id = ?", r.item_id)!;
-        const tags = [...new Set(parse<string[]>(item.tags, []).map((t) => (t === r.tag ? tag : t)))];
-        this.db.run("UPDATE items SET tags = ? WHERE id = ?", json(tags), r.item_id);
-        this.db.run("DELETE FROM item_tags WHERE item_id = ? AND tag = ?", r.item_id, r.tag);
-        this.db.run("INSERT OR IGNORE INTO item_tags (item_id, tag) VALUES (?, ?)", r.item_id, tag);
+      const rows = this.db.all<{ item_id: number; tag: string }>("SELECT item_id, tag FROM item_tags WHERE tag = ? OR tag LIKE ? ESCAPE '\\'", src, like);
+      const meta = this.db.all<{ tag: string; instructions: string; description: string }>("SELECT tag, instructions, description FROM tag_meta WHERE tag = ? OR tag LIKE ? ESCAPE '\\'", src, like);
+      const renamed = new Map(rows.map((r) => [r.tag, dst + r.tag.slice(src.length)]));
+      // Delete old keys first: renaming a into a::b can otherwise overwrite a tag still in the snapshot.
+      for (const itemId of new Set(rows.map((r) => r.item_id))) {
+        const item = this.db.get("SELECT tags FROM items WHERE id = ?", itemId)!;
+        const tags = [...new Set(parse<string[]>(item.tags, []).map((t) => renamed.get(t) ?? t))];
+        this.db.run("UPDATE items SET tags = ? WHERE id = ?", json(tags), itemId);
       }
+      for (const r of rows) this.db.run("DELETE FROM item_tags WHERE item_id = ? AND tag = ?", r.item_id, r.tag);
+      for (const r of rows) this.db.run("INSERT OR IGNORE INTO item_tags (item_id, tag) VALUES (?, ?)", r.item_id, renamed.get(r.tag)!);
+      for (const m of meta) this.db.run("DELETE FROM tag_meta WHERE tag = ?", m.tag);
+      for (const m of meta) this.db.run("INSERT INTO tag_meta (tag, instructions, description) VALUES (?, ?, ?) ON CONFLICT(tag) DO UPDATE SET instructions=excluded.instructions, description=excluded.description", dst + m.tag.slice(src.length), m.instructions, m.description);
     });
   }
 
@@ -1799,6 +1807,14 @@ export class Etude {
         if (e.length) throw new EtudeError(`${id}: generator output (seed ${seed}): ${e.join("; ")}`);
       }
     }
+    // Mutashabihat are parsed by their prepare script: a bad Surah or target id must surface now, not at study.
+    if (def.id === "quran-mutashabihat" && typeof def.prepare === "string") {
+      try {
+        runScript(def.prepare, { params: ["fields", "face", "rng", "learner"], args: { fields, face: "main", learner: null }, seed: 1, where: `${def.id}/prepare` });
+      } catch (e) {
+        throw new EtudeError(`${id}: ${(e as Error).message}`);
+      }
+    }
   }
 
   /** Returns a validated edit proposal without saving or changing scheduling. */
@@ -1835,6 +1851,7 @@ export class Etude {
   /** Generates items using the configured language model. Optionally saves them to a deck. */
   async aiGenerateItems(typeId: string, prompt: string, opts: { count?: number; deck?: string; save?: boolean; tags?: string[] } = {}) {
     if (typeof prompt !== "string" || !prompt.trim()) throw new EtudeError("describe what cards to generate");
+    if (opts.save && !opts.deck) throw new EtudeError("saved cards need a deck");
     const def = this.type(typeId);
     try {
       const generated = await aiGenerateItems(this.settings().ai, def, prompt.trim(), { count: opts.count, home: this.home });
@@ -1847,29 +1864,31 @@ export class Etude {
         if (def.id === "quran-mutashabihat" && !fields.targetVerseId && Array.isArray(fields.siblings) && fields.siblings.length) {
           const s0 = fields.siblings[0];
           if (typeof s0 === "string") {
-            const m = s0.match(/^([^|:]+)[:\s]+(\d+)/);
-            if (m) fields.targetVerseId = `${m[1]}:${m[2]}`;
+            const m = s0.replace(/^\s*\[/, "").match(/^([^|:\]]+?)[:\s]+(\d+)/);
+            const n = m ? findSurah(m[1])?.number : undefined;
+            if (m && n) fields.targetVerseId = `${n}_${m[2]}`;
           } else if (typeof s0 === "object" && s0 !== null) {
             const obj = s0 as any;
-            if (obj.surahNumber && obj.ayahNumber) fields.targetVerseId = `${obj.surahNumber}_${obj.ayahNumber}`;
+            const n = Number(obj.surahNumber) || findSurah(obj.surahNameAr ?? obj.surah)?.number;
+            const a = Number(obj.ayahNumber ?? obj.ayah);
+            if (n && a) fields.targetVerseId = `${n}_${a}`;
           }
         }
         const fullFields = { ...fieldDefaults(def), ...fields };
         this.checkItemFields(`generated-${i + 1}`, def, fullFields);
         items.push({ fields, title: item.title || itemTitle(def, fullFields, false) });
+      }
 
-        if (opts.save && opts.deck) {
-          const slug = opts.deck.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "card";
-          const id = `${slug}.${Date.now().toString(36)}${i > 0 ? `-${i + 1}` : ""}`;
-          this.upsertItem({
-            id,
-            type: typeId,
-            deck: opts.deck,
-            fields,
-            tags: opts.tags ?? [],
+      if (opts.save) {
+        const slug = opts.deck!.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "card";
+        const batch = randomUUID().replaceAll("-", "").slice(0, 12);
+        this.db.tx(() => {
+          items.forEach((item, i) => {
+            const id = `${slug}.${batch}-${i + 1}`;
+            this.upsertItem({ id, type: typeId, deck: opts.deck!, fields: item.fields, tags: opts.tags ?? [] });
+            savedIds.push(id);
           });
-          savedIds.push(id);
-        }
+        });
       }
 
       return {
@@ -2650,7 +2669,7 @@ export class Etude {
     if (grade.retry) {
       const c = this.cardWithDeck(cardId);
       const field = prep.retry?.hintField;
-      if (field) {
+      if (field && !opts.practice) {
         // Saved only if the card is still the one graded: an edit made while the grader ran wins.
         const current = this.prepare(c.item_id, c.face, seed, adapt);
         if (JSON.stringify(current.key) !== JSON.stringify(prep.key) || JSON.stringify(current.retry) !== JSON.stringify(prep.retry))
@@ -2696,10 +2715,11 @@ export class Etude {
       });
       return out ?? {};
     };
+    let probe: ReturnType<typeof scripted> | null = null;
     try {
       if (g.kind === "self" || prep.selfGraded) grade = { score: null, verdict: "ungraded", suggested: null, grader: { kind: "self" } };
       else if (g.kind === "script" || (g.kind === "hybrid" && !scriptedDeferred())) {
-        const out = scripted();
+        const out = g.kind === "script" ? scripted() : probe!;
         if (out.retry != null) {
           if (typeof out.retry !== "string" || !out.retry.trim() || out.retry.length > 600) throw new EtudeError(`${def.id}/grade: retry must be a hint of up to 600 characters`);
           grade = { score: null, verdict: "ungraded", suggested: null, grader: { kind: "script", ms: Date.now() - t0 }, retry: { hint: retryHint(out.retry, prep.retry) } };
@@ -2729,7 +2749,7 @@ export class Etude {
     }
     function scriptedDeferred() {
       if (g.kind !== "hybrid") return false;
-      const out = scripted();
+      const out = (probe ??= scripted());
       return out.defer === true || (out.score == null && out.retry == null);
     }
     if (prep.adaptive) {
@@ -2757,8 +2777,15 @@ export class Etude {
 
   private loadAnswer(stored: unknown): unknown {
     if (stored && typeof stored === "object" && typeof (stored as any).image === "string" && (stored as any).image.startsWith("media:")) {
-      const buf = readFileSync(join(this.mediaDir, (stored as any).image.slice(6)));
-      return { ...(stored as object), image: "data:image/png;base64," + buf.toString("base64") };
+      const root = resolve(this.mediaDir);
+      const full = resolve(root, (stored as any).image.slice(6));
+      if (!full.startsWith(root + sep)) return stored;
+      try {
+        const buf = readFileSync(full);
+        return { ...(stored as object), image: "data:image/png;base64," + buf.toString("base64") };
+      } catch {
+        return stored;
+      }
     }
     return stored;
   }
@@ -2921,7 +2948,8 @@ export class Etude {
           b.state, b.due, b.stability, b.difficulty, b.elapsed_days, b.scheduled_days, b.reps, b.lapses, b.learning_steps, b.last_review, b.sched_state ?? null, r.card_id,
         );
         const item = this.db.get("SELECT item_id FROM cards WHERE id = ?", r.card_id)!.item_id;
-        this.db.run("UPDATE cards SET buried_until = NULL WHERE item_id = ? AND id != ?", item, r.card_id);
+        // Only undo the automatic sibling burial from this rating, not a later manual one.
+        this.db.run("UPDATE cards SET buried_until = NULL WHERE item_id = ? AND id != ? AND buried_until = ?", item, r.card_id, r.ts);
       }
       // The graded answer goes with its rating: an undone answer didn't happen.
       this.db.run("DELETE FROM attempts WHERE review_id = ? OR id = ?", r.id, r.attempt_id ?? -1);
@@ -2980,16 +3008,19 @@ export class Etude {
         if (script) {
           // Same script, same history: run it again answer by answer.
           let row: CardRow = { ...(sched.emptyCard(new Date(c.created)) as any), id: c.id, item_id: c.item_id, face: "", suspended: 0, buried_until: null, sched_state: null };
-          // runScheduler reads earlier results from the table, so each step looks just before its own review.
+          const days = (a: string | null, b: string) => (a ? Math.max(0, (new Date(b).getTime() - new Date(a).getTime()) / 86400_000) : 0);
+          let elapsed = 0, scheduled = 0;
           for (const r of reviews) {
             const g = parse<Grade | null>(r.grade, null);
-            const at = new Date(r.ts);
-            const out = this.runScheduler(script, cfg, { ...row, created: c.created }, { rating: script.ratings === false ? null : r.rating || null, score: r.score, verdict: g?.verdict ?? null, details: g?.details ?? null, ms: r.duration_ms, at: r.ts }, new Date(at.getTime() - 1));
+            // runScheduler's history is strictly older than `at`, so the review being replayed isn't counted twice.
+            const out = this.runScheduler(script, cfg, { ...row, created: c.created }, { rating: script.ratings === false ? null : r.rating || null, score: r.score, verdict: g?.verdict ?? null, details: g?.details ?? null, ms: r.duration_ms, at: r.ts }, new Date(r.ts));
+            elapsed = days(row.last_review, r.ts);
             row = { ...row, state: 2, due: out.due, reps: row.reps + 1, lapses: row.lapses + (r.rating === 1 ? 1 : 0), last_review: r.ts, sched_state: json(out.state) };
+            scheduled = days(r.ts, row.due);
           }
           this.db.run(
-            "UPDATE cards SET state = 2, due = ?, stability = 0, difficulty = 0, elapsed_days = 0, scheduled_days = 0, reps = ?, lapses = ?, learning_steps = 0, last_review = ?, sched_state = ? WHERE id = ?",
-            row.due, row.reps, row.lapses, row.last_review, row.sched_state ?? null, c.id,
+            "UPDATE cards SET state = 2, due = ?, stability = 0, difficulty = 0, elapsed_days = ?, scheduled_days = ?, reps = ?, lapses = ?, learning_steps = 0, last_review = ?, sched_state = ? WHERE id = ?",
+            row.due, elapsed, scheduled, row.reps, row.lapses, row.last_review, row.sched_state ?? null, c.id,
           );
         } else {
           // A drill's unrated answers count as the rating their score suggests.
@@ -3039,7 +3070,7 @@ export class Etude {
       this.preset(target.preset);
       source = { kind: "preset", id: target.preset };
     } else source = this.weightsSource(this.deck(target.deck).name);
-    if (source.kind === "defaults") throw new EtudeError("this deck uses no preset and no weights of its own: attach a preset first (etude deck preset)");
+    if (source.kind === "defaults") throw new EtudeError("this deck uses no preset and no weights of its own: attach a preset first (wikae deck preset)");
     const key = JSON.stringify(source);
     const decks = this.db
       .all<{ id: number; name: string }>("SELECT id, name FROM decks ORDER BY name")
@@ -3646,7 +3677,7 @@ export class Etude {
   }
 
   importPack(pack: any, opts: { dryRun?: boolean } = {}) {
-    if (!pack || pack.etude !== "pack/1") throw new EtudeError('not an Etude pack (expected "etude": "pack/1")');
+    if (!pack || pack.etude !== "pack/1") throw new EtudeError('not a Wikae pack (expected "etude": "pack/1")');
     const report = {
       presets: 0,
       decks: 0,
@@ -3724,7 +3755,7 @@ export class Etude {
     const collection = readCollection(pkg.collection);
     const scheduling = opts.scheduling !== false;
     const prefix = opts.deckPrefix?.trim();
-    if (prefix && !/^[\w .:&/-]+$/.test(prefix)) throw new EtudeError(`invalid deck prefix "${prefix}"`);
+    if (prefix && !/^[\p{L}\p{N} _.:&/-]+$/u.test(prefix)) throw new EtudeError(`invalid deck prefix "${prefix}"`);
     const plan = convertCollection(collection, { deckPrefix: prefix || undefined, scheduling, media: pkg.media });
 
     const report = {
@@ -3793,7 +3824,7 @@ export class Etude {
           this.db.run(
             "UPDATE cards SET state = ?, due = ?, stability = ?, difficulty = ?, elapsed_days = ?, scheduled_days = ?, reps = ?, lapses = ?, learning_steps = ?, last_review = ?, suspended = ?, buried_until = ? WHERE id = ?",
             card.state,
-            card.due,
+            card.due ?? new Date().toISOString(),
             card.stability,
             card.difficulty,
             card.elapsedDays,
@@ -3871,7 +3902,7 @@ export class Etude {
     const tags = this.db.all("SELECT * FROM tag_meta").filter((t) => tagSet.has(t.tag) && (t.instructions || t.description));
     return {
       etude: "pack/1",
-      name: scope.name ?? scope.deck ?? "Etude export",
+      name: scope.name ?? scope.deck ?? "Wikae export",
       exported: iso(),
       presets: [...presetIds].map((id) => this.preset(id)),
       decks: decks.map((d) => ({ name: d.name, ...(d.presetId ? { preset: d.presetId } : {}), ...(Object.keys(d.config).length ? { config: d.config } : {}), description: d.description, instructions: d.instructions })),

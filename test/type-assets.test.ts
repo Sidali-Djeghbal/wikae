@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { Etude } from "../src/core/engine.ts";
-import { MAX_ASSET_BYTES, hashBytes, validateAssets } from "../src/core/assets.ts";
+import { MAX_ASSET_BYTES, hashBytes, readAssetDir, validateAssets } from "../src/core/assets.ts";
 import { buildIndex, buildSubmission, checkEntry, entryJson, entryPath, installFile, MAX_ENTRY_BYTES } from "../src/core/market.ts";
 import { createApp } from "../src/server/app.ts";
 import { cardFrame } from "../src/server/frame.ts";
@@ -51,6 +51,14 @@ function cli(home: string) {
     return { code, out, err, json };
   };
 }
+
+test("assets: hidden files are not read from a type directory", (t) => {
+  const dir = tmp(t);
+  mkdirSync(join(dir, "assets"));
+  writeFileSync(join(dir, "assets", "keep.json"), "{}");
+  writeFileSync(join(dir, "assets", ".DS_Store"), "junk");
+  assert.deepEqual(Object.keys(readAssetDir(dir) ?? {}), ["keep.json"]);
+});
 
 test("assets: validation of names, encoding and sizes", () => {
   assert.deepEqual(validateAssets(undefined), []);

@@ -16,7 +16,7 @@ import { ACCOUNT_EVENT } from "@/components/settings-account";
 import { account, bytes, type AccountStatus } from "@/lib/account";
 import { desktopApp } from "@/lib/platform";
 
-const DEFAULT_SERVER = "https://sync.etude.study";
+const DEFAULT_SERVER = "https://sync.wikae.study";
 
 export interface SyncStatus {
   configured: boolean;
@@ -24,7 +24,7 @@ export interface SyncStatus {
   server?: string;
   folder?: string;
   signedIn: boolean;
-  /** Signed in through the Etude account rather than Sync's own code. */
+  /** Signed in through the Wikae account rather than Sync's own code. */
   account?: boolean;
   email?: string;
   unlocked: boolean;
@@ -120,7 +120,7 @@ export function SyncSection() {
   useEffect(() => {
     void load();
     void loadAccount();
-    // Signing in to the Etude account also signs Sync in when both use the same server.
+    // Signing in to the Wikae account also signs Sync in when both use the same server.
     const h = () => {
       void load(true);
       account.status().then((a) => {
@@ -138,7 +138,7 @@ export function SyncSection() {
     if (!status || seeded.current) return;
     seeded.current = true;
     setServer(status.server ?? DEFAULT_SERVER);
-    // Not set up yet: offer the server the Etude account uses.
+    // Not set up yet: offer the server the Wikae account uses.
     if (!status.server) account.status().then((a) => setServer((cur) => (cur === DEFAULT_SERVER ? (suggested.current = a.server) : cur))).catch(() => {});
     setFolder(status.folder ?? "");
     setEmail(status.email ?? "");
@@ -380,7 +380,7 @@ export function SyncSection() {
       )}
 
       {status && stage === "setup" && (
-        <Block title="Set up sync" description="Etude syncs through a server, or through a folder on this computer in the desktop app.">
+        <Block title="Set up sync" description="Wikae syncs through a server, or through a folder on this computer in the desktop app.">
           <form
             className="flex flex-col gap-4"
             onSubmit={(e) => {
@@ -389,7 +389,7 @@ export function SyncSection() {
             }}
           >
             <TextInput label="Server" value={server} onChange={setServer} placeholder={DEFAULT_SERVER} mono autoComplete="url" hint="The sync server address. Change it to use one of your own." />
-            {!(globalThis as any).__etudeLocal && <TextInput label="Folder (optional)" value={folder} onChange={setFolder} placeholder="/home/you/Etude" mono autoComplete="off" hint="Desktop app only. Leave empty to sync through the server." action={<ChooseFolder onPick={setFolder} />} />}
+            {!(globalThis as any).__etudeLocal && <TextInput label="Folder (optional)" value={folder} onChange={setFolder} placeholder="/home/you/Wikae" mono autoComplete="off" hint="Desktop app only. Leave empty to sync through the server." action={<ChooseFolder onPick={setFolder} />} />}
             {problem && <Notice>{problem}</Notice>}
             <div>
               <Button type="submit" size="sm" className="h-10 gap-1.5 md:h-8" disabled={!!busy}>
@@ -406,7 +406,7 @@ export function SyncSection() {
           title="Sign in"
           description={
             status.kind === "folder"
-              ? "Etude emails a one-time code to confirm the address."
+              ? "Wikae emails a one-time code to confirm the address."
               : <>Codes are sent by <span className="font-mono text-[13px] text-foreground/85">{status.server ?? "the sync server"}</span>.</>
           }
         >

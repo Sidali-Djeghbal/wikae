@@ -3,7 +3,9 @@ import { syncRoutes } from "./sync.ts";
 import { accountRoutes } from "./account.ts";
 import { syncFor } from "../core/sync/client.ts";
 import { Hono, type Context } from "hono";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { Readable } from "node:stream";
+import { timingSafeEqual } from "node:crypto";
 import { dirname, extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -17,7 +19,7 @@ import { ASSET_NAME, assetMime } from "../core/assets.ts";
 import { agentFor, AgentError, AGENT_MAX_ATTACHMENT_BYTES, type AgentEvent } from "../core/agent.ts";
 import { streamSSE } from "hono/streaming";
 import { applyUpdate, updateStatus, UpdateError } from "../core/update.ts";
-import { buildSubmission, fetchMarketMedia, fetchCover, fetchEntry, fetchIndex, ghStatus, installEntry, installState, installedEntries, manualPublishUrl, marketSettings, publishFile, summarize, entryPath, entryJson, forgetInstall, type MarketKind } from "../core/market.ts";
+import { buildSubmission, fetchMarketMedia, fetchCover, fetchEntry, fetchIndex, ghStatus, installEntry, installState, installedEntries, installedRec, manualPublishUrl, marketSettings, publishFile, summarize, entryPath, entryJson, forgetInstall, type MarketKind } from "../core/market.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const require = createRequire(import.meta.url);
@@ -82,19 +84,42 @@ function withAppCsp(res: Response, path: string): Response {
 
 function sendFile(c: Context, path: string, opts: { cors?: boolean; cache?: string; mime?: string } = {}) {
   if (!existsSync(path) || !statSync(path).isFile()) return c.text("not found", 404);
-  const headers: Record<string, string> = { "Content-Type": opts.mime ?? MIME[extname(path)] ?? "application/octet-stream", "Cache-Control": opts.cache ?? "no-cache" };
+  const size = statSync(path).size;
+  const headers: Record<string, string> = { "Content-Type": opts.mime ?? MIME[extname(path)] ?? "application/octet-stream", "Cache-Control": opts.cache ?? "no-cache", "Accept-Ranges": "bytes" };
   // Card frames have an opaque origin, so everything they load is a cross-origin request.
   if (opts.cors) headers["Access-Control-Allow-Origin"] = "*";
-  return c.body(readFileSync(path), 200, headers);
+  const stream = (start?: number, end?: number) =>
+    c.body(Readable.toWeb(createReadStream(path, { start, end })) as ReadableStream, start === undefined ? 200 : 206, headers);
+  const range = c.req.header("range")?.trim();
+  if (!range) {
+    headers["Content-Length"] = String(size);
+    return stream();
+  }
+  const m = /^bytes=(\d*)-(\d*)$/.exec(range);
+  if (!m || (!m[1] && !m[2])) {
+    headers["Content-Range"] = `bytes */${size}`;
+    return c.body(null, 416, headers);
+  }
+  const start = m[1] ? Number(m[1]) : Math.max(0, size - Number(m[2]));
+  const end = m[1] && m[2] ? Math.min(Number(m[2]), size - 1) : size - 1;
+  if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start > end || start >= size) {
+    headers["Content-Range"] = `bytes */${size}`;
+    return c.body(null, 416, headers);
+  }
+  headers["Content-Range"] = `bytes ${start}-${end}/${size}`;
+  headers["Content-Length"] = String(end - start + 1);
+  return stream(start, end);
 }
 
-/** The app's public root. Behind a TLS proxy (Tailscale serve) the request arrives as http, so trust X-Forwarded-Proto/Host or card frames load their runtime over http and get blocked as mixed content. */
-function publicBase(c: Context): string {
+/** The app's public root. Behind a TLS proxy (Tailscale serve) the request arrives as http, so trust X-Forwarded-Proto/Host when `--trust-proxy` says so, or card frames load their runtime over http and get blocked as mixed content. */
+function publicBase(c: Context, trustProxy: boolean): string {
   const u = new URL("/", c.req.url);
-  const proto = c.req.header("x-forwarded-proto")?.split(",")[0].trim();
-  const host = c.req.header("x-forwarded-host")?.split(",")[0].trim();
-  if (proto === "https" || proto === "http") u.protocol = proto + ":";
-  if (host) u.host = host;
+  if (trustProxy) {
+    const proto = c.req.header("x-forwarded-proto")?.split(",")[0].trim();
+    const host = c.req.header("x-forwarded-host")?.split(",")[0].trim();
+    if (proto === "https" || proto === "http") u.protocol = proto + ":";
+    if (host) u.host = host;
+  }
   return u.toString();
 }
 
@@ -111,6 +136,8 @@ export interface AppOptions {
   allowHosts?: string[];
   /** Listening on this computer only: keep the Host check even with a token, so a rebound name can't reach the pages outside /api. */
   localOnly?: boolean;
+  /** Honor X-Forwarded-Proto/Host from a TLS reverse proxy the user controls. Off unless `serve --trust-proxy` is set. */
+  trustProxy?: boolean;
 }
 
 /** Hostnames always served: loopback, and Tailscale MagicDNS names, which only Tailscale can point anywhere. */
@@ -172,15 +199,21 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
     const raw = (c.req.header("host") ?? "").toLowerCase();
     if (!raw) return next(); // HTTP/1.0 clients and in-process requests (tests, app.request) send none
     if (hostAllowed(raw, allowHosts)) return next();
-    return c.json({ error: `host "${raw}" refused: Etude only answers on localhost. Run it with --allow-host ${raw.replace(/:\d+$/, "")} (or --token) to serve this name.` }, 421);
+    return c.json({ error: `host "${raw}" refused: Wikae only answers on localhost. Run it with --allow-host ${raw.replace(/:\d+$/, "")} (or --token) to serve this name.` }, 421);
   });
 
   // Mutating requests must be JSON from this app: blocks other websites from driving a local server.
+  const matches = (given: string, expected: string) => {
+    const a = Buffer.from(given);
+    const b = Buffer.from(expected);
+    return a.length === b.length && timingSafeEqual(a, b);
+  };
   app.use("/api/*", async (c, next) => {
     if (opts.token) {
       const auth = c.req.header("authorization") ?? "";
-      const q = c.req.query("token");
-      if (auth !== `Bearer ${opts.token}` && q !== opts.token) return c.json({ error: "unauthorized" }, 401);
+      const bearer = auth.startsWith("Bearer ") ? auth.slice("Bearer ".length) : "";
+      const q = c.req.query("token") ?? "";
+      if (!matches(bearer, opts.token) && !(q && matches(q, opts.token))) return c.json({ error: "unauthorized" }, 401);
     }
     if (c.req.method !== "GET" && c.req.method !== "HEAD") {
       const ct = c.req.header("content-type") ?? "";
@@ -188,7 +221,7 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
       const binary = c.req.method === "POST" && (["/api/anki/import", "/api/media"].includes(c.req.path) || /^\/api\/agent\/conversations\/[\w-]+\/attachments$/.test(c.req.path)) && ct.includes("application/octet-stream");
       if (!ct.includes("application/json") && !binary) return c.json({ error: "expected application/json" }, 415);
       const origin = c.req.header("origin");
-      if (origin && origin !== "null") {
+      if (origin) {
         const host = c.req.header("host");
         try {
           const o = new URL(origin);
@@ -202,8 +235,11 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
   });
 
   const body = async <T = any>(c: Context): Promise<T> => {
+    // shortcut: 100 MB cap; base64 type assets in packs can be large, raise if a real pack hits it.
+    const raw = await readBody(c, 100 * 1024 * 1024, "request body is too large");
+    if (!raw.length) return {} as T;
     try {
-      return (await c.req.json()) as T;
+      return JSON.parse(raw.toString("utf8")) as T;
     } catch {
       throw new EtudeError("request body must be JSON");
     }
@@ -478,7 +514,7 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
   let login: { url: string; started: number; error?: string } | null = null;
   let models: { at: number; rows: { slug: string; displayName: string }[] } | null = null;
   const loginState = () => (login ? (login.error ? { state: "error", error: login.error } : { state: "pending", url: login.url }) : null);
-  const requestHost = (c: Context) => (c.req.header("x-forwarded-host") ?? c.req.header("host") ?? "").split(",")[0].trim();
+  const requestHost = (c: Context) => ((opts.trustProxy ? c.req.header("x-forwarded-host") : undefined) ?? c.req.header("host") ?? "").split(",")[0].trim();
   const localBrowser = (c: Context) => /^(localhost|127\.\d+\.\d+\.\d+|\[?::1\]?)$/i.test(requestHost(c).replace(/:\d+$/, ""));
 
   app.post("/api/chatgpt/login", async (c) => {
@@ -487,9 +523,9 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
       return c.json({
         remote: true,
         host,
-        cli: "etude settings chatgpt login",
+        cli: "wikae settings chatgpt login",
         message:
-          "Sign-in finishes on 127.0.0.1, which this browser can't reach. Run `etude settings chatgpt login` on the machine running Etude; if that machine has no browser, sign in here and run `etude settings chatgpt import <file>` there with the copied ~/.etude/chatgpt.json.",
+          "Sign-in finishes on 127.0.0.1, which this browser can't reach. Run `wikae settings chatgpt login` on the machine running Wikae; if that machine has no browser, sign in here and run `wikae settings chatgpt import <file>` there with the copied ~/.wikae/chatgpt.json.",
       });
     if (login && !login.error) return c.json({ pending: true, url: login.url, host });
     const session = await etude.chatgptLogin().catch((e) => {
@@ -572,6 +608,9 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
   });
   app.get("/api/agent/conversations/:id/attachments/:att", (c) => {
     const m = agent.attachment(c.req.param("id"), c.req.param("att"));
+    c.header("Content-Security-Policy", "default-src 'none'; sandbox");
+    c.header("X-Content-Type-Options", "nosniff");
+    c.header("Content-Disposition", `attachment; filename="${String(m.name || "attachment").replace(/["\\\r\n]/g, "_")}"`);
     return sendFile(c, m.path, { mime: m.mime });
   });
   app.post("/api/agent/conversations/:id/messages", async (c) => {
@@ -636,7 +675,10 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
     const cfg = marketSettings(etude);
     const index = await fetchIndex(cfg.url, { refresh: c.req.query("refresh") === "1" });
     const installed = installedEntries(etude);
-    return c.json({ ...cfg, generated: index.generated, entries: index.entries.map((x) => ({ ...x, installed: installState(etude, x, installed), installedIds: installed[x.id]?.kind === x.kind ? installed[x.id].ids : [] })), selectedTheme: etude.currentTheme().id });
+    return c.json({ ...cfg, generated: index.generated, entries: index.entries.map((x) => {
+      const rec = installedRec(installed, x.kind, x.id);
+      return { ...x, installed: installState(etude, x, installed), installedIds: rec?.ids ?? [] };
+    }), selectedTheme: etude.currentTheme().id });
   });
   app.get("/api/market/entry/:kind/:id", async (c) => {
     const kind = c.req.param("kind") as MarketKind;
@@ -675,35 +717,45 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
     const preview = { path: entryPath(file.kind, file.id), bytes: Buffer.byteLength(entryJson(file)), entry: { ...file, content: undefined }, summary: summarize(file), manualUrl: manualPublishUrl(repo, file), repo };
     if (b.dryRun) return c.json({ dryRun: true, ...preview, ...(b.full ? { file } : {}) });
     if (!gh?.ok) return c.json({ error: gh?.reason ?? "gh isn't available", ...preview }, 424);
-    return c.json({ ...publishFile(file, { repo }), ...preview });
+    return c.json({ ...(await publishFile(file, { repo })), ...preview });
   });
 
   // --------------------------------------------- card frames and runtime
   const frameAssets = (id: string) => ({ type: id, files: etude.typeAssets(id) });
   app.get("/frame/:type", (c) => {
     const def = etude.type(c.req.param("type"));
-    const base = publicBase(c);
+    const base = publicBase(c, !!opts.trustProxy);
     return c.body(cardFrame(def, base, frameAssets(def.id)), 200, FRAME_HEADERS);
   });
   // Unsaved previews (type editor, Market) as a served document: a srcdoc frame would inherit the
   // app page's Content-Security-Policy, which doesn't allow a card's inline scripts.
-  const docs = new Map<string, string>();
+  const docs = new Map<string, { html: string; at: number }>();
+  const evictDocs = () => {
+    const cutoff = Date.now() - 10 * 60 * 1000;
+    for (const [k, v] of docs) if (v.at < cutoff) docs.delete(k);
+    while (docs.size > 64) docs.delete(docs.keys().next().value!);
+  };
   app.post("/api/frame-doc", async (c) => {
     const b = await body(c);
     if (typeof b.html !== "string" || b.html.length > 8 * 1024 * 1024) throw new EtudeError("html must be text under 8 MiB");
     const id = globalThis.crypto.randomUUID();
-    docs.set(id, b.html);
-    while (docs.size > 64) docs.delete(docs.keys().next().value!);
+    evictDocs();
+    docs.set(id, { html: b.html, at: Date.now() });
     return c.json({ url: `/frame-doc/${id}` });
   });
   app.get("/frame-doc/:id", (c) => {
-    const html = docs.get(c.req.param("id"));
-    return html === undefined ? c.text("not found", 404) : c.body(html, 200, FRAME_HEADERS);
+    const doc = docs.get(c.req.param("id"));
+    if (!doc) return c.text("not found", 404);
+    if (Date.now() - doc.at > 10 * 60 * 1000) {
+      docs.delete(c.req.param("id"));
+      return c.text("not found", 404);
+    }
+    return c.body(doc.html, 200, FRAME_HEADERS);
   });
   // The type editor previews unsaved code: it posts the definition and gets a frame back.
   app.post("/api/frame", async (c) => {
     const b = await body(c);
-    const base = publicBase(c);
+    const base = publicBase(c, !!opts.trustProxy);
     // An unsaved edit of a stored type still reaches the stored assets.
     const id = typeof b.def?.id === "string" ? b.def.id : "";
     return c.json({ html: cardFrame(b.def, base, frameAssets(id)) });
@@ -742,13 +794,32 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
     return c.body(new Uint8Array(asset.bytes), 200, headers);
   });
   app.get("/media/*", (c) => {
-    const rel = normalize(c.req.path.slice("/media/".length));
-    const full = resolve(etude.mediaDir, rel);
-    if (!full.startsWith(resolve(etude.mediaDir) + sep)) return c.text("not found", 404);
+    let rel: string;
+    try {
+      rel = normalize(decodeURIComponent(c.req.path.slice("/media/".length)));
+    } catch {
+      return c.text("not found", 404);
+    }
+    const mediaRoot = (() => {
+      try {
+        return realpathSync(etude.mediaDir);
+      } catch {
+        return resolve(etude.mediaDir);
+      }
+    })();
+    const full = resolve(mediaRoot, rel);
+    if (!full.startsWith(mediaRoot + sep)) return c.text("not found", 404);
+    let real: string;
+    try {
+      real = realpathSync(full);
+    } catch {
+      return c.text("not found", 404);
+    }
+    if (!real.startsWith(mediaRoot + sep)) return c.text("not found", 404);
     c.header("Content-Security-Policy", "default-src 'none'; sandbox");
     c.header("X-Content-Type-Options", "nosniff");
     // Card frames have an opaque origin, and @font-face needs CORS even for same-origin paths.
-    return sendFile(c, full, { cors: true, mime: mediaType(full)?.mime, cache: rel.startsWith("files/") ? "public, max-age=31536000, immutable" : undefined });
+    return sendFile(c, real, { cors: true, mime: mediaType(real)?.mime, cache: rel.startsWith("files/") ? "public, max-age=31536000, immutable" : undefined });
   });
 
   // ----------------------------------------------------------- web app

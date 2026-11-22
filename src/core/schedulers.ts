@@ -143,7 +143,11 @@ export function runSchedule(def: SchedulerDef, card: ScriptCard, attempt: Script
   if (!out || typeof out !== "object") throw new SchedulerError(`${def.id}/schedule must return { due, state }`);
   let due: Date;
   if (typeof out.due === "number") due = new Date(out.due);
-  else if (typeof out.due === "string") due = new Date(out.due);
+  else if (typeof out.due === "string") {
+    // Extended ISO years sort before normal years and break due-date ordering.
+    if (/^[+-]\d{6}-/.test(out.due)) throw new SchedulerError(`${def.id}/schedule: due "${out.due}" must be a normal ISO date`);
+    due = new Date(out.due);
+  }
   else if (out.due == null) due = new Date(ctx.now);
   else throw new SchedulerError(`${def.id}/schedule: due must be an ISO date or a timestamp`);
   if (Number.isNaN(due.getTime())) throw new SchedulerError(`${def.id}/schedule: due "${String(out.due)}" isn't a date`);

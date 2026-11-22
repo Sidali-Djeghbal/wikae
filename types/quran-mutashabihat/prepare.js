@@ -15,19 +15,22 @@ const SURAH_NAMES = [
 ];
 
 function normSurah(s) {
-  return String(s || "")
-    .replace(/^سورة\s+/, "")
-    .replace(/[أإآٱٲٳ]/g, "ا")
-    .replace(/ة/g, "ه")
+  return std.normalizeArabic(String(s || ""))
+    .replace(/^سوره\s+/, "")
     .replace(/\s+/g, "")
     .trim();
+}
+
+const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+function toAsciiDigits(s) {
+  return s.replace(/[٠-٩]/g, (d) => String(ARABIC_DIGITS.indexOf(d)));
 }
 
 function findSurah(val) {
   if (typeof val === "number" && val >= 1 && val <= 114) {
     return { number: val, nameAr: SURAH_NAMES[val - 1] };
   }
-  const str = String(val || "").trim();
+  const str = toAsciiDigits(String(val || "").trim());
   const num = parseInt(str, 10);
   if (!isNaN(num) && num >= 1 && num <= 114 && String(num) === str) {
     return { number: num, nameAr: SURAH_NAMES[num - 1] };
@@ -37,6 +40,16 @@ function findSurah(val) {
   if (idx !== -1) return { number: idx + 1, nameAr: SURAH_NAMES[idx] };
   return null;
 }
+
+/** A verse id is always `<surahNumber>_<ayahNumber>`, whatever the author wrote (`2:126`, `البقرة:126`, `2_126`). */
+function verseId(ref) {
+  const s = toAsciiDigits(String(ref || "").trim());
+  const m = s.match(/^(.+?)[:\s_]+(\d+)$/);
+  if (!m) return s;
+  const info = findSurah(m[1]);
+  return (info ? info.number : m[1]) + "_" + m[2];
+}
+
 
 function normalizeArabicSimple(text) {
   // std.normalize (prelude) applies std.normalizeArabic; strip punctuation and collapse spaces.
@@ -50,7 +63,7 @@ function parseSibling(input, index) {
   if (typeof input === "object" && input.pivotalUthmani && input.surahNumber && input.surahNameAr) {
     return {
       ...input,
-      id: input.id || (input.surahNumber + "_" + input.ayahNumber),
+      id: verseId(input.id || (input.surahNumber + "_" + input.ayahNumber)),
       textUthmani: input.textUthmani || [input.prefixUthmani, input.pivotalUthmani, input.suffixUthmani].filter(Boolean).join(" "),
       pivotalNormalized: input.pivotalNormalized || normalizeArabicSimple(input.pivotalUthmani),
     };
@@ -94,8 +107,9 @@ function parseSibling(input, index) {
   }
 
   const surahInfo = findSurah(surahRef);
-  const surahNumber = surahInfo ? surahInfo.number : (parseInt(surahRef, 10) || (index + 1));
-  const surahNameAr = surahInfo ? surahInfo.nameAr : (String(surahRef) || ("سورة " + surahNumber));
+  if (!surahInfo) throw new Error("sibling " + (index + 1) + ": unknown Surah \"" + surahRef + "\"");
+  const surahNumber = surahInfo.number;
+  const surahNameAr = surahInfo.nameAr;
   const ayahNumber = ayahRef || 1;
 
   const bStart = verseText.indexOf("[");
@@ -109,7 +123,7 @@ function parseSibling(input, index) {
   const suffixUthmani = verseText.slice(bEnd + 1).trim();
   const textUthmani = [prefixUthmani, pivotalUthmani, suffixUthmani].filter(Boolean).join(" ");
   const pivotalNormalized = normalizeArabicSimple(pivotalUthmani);
-  const id = (input && input.id) ? input.id : (surahNumber + "_" + ayahNumber);
+  const id = verseId((input && input.id) ? input.id : (surahNumber + "_" + ayahNumber));
 
   return {
     id,
@@ -131,7 +145,8 @@ if (siblings.length < 2) throw new Error("a Mutashabihat cluster needs at least 
 
 let target;
 if (fields.targetVerseId) {
-  target = siblings.find((s) => s.id === fields.targetVerseId);
+  const wanted = verseId(fields.targetVerseId);
+  target = siblings.find((s) => s.id === wanted);
   if (!target) throw new Error(`targetVerseId "${fields.targetVerseId}" is not one of the siblings`);
 } else {
   target = siblings[0];
@@ -143,10 +158,11 @@ for (const s of siblings) {
   }
 }
 if (!target.pivotalUthmani) throw new Error("the target sibling is missing pivotalUthmani");
-const mode = fields.mode === "surah_identification" ? "surah_identification" : "pivotal_completion";
+const requestedMode = fields.mode === "surah_identification" ? "surah_identification" : "pivotal_completion";
+// A single-Surah cluster has no second Surah to choose; ask the pivotal phrase instead.
+const mode = requestedMode === "surah_identification" && new Set(siblings.map((s) => s.surahNumber)).size < 2 ? "pivotal_completion" : requestedMode;
 const inputSubmode = fields.inputSubmode === "typing" ? "typing" : "choice";
 
-const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
 function arabicDigits(value) {
   return String(value == null ? "" : value).replace(/[0-9]/g, (d) => ARABIC_DIGITS[Number(d)]);
 }
@@ -196,9 +212,7 @@ for (const s of siblings) {
   seenSurahs.add(s.surahNumber);
   otherSurahs.push(s);
 }
-if (mode === "surah_identification" && otherSurahs.length === 0) {
-  throw new Error("surah_identification needs siblings from at least two different Surahs");
-}
+// A single-Surah cluster has no second Surah to choose; ask the pivotal phrase instead.
 const surahRaw = rng.shuffle([target, ...rng.shuffle(otherSurahs).slice(0, 3)]);
 const surahOptions = surahRaw.map((s, i) => ({
   id: "s" + i,

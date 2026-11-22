@@ -13,6 +13,7 @@ export function imageSize(buf: Buffer): { width: number; height: number } | null
     let p = 2;
     while (p + 9 < buf.length) {
       if (buf[p] !== 0xff) { p++; continue; }
+      while (buf[p] === 0xff && buf[p + 1] === 0xff) p++; // JPEG allows fill bytes before a marker.
       const m = buf[p + 1];
       if (m === 0xd8 || m === 0x01 || (m >= 0xd0 && m <= 0xd7)) { p += 2; continue; }
       const len = buf.readUInt16BE(p + 2);
@@ -36,7 +37,7 @@ export function imageSize(buf: Buffer): { width: number; height: number } | null
   const head = buf.toString("utf8", 0, Math.min(buf.length, 4096));
   const svg = /<svg\b[^>]*>/i.exec(head)?.[0];
   if (svg) {
-    const attr = (n: string) => new RegExp(`\\b${n}\\s*=\\s*["']\\s*([\\d.]+)(px)?\\s*["']`, "i").exec(svg)?.[1];
+    const attr = (n: string) => new RegExp(`(?<![\\w-])${n}\\s*=\\s*["']\\s*([\\d.]+)(px)?\\s*["']`, "i").exec(svg)?.[1];
     const w = Number(attr("width")), h = Number(attr("height"));
     if (w > 0 && h > 0) return { width: w, height: h };
     const vb = /\bviewBox\s*=\s*["']\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)/i.exec(svg);

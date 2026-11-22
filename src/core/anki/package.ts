@@ -66,6 +66,8 @@ function decompress(name: string, max: number, f: () => Buffer): Buffer {
 }
 
 export function zipData(buf: Buffer, e: ZipEntry, max = ANKI_LIMITS.collection): Buffer {
+  // The directory's uncompressed size is a cheap first bound: a tiny zip can claim gigabytes.
+  if (!Number.isSafeInteger(e.size) || e.size > max) throw new AnkiFormatError(`${e.name} is larger than ${Math.round(max / 1024 ** 2)} MiB; refusing it`);
   if (buf.readUInt32LE(e.offset) !== 0x04034b50) throw new AnkiFormatError(`corrupt zip entry ${e.name}`);
   const start = e.offset + 30 + buf.readUInt16LE(e.offset + 26) + buf.readUInt16LE(e.offset + 28);
   const raw = buf.subarray(start, start + e.compressedSize);
@@ -109,6 +111,7 @@ export function readProto(buf: Buffer | Uint8Array | null | undefined): Map<numb
       p += 8;
     } else if (wire === 2) {
       const len = Number(varint());
+      if (!Number.isSafeInteger(len) || len < 0 || len > b.length - p) throw new AnkiFormatError("truncated protobuf");
       v = b.subarray(p, p + len);
       p += len;
     } else if (wire === 5) {

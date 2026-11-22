@@ -2,7 +2,7 @@
   {
     "id": "showcase.basic.sky",
     "type": "basic",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::science"
@@ -17,7 +17,7 @@
   {
     "id": "showcase.typed.capital",
     "type": "typed",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::geography"
@@ -35,7 +35,7 @@
   {
     "id": "showcase.mcq.day",
     "type": "mcq",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::astronomy"
@@ -68,7 +68,7 @@
   {
     "id": "showcase.cloze.haiku",
     "type": "cloze",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::poetry"
@@ -82,7 +82,7 @@
   {
     "id": "showcase.match.quran",
     "type": "match",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::quran"
@@ -122,7 +122,7 @@
   {
     "id": "showcase.occlusion.heart",
     "type": "occlusion",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::anatomy"
@@ -213,7 +213,7 @@
   {
     "id": "showcase.quran.baqarah",
     "type": "quran-mutashabihat",
-    "deck": "Etude Showcase::1 Recall",
+    "deck": "Wikae Showcase::1 Recall",
     "tags": [
       "showcase",
       "topic::quran"

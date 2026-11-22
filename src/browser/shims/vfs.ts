@@ -99,7 +99,7 @@ export function flush(): Promise<void> {
   const gone = [...removed];
   dirty.clear();
   removed.clear();
-  flushing = flushing.then(async () => {
+  const job = flushing.catch(() => {}).then(async () => {
     for (const p of gone) {
       const h = await handleFor(p, false);
       if (h) await h[0].removeEntry(h[1], { recursive: true }).catch(() => {});
@@ -110,12 +110,26 @@ export function flush(): Promise<void> {
       const h = await handleFor(p, true);
       if (!h) continue;
       const fh = await h[0].getFileHandle(h[1], { create: true });
-      const w = await (fh as any).createWritable();
-      await w.write(data);
-      await w.close();
+      try {
+        // Safari/iOS only offers createSyncAccessHandle inside a Worker (which is where this runs).
+        const ah = await (fh as any).createSyncAccessHandle();
+        try {
+          ah.truncate(data.byteLength);
+          ah.write(data, { at: 0 });
+          ah.flush();
+        } finally {
+          ah.close();
+        }
+      } catch {
+        const w = await (fh as any).createWritable();
+        await w.write(data);
+        await w.close();
+      }
     }
   });
-  return flushing;
+  // A failed write must not leave the queue rejected forever.
+  flushing = job.catch(() => {});
+  return job;
 }
 
 const bytes = (data: unknown): Uint8Array =>
