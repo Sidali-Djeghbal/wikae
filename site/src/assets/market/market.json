@@ -318,7 +318,21 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Catppuccin Frappé",
+      "nameAr": "كاتبوتشين فرابيه",
+      "descriptionEn": "The softest dark Catppuccin: muted pastels on a dusky blue-grey base, with a mauve accent. Palette by Catppuccin (catppuccin.com), MIT.",
+      "descriptionAr": "ألطف نسخ كاتبوتشين الداكنة: ألوان باستيل هادئة على قاعدة رمادية مزرقة مع لمسة بنفسجية فاتحة (موف). لوحة ألوان من كاتبوتشين (catppuccin.com)، بترخيص MIT.",
+      "tagsEn": [
+        "catppuccin",
+        "pastel",
+        "dark"
+      ],
+      "tagsAr": [
+        "كاتبوتشين",
+        "باستيل",
+        "داكن"
+      ]
     },
     {
       "id": "catppuccin-latte",
@@ -379,7 +393,21 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Catppuccin Latte",
+      "nameAr": "كاتبوتشين لاتيه",
+      "descriptionEn": "Catppuccin's light flavor: crisp pastels on a cool off-white base, with a mauve accent. Palette by Catppuccin (catppuccin.com), MIT.",
+      "descriptionAr": "نسخة كاتبوتشين الفاتحة: ألوان باستيل ناعمة على قاعدة بيضاء مائلة للبرودة مع لمسة بنفسجية فاتحة. لوحة ألوان من كاتبوتشين (catppuccin.com)، بترخيص MIT.",
+      "tagsEn": [
+        "catppuccin",
+        "pastel",
+        "light"
+      ],
+      "tagsAr": [
+        "كاتبوتشين",
+        "باستيل",
+        "فاتح"
+      ]
     },
     {
       "id": "catppuccin-macchiato",
@@ -440,7 +468,21 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Catppuccin Macchiato",
+      "nameAr": "كاتبوتشين ماكياتو",
+      "descriptionEn": "Catppuccin's middle dark flavor: pastels on a slate-blue base, with a mauve accent. Palette by Catppuccin (catppuccin.com), MIT.",
+      "descriptionAr": "النسخة الداكنة المتوسطة من كاتبوتشين: ألوان باستيل على قاعدة زرقاء رمادية مع لمسة بنفسجية فاتحة. لوحة ألوان من كاتبوتشين (catppuccin.com)، بترخيص MIT.",
+      "tagsEn": [
+        "catppuccin",
+        "pastel",
+        "dark"
+      ],
+      "tagsAr": [
+        "كاتبوتشين",
+        "باستيل",
+        "داكن"
+      ]
     },
     {
       "id": "catppuccin-mocha",
@@ -501,7 +543,21 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Catppuccin Mocha",
+      "nameAr": "كاتبوتشين موكا",
+      "descriptionEn": "The darkest Catppuccin: soothing pastels on a deep mocha base, with a mauve accent. Palette by Catppuccin (catppuccin.com), MIT.",
+      "descriptionAr": "أغمق نسخ كاتبوتشين: ألوان باستيل مريحة على قاعدة موكا داكنة مع لمسة بنفسجية فاتحة. لوحة ألوان من كاتبوتشين (catppuccin.com)، بترخيص MIT.",
+      "tagsEn": [
+        "catppuccin",
+        "pastel",
+        "dark"
+      ],
+      "tagsAr": [
+        "كاتبوتشين",
+        "باستيل",
+        "داكن"
+      ]
     },
     {
       "id": "dracula",
@@ -563,7 +619,23 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Dracula",
+      "nameAr": "دراكولا",
+      "descriptionEn": "The classic vampire palette: dark violet-grey with vivid purple, pink and green. Palette by Zeno Rocha (draculatheme.com), MIT.",
+      "descriptionAr": "لوحة دراكولا الكلاسيكية: رمادي بنفسجي داكن مع درجات بنفسجية ووردية وخضراء زاهية. لوحة ألوان من زينو روشا (draculatheme.com)، بترخيص MIT.",
+      "tagsEn": [
+        "dracula",
+        "purple",
+        "vivid",
+        "dark"
+      ],
+      "tagsAr": [
+        "دراكولا",
+        "بنفسجي",
+        "زاهي",
+        "داكن"
+      ]
     },
     {
       "id": "everforest-dark",
@@ -625,7 +697,23 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Everforest Dark",
+      "nameAr": "إيفرفورست داكن",
+      "descriptionEn": "Green-based and warm, made to be easy on the eyes for long sessions, like a forest at dusk. Palette by sainnhe (Everforest), MIT.",
+      "descriptionAr": "سمة خضراء دافئة مريحة للعينين في جلسات القراءة الطويلة، كغابة عند الغسق. لوحة ألوان من sainnhe (Everforest)، بترخيص MIT.",
+      "tagsEn": [
+        "everforest",
+        "green",
+        "warm",
+        "dark"
+      ],
+      "tagsAr": [
+        "إيفرفورست",
+        "أخضر",
+        "دافئ",
+        "داكن"
+      ]
     },
     {
       "id": "everforest-light",
@@ -687,7 +775,23 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Everforest Light",
+      "nameAr": "إيفرفورست فاتح",
+      "descriptionEn": "Everforest by day: warm parchment with soft greens. Palette by sainnhe (Everforest), MIT.",
+      "descriptionAr": "إيفرفورست في وضح النهار: خلفية رقّية دافئة مع درجات خضراء ناعمة. لوحة ألوان من sainnhe (Everforest)، بترخيص MIT.",
+      "tagsEn": [
+        "everforest",
+        "green",
+        "warm",
+        "light"
+      ],
+      "tagsAr": [
+        "إيفرفورست",
+        "أخضر",
+        "دافئ",
+        "فاتح"
+      ]
     },
     {
       "id": "gruvbox-dark",
@@ -749,7 +853,23 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Gruvbox Dark",
+      "nameAr": "غراف بوكس داكن",
+      "descriptionEn": "Retro groove: warm earthy browns with bright orange, yellow and olive. Palette by Pavel Pertsev (morhetz/gruvbox), MIT.",
+      "descriptionAr": "طابع كلاسيكي دافئ: درجات بنية ترابية مع برتقالي وأصفر وزيتي مشرق. لوحة ألوان من بافل بيرتسيف (morhetz/gruvbox)، بترخيص MIT.",
+      "tagsEn": [
+        "gruvbox",
+        "retro",
+        "warm",
+        "dark"
+      ],
+      "tagsAr": [
+        "غراف بوكس",
+        "كلاسيكي",
+        "دافئ",
+        "داكن"
+      ]
     },
     {
       "id": "gruvbox-light",
@@ -811,7 +931,23 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Gruvbox Light",
+      "nameAr": "غراف بوكس فاتح",
+      "descriptionEn": "Gruvbox on cream paper: sepia, rust and deep olive. Palette by Pavel Pertsev (morhetz/gruvbox), MIT.",
+      "descriptionAr": "غراف بوكس على ورق كريمي: درجات سيبيا وصدأ وزيتوني داكن. لوحة ألوان من بافل بيرتسيف (morhetz/gruvbox)، بترخيص MIT.",
+      "tagsEn": [
+        "gruvbox",
+        "retro",
+        "warm",
+        "light"
+      ],
+      "tagsAr": [
+        "غراف بوكس",
+        "كلاسيكي",
+        "دافئ",
+        "فاتح"
+      ]
     },
     {
       "id": "kanagawa",
@@ -873,7 +1009,23 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Kanagawa",
+      "nameAr": "كاناغاوا",
+      "descriptionEn": "Inspired by Hokusai's The Great Wave off Kanagawa: sumi ink with wave blue and washi white. Palette by rebelot (kanagawa.nvim), MIT.",
+      "descriptionAr": "مستوحاة من لوحة هوكوساي «الموجة العظيمة قبالة كاناغاوا»: حبر السومي مع أزرق الموجة وأبيض الورق الياباني. لوحة ألوان من rebelot (kanagawa.nvim)، بترخيص MIT.",
+      "tagsEn": [
+        "kanagawa",
+        "japanese",
+        "ink",
+        "dark"
+      ],
+      "tagsAr": [
+        "كاناغاوا",
+        "ياباني",
+        "حبر",
+        "داكن"
+      ]
     },
     {
       "id": "manuscript",
@@ -934,7 +1086,21 @@
           "--font-sans": "\"Latin Modern Roman\", \"CMU Serif\", Georgia, serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Manuscript",
+      "nameAr": "المخطوطة",
+      "descriptionEn": "Cream paper, ink-blue text and a red-pen accent, set in Computer Modern. For long reading sessions and math-heavy decks.",
+      "descriptionAr": "ورق كريمي ونص بحبر أزرق مع لمسة قلم أحمر، بخط Computer Modern. مثالية لجلسات القراءة الطويلة وحزم الرياضيات.",
+      "tagsEn": [
+        "light",
+        "serif",
+        "paper"
+      ],
+      "tagsAr": [
+        "فاتح",
+        "مخطوطة",
+        "ورقي"
+      ]
     },
     {
       "id": "nocturne",
@@ -994,7 +1160,19 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Nocturne",
+      "nameAr": "نوكتورن",
+      "descriptionEn": "Deep indigo night with a soft violet accent. Easier on the eyes than pure black at 2am.",
+      "descriptionAr": "ليل نيلي عميق مع لمسة بنفسجية ناعمة. ألطف على العينين من الأسود الصافي في جلسات المراجعة المتأخرة.",
+      "tagsEn": [
+        "dark",
+        "purple"
+      ],
+      "tagsAr": [
+        "داكن",
+        "بنفسجي"
+      ]
     },
     {
       "id": "nord",
@@ -1056,7 +1234,23 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Nord",
+      "nameAr": "نورد",
+      "descriptionEn": "An arctic, north-bluish palette: calm polar night greys with frost blues. Palette by Arctic Ice Studio (nordtheme.com), MIT.",
+      "descriptionAr": "لوحة قطبية شمالية هادئة: درجات رمادية كليل قطبي مع أزرق صقيعي منعش. لوحة ألوان من Arctic Ice Studio (nordtheme.com)، بترخيص MIT.",
+      "tagsEn": [
+        "nord",
+        "arctic",
+        "blue",
+        "dark"
+      ],
+      "tagsAr": [
+        "نورد",
+        "قطبي",
+        "أزرق",
+        "داكن"
+      ]
     },
     {
       "id": "one-dark",
@@ -1117,7 +1311,21 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "One Dark",
+      "nameAr": "ون دارك",
+      "descriptionEn": "Atom's iconic dark theme: cool grey with soft, balanced syntax colours. Palette from Atom's One Dark, MIT.",
+      "descriptionAr": "سمة Atom الداكنة الشهيرة: رمادي بارد مع ألوان متوازنة وناعمة. مستوحاة من One Dark لمحرر Atom، بترخيص MIT.",
+      "tagsEn": [
+        "atom",
+        "classic",
+        "dark"
+      ],
+      "tagsAr": [
+        "أتوم",
+        "كلاسيكي",
+        "داكن"
+      ]
     },
     {
       "id": "rose-pine",
@@ -1179,7 +1387,23 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Rosé Pine",
+      "nameAr": "روزي باين",
+      "descriptionEn": "All natural pine, faux fur and a bit of soho vibes: deep violet with rose and gold. Palette by Rosé Pine (rosepinetheme.com), MIT.",
+      "descriptionAr": "أجواء طبيعية هادئة: بنفسجي داكن مع لمسات وردية وذهبية ناعمة. لوحة ألوان من Rosé Pine (rosepinetheme.com)، بترخيص MIT.",
+      "tagsEn": [
+        "rose-pine",
+        "muted",
+        "pink",
+        "dark"
+      ],
+      "tagsAr": [
+        "روزي باين",
+        "هادئ",
+        "وردي",
+        "داكن"
+      ]
     },
     {
       "id": "rose-pine-dawn",
@@ -1241,7 +1465,23 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Rosé Pine Dawn",
+      "nameAr": "روزي باين فجر",
+      "descriptionEn": "Rosé Pine at dawn: warm linen with rose, pine and iris. Palette by Rosé Pine (rosepinetheme.com), MIT.",
+      "descriptionAr": "روزي باين عند الفجر: كتان دافئ مع درجات وردية وصنوبرية وبنفسجية زاهية. لوحة ألوان من Rosé Pine (rosepinetheme.com)، بترخيص MIT.",
+      "tagsEn": [
+        "rose-pine",
+        "muted",
+        "pink",
+        "light"
+      ],
+      "tagsAr": [
+        "روزي باين",
+        "هادئ",
+        "وردي",
+        "فاتح"
+      ]
     },
     {
       "id": "rose-pine-moon",
@@ -1303,7 +1543,23 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Rosé Pine Moon",
+      "nameAr": "روزي باين قمر",
+      "descriptionEn": "Rosé Pine by moonlight: a softer twilight violet. Palette by Rosé Pine (rosepinetheme.com), MIT.",
+      "descriptionAr": "روزي باين تحت ضوء القمر: بنفسجي شفقي أكثر نعومة وهدوءاً. لوحة ألوان من Rosé Pine (rosepinetheme.com)، بترخيص MIT.",
+      "tagsEn": [
+        "rose-pine",
+        "muted",
+        "pink",
+        "dark"
+      ],
+      "tagsAr": [
+        "روزي باين",
+        "هادئ",
+        "وردي",
+        "داكن"
+      ]
     },
     {
       "id": "solarized-dark",
@@ -1364,7 +1620,21 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Solarized Dark",
+      "nameAr": "سولارايزد داكن",
+      "descriptionEn": "Ethan Schoonover's precision palette, built on fixed lightness relationships: deep teal. Palette by Ethan Schoonover (Solarized), MIT.",
+      "descriptionAr": "لوحة إيثان شونوفير الدقيقة المبنية على علاقات إضاءة ثابتة: قاعدة تركوازية داكنة مريحة للعين. لوحة ألوان من Ethan Schoonover (Solarized)، بترخيص MIT.",
+      "tagsEn": [
+        "solarized",
+        "classic",
+        "dark"
+      ],
+      "tagsAr": [
+        "سولارايزد",
+        "كلاسيكي",
+        "داكن"
+      ]
     },
     {
       "id": "solarized-light",
@@ -1425,7 +1695,21 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Solarized Light",
+      "nameAr": "سولارايزد فاتح",
+      "descriptionEn": "Solarized on its own cream: the same accents, flipped base. Palette by Ethan Schoonover (Solarized), MIT.",
+      "descriptionAr": "سولارايزد على خلفية كريمية دافئة بنفس الألوان المميزة بقاعدة فاتحة. لوحة ألوان من Ethan Schoonover (Solarized)، بترخيص MIT.",
+      "tagsEn": [
+        "solarized",
+        "classic",
+        "light"
+      ],
+      "tagsAr": [
+        "سولارايزد",
+        "كلاسيكي",
+        "فاتح"
+      ]
     },
     {
       "id": "tokyo-night",
@@ -1487,7 +1771,23 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Tokyo Night",
+      "nameAr": "طوكيو نايت",
+      "descriptionEn": "The lights of downtown Tokyo at night: deep navy with neon blue and magenta. Palette by enkia and folke (Tokyo Night), MIT / Apache-2.0.",
+      "descriptionAr": "أضواء وسط طوكيو ليلاً: كحلي داكن مع أزرق نيون ولمسات أرجوانية زاهية. لوحة ألوان من enkia وfolke (Tokyo Night)، بترخيص MIT / Apache-2.0.",
+      "tagsEn": [
+        "tokyo-night",
+        "blue",
+        "neon",
+        "dark"
+      ],
+      "tagsAr": [
+        "طوكيو نايت",
+        "أزرق",
+        "نيون",
+        "داكن"
+      ]
     },
     {
       "id": "tokyo-night-day",
@@ -1548,7 +1848,21 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Tokyo Night Day",
+      "nameAr": "طوكيو نايت نهار",
+      "descriptionEn": "Tokyo Night in daylight: cool grey with ink-blue text. Palette by enkia and folke (Tokyo Night), MIT / Apache-2.0.",
+      "descriptionAr": "طوكيو نايت في وضح النهار: رمادي بارد مع نص أزرق حبر هادئ. لوحة ألوان من enkia وfolke (Tokyo Night)، بترخيص MIT / Apache-2.0.",
+      "tagsEn": [
+        "tokyo-night",
+        "blue",
+        "light"
+      ],
+      "tagsAr": [
+        "طوكيو نايت",
+        "أزرق",
+        "فاتح"
+      ]
     },
     {
       "id": "tokyo-night-storm",
@@ -1609,7 +1923,21 @@
           "--font-sans": "\"Inter\", ui-sans-serif, system-ui, sans-serif",
           "--font-mono": "\"JetBrains Mono\", ui-monospace, \"SFMono-Regular\", monospace"
         }
-      }
+      },
+      "nameEn": "Tokyo Night Storm",
+      "nameAr": "طوكيو نايت عاصفة",
+      "descriptionEn": "Tokyo Night under storm clouds: a lighter slate-navy with a violet accent. Palette by enkia and folke (Tokyo Night), MIT / Apache-2.0.",
+      "descriptionAr": "طوكيو نايت تحت الغيوم: كحلي رمادي أفتح مع لمسة بنفسجية. لوحة ألوان من enkia وfolke (Tokyo Night)، بترخيص MIT / Apache-2.0.",
+      "tagsEn": [
+        "tokyo-night",
+        "blue",
+        "dark"
+      ],
+      "tagsAr": [
+        "طوكيو نايت",
+        "أزرق",
+        "داكن"
+      ]
     }
   ]
 }

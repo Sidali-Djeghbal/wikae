@@ -520,28 +520,18 @@ if (term) {
         line.setAttribute("translate", "no");
         line.setAttribute("lang", "en");
         line.setAttribute("dir", "ltr");
-        line.innerHTML = `<span class="ps" translate="no">$</span> <span class="t-cmd notranslate" translate="no" lang="en" dir="ltr"></span>`;
+        line.innerHTML = `<span class="ps notranslate" translate="no">$</span> <bdi class="t-cmd notranslate" translate="no" lang="en" dir="ltr" style="unicode-bidi:isolate"></bdi>`;
         out.appendChild(line);
         const cmd = $(".t-cmd", line);
-        const desc = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
-        Object.defineProperty(cmd, "textContent", {
-          get() { return desc.get.call(this); },
-          set(val) {
-            console.log("SET textContent TO:", val, new Error().stack);
-            desc.set.call(this, val);
-          }
-        });
         const body = out.parentElement;
-        const text = s.cmd.trim();
-        console.log("FIRST CHAR OF TEXT:", text[0], text.charCodeAt(0));
-        for (const ch of text) {
-          cmd.textContent += ch;
-          console.log("APPENDED:", ch, "cmd.textContent IS:", cmd.textContent);
+        const raw = String(s.cmd ?? "").trim();
+        for (let i = 1; i <= raw.length; i++) {
+          cmd.textContent = `\u2066${raw.slice(0, i)}\u2069`;
           body.scrollTop = body.scrollHeight;
           await sleep(reduced ? 0 : 16);
         }
         await sleep(420);
-        out.insertAdjacentHTML("beforeend", `\n<span class="notranslate" translate="no" lang="en" dir="ltr">${colorJson(s.out)}</span>\n\n`);
+        out.insertAdjacentHTML("beforeend", `\n<span class="notranslate" translate="no" lang="en" dir="ltr">${colorJson(String(s.out ?? ""))}</span>\n\n`);
         body.scrollTo({ top: body.scrollHeight, behavior: reduced ? "auto" : "smooth" });
         await sleep(1500);
       }

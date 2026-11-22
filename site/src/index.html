@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="google" content="notranslate">
   <title>وِكَاء — رِباطُ المحفوظ وإتقان المتشابهات بالتكرار المتباعد الذكي</title>
   <meta name="description"
     content="وِكَاء — منصة وتطبيق مفتوح المصدر لحفظ القرآن الكريم وتثبيت المتشابهات اللفظية والعلوم النافعة بخوارزمية FSRS-6 العلمية والتقييم الذكي.">
@@ -191,7 +192,7 @@
                 <button class="btn btn-lg ph-only ph-film" type="button" data-play-film><svg viewBox="0 0 24 24"
                     aria-hidden="true">
                     <path d="M8 5.5v13l11-6.5z" fill="currentColor" />
-                  </svg>العرض التقديمي <small class="tabular">2:26</small></button>
+                  </svg>العرض التقديمي <small class="tabular">1:30</small></button>
               </div>
             </div>
 
@@ -211,7 +212,7 @@
                 <button class="btn btn-lg ph-only ph-film" type="button" data-play-film><svg viewBox="0 0 24 24"
                     aria-hidden="true">
                     <path d="M8 5.5v13l11-6.5z" fill="currentColor" />
-                  </svg>Watch presentation <small class="tabular">2:26</small></button>
+                  </svg>Watch presentation <small class="tabular">1:30</small></button>
               </div>
             </div>
 
@@ -269,15 +270,17 @@
           <div class="sheet film-frame">
             <video id="film-video" playsinline preload="none" poster="assets/film/poster.webp" width="1920"
               height="1080">
+              <source src="assets/film/wikae-film.mp4" type="video/mp4">
               <source src="assets/film/etude-film.mp4" type="video/mp4">
-              <track kind="captions" srclang="en" label="English" src="assets/film/etude-film.vtt">
+              <track kind="captions" srclang="ar" label="العربية" src="assets/film/wikae-film.ar.vtt" default>
+              <track kind="captions" srclang="en" label="English" src="assets/film/wikae-film.en.vtt">
             </video>
             <button class="film-play" type="button" aria-label="Play presentation">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M8 5.5v13l11-6.5z" />
               </svg>
-              <span data-lang="ar">مشاهدة العرض <small class="tabular">2:26</small></span>
-              <span data-lang="en">Watch overview <small class="tabular">2:26</small></span>
+              <span data-lang="ar">مشاهدة العرض <small class="tabular">1:30</small></span>
+              <span data-lang="en">Watch overview <small class="tabular">1:30</small></span>
             </button>
           </div>
         </div>
