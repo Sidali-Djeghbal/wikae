@@ -219,7 +219,7 @@ flowchart TD
 
 > ملاحظات مختصرة حول ما بُنيت عليه وِكَاء:
 
-- **Étude**: الأساس الأصلي للعمل، طوّره [João Henrique Costa Araujo](https://github.com/jhca) في [Zibhelina/etude](https://github.com/Zibhelina/etude) تحت AGPL-3.0.
+- **إيتود - Étude**: الأساس الأصلي للعمل، طوّره [João Henrique Costa Araujo](https://github.com/jhca) في [Zibhelina/etude](https://github.com/Zibhelina/etude) تحت AGPL-3.0.
 - **الجدولة والتخزين**: [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs) و`@open-spaced-repetition/binding` لـ FSRS، وSQLite/`@sqlite.org/sqlite-wasm` للتخزين المحلي.
 - **تنفيذ البطاقة بأمان**: [QuickJS/quickjs-emscripten](https://github.com/justjake/quickjs-emscripten) لتشغيل منطق البطاقة في بيئة معزولة.
 - **الخادم والواجهة**: [Hono](https://hono.dev/) و`@hono/node-server` للـ API، مع React وVite وTailwind وRadix/shadcn وCodeMirror وLucide للواجهة.
