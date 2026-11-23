@@ -217,7 +217,14 @@ flowchart TD
 
 ## شكر وتقدير
 
-تعتز **وِكَاء (Wikae)** بكونها امتداداً لمشروع **Étude**، الذي طوّره [João Henrique Costa Araujo](https://github.com/jhca) في مستودع [Zibhelina/etude](https://github.com/Zibhelina/etude) تحت رخصة AGPL-3.0. وتدين بالفضل لمجتمع البرمجيات الحرة على المكوّنات التي تقوم عليها المنصة: خوارزمية FSRS ومكتبة `ts-fsrs`، ومحرك QuickJS، وSQLite، وإطار Hono، وخطوط المصحف والخطوط العربية.
+> ملاحظات مختصرة حول ما بُنيت عليه وِكَاء:
+
+- **Étude**: الأساس الأصلي للعمل، طوّره [João Henrique Costa Araujo](https://github.com/jhca) في [Zibhelina/etude](https://github.com/Zibhelina/etude) تحت AGPL-3.0.
+- **الجدولة والتخزين**: [ts-fsrs](https://github.com/open-spaced-repetition/ts-fsrs) و`@open-spaced-repetition/binding` لـ FSRS، وSQLite/`@sqlite.org/sqlite-wasm` للتخزين المحلي.
+- **تنفيذ البطاقة بأمان**: [QuickJS/quickjs-emscripten](https://github.com/justjake/quickjs-emscripten) لتشغيل منطق البطاقة في بيئة معزولة.
+- **الخادم والواجهة**: [Hono](https://hono.dev/) و`@hono/node-server` للـ API، مع React وVite وTailwind وRadix/shadcn وCodeMirror وLucide للواجهة.
+- **سطح المكتب والهاتف**: Electron لتطبيق سطح المكتب، وCapacitor لتطبيقات Android/iOS.
+- **المحتوى والعرض**: marked وDOMPurify وKaTeX وunpdf؛ وخطوط المصحف/العربية مثل Amiri وAref Ruqaa وCairo.
 
 ### منظومة مشاريع وِكَاء
 
