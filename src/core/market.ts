@@ -126,7 +126,9 @@ async function pinnedUrl(url: string): Promise<string> {
 function tryReadLocalFallback(path: string): { text: string; bytes: number; body: Buffer } | null {
   const candidates = [
     join(dirname(fileURLToPath(import.meta.url)), "../../market", path),
+    join(dirname(fileURLToPath(import.meta.url)), "../../wikae-market", path),
     join(process.env.HOME || "", "market", path),
+    join(process.env.HOME || "", "wikae-market", path),
     join(process.env.HOME || "", "etude-market", path),
   ];
   for (const c of candidates) {

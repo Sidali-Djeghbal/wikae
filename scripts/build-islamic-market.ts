@@ -326,7 +326,7 @@ async function run() {
 
   console.log("Entries written. Now building index.json...");
   const { index, problems } = await buildIndex("market", {
-    repo: "Sidali-Djeghbal/etude-market",
+    repo: "Sidali-Djeghbal/wikae-market",
     dryRunInto: () => Etude.open(":memory:")
   });
 
