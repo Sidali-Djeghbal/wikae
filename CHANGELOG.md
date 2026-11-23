@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.10.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.9.0...v2.10.0) (2026-11-23)
+
+
+### Features
+
+* add promotional film assets and improve terminal text rendering ([488d8ca](https://github.com/Sidali-Djeghbal/wikae/commit/488d8cafbd5324934a65e492f2b30cc35c3277d7))
+* rebrand to Wikae, complete audit fixes, and improve the website ([6ded382](https://github.com/Sidali-Djeghbal/wikae/commit/6ded382cbb5fc98b67768ec2d43fa7271a51e6c4))
+
+
+### Bug Fixes
+
+* enforce LTR direction and prevent translation on terminal elements ([a12fe1f](https://github.com/Sidali-Djeghbal/wikae/commit/a12fe1f9e4922da0e076746e6a42ff070339d755))
+* find the market folder under its new name and publish to wikae-market ([7c9634f](https://github.com/Sidali-Djeghbal/wikae/commit/7c9634f09a017d3065c2dbb5d894fc07ed33296a))
+
 ## [2.9.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.8.0...v2.9.0) (2026-11-12)
 
 
