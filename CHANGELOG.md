@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.1](https://github.com/Sidali-Djeghbal/wikae/compare/v2.10.0...v2.10.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* wait for a DevTools page target in site check ([9ff1a98](https://github.com/Sidali-Djeghbal/wikae/commit/9ff1a98271ec47260514b608bbf465f771957bb9))
+
 ## [2.10.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.9.0...v2.10.0) (2026-11-23)
 
 
