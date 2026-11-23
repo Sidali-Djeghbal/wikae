@@ -22,10 +22,18 @@ let ws;
 for (let i = 0; i < 80; i++) {
   try {
     const list = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
-    ws = new WebSocket(list.find((t) => t.type === "page").webSocketDebuggerUrl);
-    await new Promise((r, j) => { ws.onopen = r; ws.onerror = j; });
+    const page = list.find((t) => t.type === "page" && t.webSocketDebuggerUrl);
+    if (!page) throw new Error("no page target");
+    const sock = new WebSocket(page.webSocketDebuggerUrl);
+    await new Promise((r, j) => { sock.onopen = r; sock.onerror = j; });
+    ws = sock;
     break;
   } catch { await sleep(200); }
+}
+if (!ws) {
+  chrome.kill();
+  rmSync(profile, { recursive: true, force: true });
+  throw new Error(`could not connect to Chrome DevTools on 127.0.0.1:${port}`);
 }
 let id = 0;
 const pending = new Map(), problems = [];
