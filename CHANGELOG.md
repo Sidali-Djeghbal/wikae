@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.10.2](https://github.com/Sidali-Djeghbal/wikae/compare/v2.10.1...v2.10.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* allow headless Chrome DevTools websocket in CI ([80e9f53](https://github.com/Sidali-Djeghbal/wikae/commit/80e9f53f0696eaa1212d0d17d3c5b16953ea277d))
+* bind Chrome DevTools to loopback in site checks ([2baad52](https://github.com/Sidali-Djeghbal/wikae/commit/2baad528cc518df5364add4bf688c76e56d9c4d7))
+
 ## [2.10.1](https://github.com/Sidali-Djeghbal/wikae/compare/v2.10.0...v2.10.1) (2026-11-23)
 
 
