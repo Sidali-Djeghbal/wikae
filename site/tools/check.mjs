@@ -16,9 +16,9 @@ const findChrome = () => {
   }
   return "chromium";
 };
-const chrome = spawn(findChrome(), ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--no-first-run", "--hide-scrollbars", "--force-color-profile=srgb", "about:blank"], { stdio: "ignore" });
+const chrome = spawn(findChrome(), ["--headless=new", `--remote-debugging-port=${port}`, "--remote-allow-origins=*", "--no-sandbox", `--user-data-dir=${profile}`, "--no-first-run", "--hide-scrollbars", "--force-color-profile=srgb", "about:blank"], { stdio: "ignore" });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-let ws;
+let ws, lastErr;
 for (let i = 0; i < 80; i++) {
   try {
     const list = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
@@ -28,12 +28,12 @@ for (let i = 0; i < 80; i++) {
     await new Promise((r, j) => { sock.onopen = r; sock.onerror = j; });
     ws = sock;
     break;
-  } catch { await sleep(200); }
+  } catch (e) { lastErr = e; await sleep(200); }
 }
 if (!ws) {
   chrome.kill();
   rmSync(profile, { recursive: true, force: true });
-  throw new Error(`could not connect to Chrome DevTools on 127.0.0.1:${port}`);
+  throw new Error(`could not connect to Chrome DevTools on 127.0.0.1:${port}: ${lastErr?.message ?? lastErr}`);
 }
 let id = 0;
 const pending = new Map(), problems = [];
