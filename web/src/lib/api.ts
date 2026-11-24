@@ -605,6 +605,15 @@ export const api = {
   marketEntry: (kind: MarketKind, id: string) => call<MarketFile>("GET", `/api/market/entry/${kind}/${encodeURIComponent(id)}`),
   marketInstall: (id: string, kind: MarketKind, opts: { use?: boolean; dryRun?: boolean } = {}) =>
     call<{ entry: MarketMeta; result: "created" | "updated" | "unchanged"; ids: string[]; report: any }>("POST", "/api/market/install", { id, kind, ...opts }),
+  marketBatches: (opts: { deck?: string; id?: string } = {}) =>
+    call<{ entries: MediaBatchEntryStatus[] }>("GET", `/api/market/batches${qs({ deck: opts.deck, id: opts.id })}`),
+  marketSyncBatches: (opts: { deck?: string; id?: string; force?: boolean; all?: boolean } = {}) =>
+    call<{
+      downloaded: { entryId: string; batchId: string; order: number; title?: string; items: number; bytes: number }[];
+      offline: boolean;
+      errors: { entryId: string; error: string }[];
+      entries: MediaBatchEntryStatus[];
+    }>("POST", "/api/market/batches/sync", opts),
   /** An <img> can't send the bearer token, so it rides in the query. */
   marketCoverUrl: (kind: MarketKind, id: string) => `/api/market/cover/${kind}/${encodeURIComponent(id)}${apiToken() ? `?token=${encodeURIComponent(apiToken()!)}` : ""}`,
   marketForget: (id: string) => call<{ forgot: boolean }>("POST", "/api/market/forget", { id }),
@@ -664,6 +673,25 @@ export interface MarketListing {
 export interface MarketFile extends MarketMeta {
   etudeMarket: 1;
   content: any;
+}
+
+export interface MediaBatchEntryStatus {
+  entryId: string;
+  kind: MarketKind;
+  decks: string[];
+  totalBatches: number;
+  downloadedBatches: number;
+  pendingBatches: number;
+  totalItems: number;
+  downloadedItems: number;
+  practicedItems: number;
+  remainingUnpracticed: number;
+  downloadedBytes: number;
+  totalBytes: number;
+  shouldPrefetch: boolean;
+  lastError?: string;
+  nextBatch: { id: string; order: number; title?: string; bytes: number; items: number } | null;
+  batches: { id: string; order: number; title?: string; bytes: number; items: number; practiced: number; downloaded: boolean; downloadedAt?: string }[];
 }
 
 export interface PublishInput {

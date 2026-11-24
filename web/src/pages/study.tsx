@@ -44,6 +44,8 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
   const [card, setCard] = useState<StudyCard | null>(null);
   const [counts, setCounts] = useState<Counts | null>(null);
   const [phase, setPhase] = useState<Phase>("loading");
+  const phaseRef = useRef<Phase>("loading");
+  phaseRef.current = phase;
   const [result, setResult] = useState<CardResult | null>(null);
   const [retry, setRetry] = useState<{ hint: string; count: number } | null>(null);
   const [attemptId, setAttemptId] = useState<number | null>(null);
@@ -65,8 +67,39 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
   const shownAt = useRef(Date.now());
   const lastCard = useRef<number | undefined>(undefined);
   const busy = useRef(false);
+  const batchSyncing = useRef(false);
   const resultRef = useRef<HTMLElement>(null);
   const sk = useSketch(card ? `${card.cardId}:${card.seed}` : null);
+
+  const syncBatches = useCallback(async (deckName?: string, force = false) => {
+    const targetDeck = deckName ?? scope.deck;
+    if (!targetDeck || scope.placement || batchSyncing.current) return false;
+    batchSyncing.current = true;
+    try {
+      const r = await api.marketSyncBatches({ deck: targetDeck, force });
+      if (r.downloaded.length > 0) {
+        const added = r.downloaded.reduce((n, b) => n + b.items, 0);
+        const st = r.entries[0];
+        toast.success(
+          st
+            ? t("Downloaded {count} new offline audio clips ({done}/{total} batches)", {
+                count: added,
+                done: st.downloadedBatches,
+                total: st.totalBatches,
+              })
+            : t("Downloaded {count} new offline audio clips", { count: added }),
+        );
+        const freshCounts = await api.counts(scope).catch(() => null);
+        if (freshCounts) setCounts(freshCounts);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      batchSyncing.current = false;
+    }
+  }, [scope.deck, scope.q, scope.ahead, scope.placement]);
 
   useEffect(() => {
     if (phase === "result") setTimeout(() => resultRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 60);
@@ -94,6 +127,9 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
   useEffect(() => {
     if (!startCard) {
       load();
+      void syncBatches(scope.deck).then((gotNew) => {
+        if (gotNew && phaseRef.current === "done") void load();
+      });
       return;
     }
     // Opened on a specific card (from Browse, or a link): show it first, then continue with the scope.
@@ -105,7 +141,7 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
         shownAt.current = Date.now();
       })
       .catch((e) => toast.error((e as Error).message));
-  }, [load, startCard]);
+  }, [load, startCard, syncBatches, scope.deck]);
 
   const askFeedback = useCallback(async (id: number) => {
     setFeedback({ loading: true });
@@ -155,16 +191,20 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
   const rate = useCallback(async (rating: Rating | 0) => {
     if (!card || phase !== "result" || busy.current) return;
     busy.current = true;
+    const deckName = card.deck;
     try {
       await api.rate(card.cardId, rating, { attemptId: attemptId ?? undefined, durationMs: Date.now() - shownAt.current, practice });
       lastCard.current = card.cardId;
+      void syncBatches(deckName).then((gotNew) => {
+        if (gotNew && phaseRef.current === "done") void load();
+      });
       await load(card.cardId);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       busy.current = false;
     }
-  }, [card, phase, attemptId, practice, load]);
+  }, [card, phase, attemptId, practice, load, syncBatches]);
 
   const undo = useCallback(async () => {
     if (busy.current) return;
@@ -399,7 +439,7 @@ export function StudyPage({ scope, title, startCard }: { scope: Scope; title: st
       </header>
       )}
 
-      {phase === "done" && (scope.placement ? <PlacementDone deck={scope.deck ?? ""} /> : <Done counts={counts} scope={scope} />)}
+      {phase === "done" && (scope.placement ? <PlacementDone deck={scope.deck ?? ""} /> : <Done counts={counts} scope={scope} onUnlocked={() => load()} />)}
 
       {card && phase !== "done" && (
         <main ref={mainRef} style={phone ? sketchTransform(sk.view, mainRef.current) : undefined} className={cn("flex flex-1 flex-col gap-5 pt-3 sm:gap-6 sm:pt-6", bare && phone && "pt-0")}>
@@ -625,8 +665,35 @@ function PlacementDone({ deck }: { deck: string }) {
   );
 }
 
-function Done({ counts, scope }: { counts: Counts | null; scope: Scope }) {
+function Done({ counts, scope, onUnlocked }: { counts: Counts | null; scope: Scope; onUnlocked(): void }) {
+  const [batchInfo, setBatchInfo] = useState<{ pending: number; nextItems: number; nextBytes: number; loading: boolean; error?: string } | null>(null);
   useEffect(() => { void autoSync(); }, []);
+  useEffect(() => {
+    if (!scope.deck) return;
+    api.marketBatches({ deck: scope.deck }).then((r) => {
+      const st = r.entries.find((e) => e.pendingBatches > 0);
+      if (st?.nextBatch) {
+        setBatchInfo({ pending: st.pendingBatches, nextItems: st.nextBatch.items, nextBytes: st.nextBatch.bytes, loading: false, error: st.lastError });
+      } else {
+        setBatchInfo(null);
+      }
+    }).catch(() => {});
+  }, [scope.deck]);
+  const downloadNext = async () => {
+    if (!scope.deck || !batchInfo || batchInfo.loading) return;
+    setBatchInfo({ ...batchInfo, loading: true, error: undefined });
+    try {
+      const r = await api.marketSyncBatches({ deck: scope.deck, force: true });
+      if (r.downloaded.length > 0) {
+        toast.success(t("Downloaded {count} new offline audio clips", { count: r.downloaded.reduce((n, b) => n + b.items, 0) }));
+        onUnlocked();
+        return;
+      }
+      setBatchInfo({ ...batchInfo, loading: false, error: r.errors[0]?.error || (r.offline ? t("You appear to be offline") : undefined) });
+    } catch (e) {
+      setBatchInfo({ ...batchInfo, loading: false, error: (e as Error).message });
+    }
+  };
   const aheadUrl = () => {
     const p = new URLSearchParams();
     if (scope.deck) p.set("deck", scope.deck);
@@ -641,6 +708,18 @@ function Done({ counts, scope }: { counts: Counts | null; scope: Scope }) {
         {counts?.doneToday ? t("{count} reviews today. ", { count: counts.doneToday }) : ""}
         {scope.ahead ? t("There are no cards in this deck.") : counts?.nextDue ? t("The next card comes back {time}.", { time: relative(counts.nextDue) }) : t("Nothing else is scheduled.")}
       </p>
+      {batchInfo && (
+        <div className="mt-2 flex flex-col items-center gap-2 rounded-xl border bg-card/70 px-5 py-3.5 text-sm">
+          <div className="text-muted-foreground">
+            {t("More offline audio clips are available ({n} clips in the next batch).", { n: batchInfo.nextItems })}
+          </div>
+          {batchInfo.error && <div className="text-xs text-destructive">{batchInfo.error}</div>}
+          <Button size="sm" variant="secondary" disabled={batchInfo.loading} onClick={downloadNext} className="gap-1.5">
+            {batchInfo.loading && <Loader2 className="size-3.5 animate-spin" />}
+            {t("Download next batch")}
+          </Button>
+        </div>
+      )}
       <div className="mt-4 flex gap-2">
         <Button variant="outline" onClick={() => navigate("/")}>{t("Back to decks")}</Button>
         {!scope.ahead && counts?.nextDue && (

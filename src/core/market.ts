@@ -49,6 +49,57 @@ export interface MarketFile extends MarketMeta {
   content: any;
 }
 
+export interface MediaBatchSpec {
+  id: string;
+  order: number;
+  title?: string;
+  path: string;
+  sha256: string;
+  bytes: number;
+  itemIds: string[];
+  media: string[];
+}
+
+export interface MediaBatchRecord extends MediaBatchSpec {
+  downloaded: boolean;
+  downloadedAt?: string;
+}
+
+export interface EntryMediaBatches {
+  entryId: string;
+  kind: MarketKind;
+  url: string;
+  decks: string[];
+  batches: MediaBatchRecord[];
+  lastError?: string;
+  lastAttemptAt?: string;
+}
+
+export interface MediaBatchStatus {
+  entryId: string;
+  kind: MarketKind;
+  decks: string[];
+  totalBatches: number;
+  downloadedBatches: number;
+  pendingBatches: number;
+  totalItems: number;
+  downloadedItems: number;
+  practicedItems: number;
+  remainingUnpracticed: number;
+  downloadedBytes: number;
+  totalBytes: number;
+  shouldPrefetch: boolean;
+  lastError?: string;
+  nextBatch: { id: string; order: number; title?: string; bytes: number; items: number } | null;
+  batches: { id: string; order: number; title?: string; bytes: number; items: number; practiced: number; downloaded: boolean; downloadedAt?: string }[];
+}
+
+interface MarketBatchBundle {
+  etudeBatch: 1;
+  id: string;
+  files: { name: string; url?: string; sha256?: string; data: string }[];
+}
+
 export type MarketSummary =
   | { theme: Theme }
   | { decks: string[]; items: number; cardTypes: Record<string, number>; types: { id: string; name: string }[]; watch: boolean; samples: string[] }
@@ -220,6 +271,30 @@ export function checkEntry(file: any): string[] {
     }
     if (file.kind === "deck" && !(c.items ?? []).length) errors.push("a deck needs at least one item");
     if (file.kind === "type" && !(c.types ?? []).length) errors.push("a card type entry needs at least one type in content.types");
+    if (c.mediaBatches !== undefined) {
+      if (!Array.isArray(c.mediaBatches)) errors.push("content.mediaBatches must be a list");
+      else {
+        const seenBatches = new Set<string>();
+        for (const [i, b] of c.mediaBatches.entries()) {
+          if (!b || typeof b !== "object" || Array.isArray(b)) {
+            errors.push(`mediaBatches[${i}] must be an object`);
+            continue;
+          }
+          if (typeof b.id !== "string" || !ENTRY_ID.test(b.id)) errors.push(`mediaBatches[${i}].id must be a lowercase slug`);
+          else if (seenBatches.has(b.id)) errors.push(`duplicate media batch id "${b.id}"`);
+          else seenBatches.add(b.id);
+          if (!Number.isInteger(b.order) || b.order < 1) errors.push(`mediaBatches[${i}].order must be a positive integer`);
+          if (typeof b.path !== "string" || !/^bundles\/(themes|decks|types)\/[a-z0-9-]+\/[a-z0-9-]+\.json$/.test(b.path))
+            errors.push(`mediaBatches[${i}].path must stay under bundles/<kind>s/<id>/<batch>.json`);
+          if (typeof b.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(b.sha256)) errors.push(`mediaBatches[${i}].sha256 must be a sha256 hex digest`);
+          if (!Number.isInteger(b.bytes) || b.bytes <= 0 || b.bytes > MAX_ENTRY_BYTES) errors.push(`mediaBatches[${i}].bytes must be a valid byte size`);
+          if (!Array.isArray(b.itemIds) || !b.itemIds.length || b.itemIds.some((x: unknown) => typeof x !== "string" || !x))
+            errors.push(`mediaBatches[${i}].itemIds must be a non-empty list of item ids`);
+          if (!Array.isArray(b.media) || b.media.some((x: unknown) => typeof x !== "string" || !x.startsWith("/media/")))
+            errors.push(`mediaBatches[${i}].media must be a list of /media/ paths`);
+        }
+      }
+    }
   }
   return errors;
 }
@@ -284,10 +359,17 @@ export async function fetchMarketMedia(url: string, path: string): Promise<{ bod
     if (!existsSync(p)) throw new MarketError(`the market has no ${path}`, 404);
     body = readFileSync(p);
   } else {
-    const res = await fetch(`${url.replace(/\/+$/, "")}/${path}`, { signal: AbortSignal.timeout(20_000) });
-    if (!res.ok) throw new MarketError(`the market answered ${res.status} for ${path}`, res.status === 404 ? 404 : 502);
-    if (Number(res.headers.get("content-length")) > MAX_MEDIA_BYTES) throw new MarketError("media is too large");
-    body = Buffer.from(await res.arrayBuffer());
+    const target = `${url.replace(/\/+$/, "")}/${path}`;
+    const res = await fetch(target, { signal: AbortSignal.timeout(20_000) }).catch(() => null);
+    if (res && res.ok) {
+      if (Number(res.headers.get("content-length")) > MAX_MEDIA_BYTES) throw new MarketError("media is too large");
+      body = Buffer.from(await res.arrayBuffer());
+    } else {
+      const local = tryReadLocalFallback(path);
+      if (local) body = local.body;
+      else if (!res) throw new MarketError(`couldn't reach the market for ${path}`, 502);
+      else throw new MarketError(`the market answered ${res.status} for ${path}`, res.status === 404 ? 404 : 502);
+    }
   }
   if (body.length > MAX_MEDIA_BYTES) throw new MarketError("media is too large");
   return { body, type: ({ ...COVER_TYPE, mp4: "video/mp4", webm: "video/webm" } as Record<string, string>)[m[2]] };
@@ -303,11 +385,22 @@ export async function fetchCover(url: string, cover: string): Promise<{ body: Bu
     if (!existsSync(p)) throw new MarketError(`the market has no ${cover}`, 404);
     body = readFileSync(p);
   } else {
-    const res = await fetch(`${url.replace(/\/+$/, "")}/${cover}`, { signal: AbortSignal.timeout(20_000) }).catch((e) => {
-      throw new MarketError(`couldn't reach the market (${(e as Error).message})`, 502);
-    });
-    if (!res.ok) throw new MarketError(`the market answered ${res.status} for ${cover}`, res.status === 404 ? 404 : 502);
-    body = Buffer.from(await res.arrayBuffer());
+    const target = `${url.replace(/\/+$/, "")}/${cover}`;
+    let res: Response | null = null;
+    let netErr: unknown = null;
+    try {
+      res = await fetch(target, { signal: AbortSignal.timeout(20_000) });
+    } catch (e) {
+      netErr = e;
+    }
+    if (res && res.ok) {
+      body = Buffer.from(await res.arrayBuffer());
+    } else {
+      const local = tryReadLocalFallback(cover);
+      if (local) body = local.body;
+      else if (netErr) throw new MarketError(`couldn't reach the market (${(netErr as Error).message})`, 502);
+      else throw new MarketError(`the market answered ${res!.status} for ${cover}`, res!.status === 404 ? 404 : 502);
+    }
   }
   if (body.length > MAX_COVER_BYTES) throw new MarketError(`${cover} is larger than ${MAX_COVER_BYTES} bytes`);
   return { body, type: COVER_TYPE[m[2]] };
@@ -362,18 +455,33 @@ export function installedEntries(e: Etude): Record<string, InstalledEntry> {
   return e.db.setting<{ installed?: Record<string, InstalledEntry> }>("market", {}).installed ?? {};
 }
 
+export function entryMediaBatches(e: Etude): Record<string, EntryMediaBatches> {
+  return e.db.setting<{ batches?: Record<string, EntryMediaBatches> }>("market", {}).batches ?? {};
+}
+
+function saveEntryMediaBatches(e: Etude, key: string, rec: EntryMediaBatches | null) {
+  const cur = e.db.setting<{ installed?: Record<string, InstalledEntry>; batches?: Record<string, EntryMediaBatches> }>("market", {});
+  const batches = { ...(cur.batches ?? {}) };
+  if (rec) batches[key] = rec;
+  else delete batches[key];
+  e.db.setSetting("market", { ...cur, batches });
+}
+
 function recordInstall(e: Etude, id: string, rec: InstalledEntry) {
-  const cur = e.db.setting<{ installed?: Record<string, InstalledEntry> }>("market", {});
+  const cur = e.db.setting<{ installed?: Record<string, InstalledEntry>; batches?: Record<string, EntryMediaBatches> }>("market", {});
   e.db.setSetting("market", { ...cur, installed: { ...(cur.installed ?? {}), [installKey(rec.kind, id)]: rec } });
 }
 
 export function forgetInstall(e: Etude, id: string): boolean {
-  const cur = e.db.setting<{ installed?: Record<string, InstalledEntry> }>("market", {});
+  const cur = e.db.setting<{ installed?: Record<string, InstalledEntry>; batches?: Record<string, EntryMediaBatches> }>("market", {});
   // Old collections hold bare ids; accept those too.
   const key = Object.keys(cur.installed ?? {}).find((k) => k === id || k.endsWith(`:${id}`));
   if (!key) return false;
   const { [key]: _gone, ...rest } = cur.installed!;
-  e.db.setSetting("market", { ...cur, installed: rest });
+  const batches = { ...(cur.batches ?? {}) };
+  delete batches[key];
+  delete batches[id];
+  e.db.setSetting("market", { ...cur, installed: rest, batches });
   return true;
 }
 
@@ -384,20 +492,249 @@ export function installState(e: Etude, entry: MarketMeta, installed = installedE
   return rec.version !== entry.version || (entry.updated && rec.updated !== entry.updated) ? "update" : "installed";
 }
 
+// ------------------------------------------------------------------ media batches
+
+const batchLocks = new Map<string, Promise<any>>();
+
+function batchMediaExists(e: Etude, mediaPath: string): boolean {
+  if (!mediaPath.startsWith("/media/")) return false;
+  const rel = mediaPath.slice("/media/".length);
+  if (!rel || rel.includes("..")) return false;
+  return existsSync(join(e.mediaDir, rel));
+}
+
+function reconcileBatches(e: Etude, rec: EntryMediaBatches): { rec: EntryMediaBatches; changed: boolean } {
+  let changed = false;
+  const batches = rec.batches.map((b) => {
+    const allPresent = b.media.length > 0 && b.media.every((m) => batchMediaExists(e, m));
+    if (allPresent !== b.downloaded) {
+      changed = true;
+      return { ...b, downloaded: allPresent, ...(allPresent && !b.downloadedAt ? { downloadedAt: new Date().toISOString() } : {}) };
+    }
+    return b;
+  });
+  return { rec: changed ? { ...rec, batches } : rec, changed };
+}
+
+function deckMatchesEntry(deck: string | undefined, entryDecks: string[]): boolean {
+  if (!deck) return true;
+  const d = deck.toLowerCase();
+  return entryDecks.some((root) => {
+    const r = root.toLowerCase();
+    return r === d || r.startsWith(d + "::") || d.startsWith(r + "::");
+  });
+}
+
+function practicedItemIds(e: Etude, itemIds: string[]): Set<string> {
+  if (!itemIds.length) return new Set();
+  const marks = itemIds.map(() => "?").join(",");
+  const rows = e.db.all<{ item_id: string }>(
+    `SELECT DISTINCT c.item_id FROM cards c WHERE c.item_id IN (${marks}) AND (c.reps > 0 OR EXISTS (SELECT 1 FROM attempts a WHERE a.card_id = c.id))`,
+    ...itemIds,
+  );
+  return new Set(rows.map((r) => r.item_id));
+}
+
+function summarizeBatchEntry(e: Etude, key: string, raw: EntryMediaBatches): MediaBatchStatus {
+  const { rec, changed } = reconcileBatches(e, raw);
+  if (changed) saveEntryMediaBatches(e, key, rec);
+  const sorted = [...rec.batches].sort((a, b) => a.order - b.order);
+  const allIds = [...new Set(sorted.flatMap((b) => b.itemIds))];
+  const practiced = practicedItemIds(e, allIds);
+  const batches = sorted.map((b) => ({
+    id: b.id,
+    order: b.order,
+    ...(b.title ? { title: b.title } : {}),
+    bytes: b.bytes,
+    items: b.itemIds.length,
+    practiced: b.itemIds.filter((id) => practiced.has(id)).length,
+    downloaded: b.downloaded,
+    ...(b.downloadedAt ? { downloadedAt: b.downloadedAt } : {}),
+  }));
+  const downloaded = batches.filter((b) => b.downloaded);
+  const pending = batches.filter((b) => !b.downloaded);
+  const downloadedItems = downloaded.reduce((n, b) => n + b.items, 0);
+  const practicedItems = downloaded.reduce((n, b) => n + b.practiced, 0);
+  const remainingUnpracticed = Math.max(0, downloadedItems - practicedItems);
+  const latest = downloaded.at(-1);
+  const latestRatio = latest && latest.items > 0 ? latest.practiced / latest.items : 0;
+  const next = pending[0] ?? null;
+  const thresholdRemaining = Math.min(4, Math.max(1, Math.floor((latest?.items ?? 0) * 0.25)));
+  // Prefetch once the learner has practiced >=75% of the latest downloaded batch (or <=25%, max 4 clips remain).
+  const shouldPrefetch =
+    !!next &&
+    (downloaded.length === 0 ||
+      (practicedItems > 0 && (remainingUnpracticed <= thresholdRemaining || latestRatio >= 0.75)));
+  return {
+    entryId: rec.entryId,
+    kind: rec.kind,
+    decks: rec.decks,
+    totalBatches: batches.length,
+    downloadedBatches: downloaded.length,
+    pendingBatches: pending.length,
+    totalItems: batches.reduce((n, b) => n + b.items, 0),
+    downloadedItems,
+    practicedItems,
+    remainingUnpracticed,
+    downloadedBytes: downloaded.reduce((n, b) => n + b.bytes, 0),
+    totalBytes: batches.reduce((n, b) => n + b.bytes, 0),
+    shouldPrefetch,
+    ...(rec.lastError ? { lastError: rec.lastError } : {}),
+    nextBatch: next ? { id: next.id, order: next.order, ...(next.title ? { title: next.title } : {}), bytes: next.bytes, items: next.items } : null,
+    batches,
+  };
+}
+
+export function mediaBatchStatus(e: Etude, opts: { deck?: string; id?: string } = {}): MediaBatchStatus[] {
+  const all = entryMediaBatches(e);
+  const out: MediaBatchStatus[] = [];
+  for (const [key, rec] of Object.entries(all)) {
+    if (opts.id && rec.entryId !== opts.id) continue;
+    if (!deckMatchesEntry(opts.deck, rec.decks)) continue;
+    out.push(summarizeBatchEntry(e, key, rec));
+  }
+  return out;
+}
+
+export async function downloadMediaBatch(
+  e: Etude,
+  entryId: string,
+  batchId?: string,
+  opts: { url?: string; kind?: MarketKind } = {},
+): Promise<{ entryId: string; batch: MediaBatchRecord; filesStored: number; status: MediaBatchStatus }> {
+  const all = entryMediaBatches(e);
+  const key = opts.kind
+    ? installKey(opts.kind, entryId)
+    : Object.keys(all).find((k) => all[k].entryId === entryId);
+  const rec = key ? all[key] : undefined;
+  if (!key || !rec) throw new MarketError(`no progressive media batches found for "${entryId}"`, 404);
+  const sorted = [...rec.batches].sort((a, b) => a.order - b.order);
+  const target = batchId ? sorted.find((b) => b.id === batchId) : sorted.find((b) => !b.downloaded);
+  if (!target) throw new MarketError(batchId ? `unknown media batch "${batchId}"` : "all media batches are already downloaded", 404);
+
+  const lockKey = `${e.path}:${key}:${target.id}`;
+  const existing = batchLocks.get(lockKey);
+  if (existing) return existing;
+
+  const job = (async () => {
+    const url = opts.url || rec.url || marketSettings(e).url;
+    try {
+      const { text, bytes, body } = await readMarketFile(url, target.path);
+      if (bytes !== target.bytes) throw new MarketError(`${target.path} is ${bytes} bytes; expected ${target.bytes}`);
+      const digest = createHash("sha256").update(body).digest("hex");
+      if (digest !== target.sha256) throw new MarketError(`${target.path} sha256 mismatch (got ${digest}, expected ${target.sha256})`);
+      const bundle = parseJson(text, target.path) as MarketBatchBundle;
+      if (bundle?.etudeBatch !== 1 || !Array.isArray(bundle.files)) throw new MarketError(`${target.path} isn't a valid media batch bundle`);
+
+      let filesStored = 0;
+      for (const f of bundle.files) {
+        const m = typeof f?.data === "string" ? /^data:([\w.+-]+\/[\w.+-]+);base64,([A-Za-z0-9+/=\s]+)$/.exec(f.data) : null;
+        if (!m) throw new MarketError(`${target.path}: invalid data URL for ${f?.name ?? "?"}`);
+        const raw = Buffer.from(m[2], "base64");
+        if (f.sha256) {
+          const fh = createHash("sha256").update(raw).digest("hex");
+          if (fh !== f.sha256) throw new MarketError(`${target.path}: sha256 mismatch for ${f.name}`);
+        }
+        const stored = e.storeMedia(f.name, raw);
+        if (f.url && stored.url !== f.url) {
+          throw new MarketError(`${target.path}: stored URL ${stored.url} differs from expected ${f.url}`);
+        }
+        filesStored++;
+      }
+
+      const fresh = entryMediaBatches(e)[key] ?? rec;
+      const nowIso = new Date().toISOString();
+      const updated: EntryMediaBatches = {
+        ...fresh,
+        url,
+        lastError: undefined,
+        lastAttemptAt: nowIso,
+        batches: fresh.batches.map((b) => (b.id === target.id ? { ...b, downloaded: true, downloadedAt: nowIso } : b)),
+      };
+      saveEntryMediaBatches(e, key, updated);
+      const savedTarget = updated.batches.find((b) => b.id === target.id)!;
+      return { entryId: updated.entryId, batch: savedTarget, filesStored, status: summarizeBatchEntry(e, key, updated) };
+    } catch (err) {
+      const fresh = entryMediaBatches(e)[key] ?? rec;
+      saveEntryMediaBatches(e, key, { ...fresh, lastError: (err as Error).message, lastAttemptAt: new Date().toISOString() });
+      throw err;
+    } finally {
+      batchLocks.delete(lockKey);
+    }
+  })();
+
+  batchLocks.set(lockKey, job);
+  return job;
+}
+
+export async function syncMediaBatches(
+  e: Etude,
+  opts: { deck?: string; id?: string; url?: string; force?: boolean; all?: boolean } = {},
+): Promise<{
+  downloaded: { entryId: string; batchId: string; order: number; title?: string; items: number; bytes: number }[];
+  offline: boolean;
+  errors: { entryId: string; error: string }[];
+  entries: MediaBatchStatus[];
+}> {
+  const initial = mediaBatchStatus(e, { deck: opts.deck, id: opts.id });
+  const downloaded: { entryId: string; batchId: string; order: number; title?: string; items: number; bytes: number }[] = [];
+  const errors: { entryId: string; error: string }[] = [];
+  let offline = false;
+
+  for (const st of initial) {
+    if (!st.nextBatch) continue;
+    if (!opts.all && !opts.force && !st.shouldPrefetch) continue;
+    for (;;) {
+      const latest = mediaBatchStatus(e, { id: st.entryId })[0];
+      if (!latest?.nextBatch) break;
+      if (!opts.all && downloaded.some((d) => d.entryId === st.entryId)) break;
+      try {
+        const res = await downloadMediaBatch(e, st.entryId, latest.nextBatch.id, { url: opts.url, kind: st.kind });
+        downloaded.push({
+          entryId: st.entryId,
+          batchId: res.batch.id,
+          order: res.batch.order,
+          ...(res.batch.title ? { title: res.batch.title } : {}),
+          items: res.batch.itemIds.length,
+          bytes: res.batch.bytes,
+        });
+        if (!opts.all) break;
+      } catch (err) {
+        const msg = (err as Error).message;
+        if (/couldn't reach|fetch failed|network|timeout|ENOTFOUND|ECONNREFUSED|offline/i.test(msg)) offline = true;
+        errors.push({ entryId: st.entryId, error: msg });
+        break;
+      }
+    }
+  }
+  return { downloaded, offline, errors, entries: mediaBatchStatus(e, { deck: opts.deck, id: opts.id }) };
+}
+
 // ------------------------------------------------------------------ install
 
-export async function installEntry(e: Etude, id: string, opts: { url?: string; dryRun?: boolean; kind?: MarketKind } = {}) {
+export async function installEntry(e: Etude, id: string, opts: { url?: string; dryRun?: boolean; kind?: MarketKind; fetchInitialBatch?: boolean } = {}) {
   const url = opts.url ?? marketSettings(e).url;
   const index = await fetchIndex(url);
   const matches = index.entries.filter((x) => x.id === id && (!opts.kind || x.kind === opts.kind));
   if (!matches.length) throw new MarketError(`the market has no entry "${id}"`, 404);
   if (matches.length > 1) throw new MarketError(`"${id}" is both a ${matches.map((m) => m.kind).join(" and a ")}; pass the kind`, 409);
   const file = await fetchEntry(url, matches[0]);
-  return installFile(e, file, { dryRun: opts.dryRun });
+  const out = installFile(e, file, { dryRun: opts.dryRun, url });
+  if (!opts.dryRun && opts.fetchInitialBatch !== false && Array.isArray(file.content?.mediaBatches) && file.content.mediaBatches.length) {
+    const status = mediaBatchStatus(e, { id: file.id })[0];
+    const firstBatch = status?.batches[0];
+    if (status && firstBatch && !firstBatch.downloaded) {
+      const initial = await downloadMediaBatch(e, file.id, firstBatch.id, { url, kind: file.kind });
+      out.report = { ...out.report, initialBatch: { id: initial.batch.id, bytes: initial.batch.bytes, files: initial.filesStored, status: initial.status } };
+    } else if (status) {
+      out.report = { ...out.report, batches: status };
+    }
+  }
+  return out;
 }
 
 /** Adds an entry file to the collection. Installing the same entry again updates it in place. */
-export function installFile(e: Etude, file: MarketFile, opts: { dryRun?: boolean } = {}) {
+export function installFile(e: Etude, file: MarketFile, opts: { dryRun?: boolean; url?: string } = {}) {
   const errors = checkEntry(file);
   if (errors.length) throw new MarketError(`invalid market entry: ${errors.join("; ")}`);
   const meta = metaOf(file);
@@ -432,7 +769,36 @@ export function installFile(e: Etude, file: MarketFile, opts: { dryRun?: boolean
         ? (pack.types ?? []).map((t: any) => t.id)
         : [...new Set(([...(pack.decks ?? []).map((d: any) => d.name), ...(pack.items ?? []).map((i: any) => i.deck)] as string[]).filter(Boolean).map((n) => n.split("::")[0].trim()))];
   }
-  if (!opts.dryRun) recordInstall(e, meta.id, { kind: meta.kind, name: meta.name, version: meta.version, updated: meta.updated, at: new Date().toISOString(), ids });
+  if (!opts.dryRun) {
+    recordInstall(e, meta.id, { kind: meta.kind, name: meta.name, version: meta.version, updated: meta.updated, at: new Date().toISOString(), ids });
+    const rawBatches = Array.isArray(file.content?.mediaBatches) ? (file.content.mediaBatches as MediaBatchSpec[]) : [];
+    const key = installKey(meta.kind, meta.id);
+    if (rawBatches.length) {
+      const prevRec = entryMediaBatches(e)[key];
+      const prevById = new Map((prevRec?.batches ?? []).map((b) => [b.id, b]));
+      const batches: MediaBatchRecord[] = [...rawBatches]
+        .sort((a, b) => a.order - b.order)
+        .map((b) => {
+          const old = prevById.get(b.id);
+          const allPresent = b.media.length > 0 && b.media.every((m) => batchMediaExists(e, m));
+          const downloaded = allPresent || (!!old?.downloaded && old.sha256 === b.sha256);
+          return {
+            ...b,
+            downloaded,
+            ...(downloaded ? { downloadedAt: old?.downloadedAt ?? new Date().toISOString() } : {}),
+          };
+        });
+      saveEntryMediaBatches(e, key, {
+        entryId: meta.id,
+        kind: meta.kind,
+        url: opts.url || prevRec?.url || marketSettings(e).url,
+        decks: ids,
+        batches,
+      });
+    } else {
+      saveEntryMediaBatches(e, key, null);
+    }
+  }
   return { entry: meta, result, ids, dryRun: !!opts.dryRun, report };
 }
 

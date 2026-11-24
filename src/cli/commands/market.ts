@@ -19,8 +19,10 @@ import {
   installedEntries,
   manualPublishUrl,
   marketSettings,
+  mediaBatchStatus,
   publishFile,
   summarize,
+  syncMediaBatches,
   type MarketKind,
 } from "../../core/market.ts";
 import { command, group, CliError, Failed } from "../registry.ts";
@@ -109,6 +111,34 @@ command({
   run(ctx) {
     if (!forgetInstall(ctx.e, ctx.args.id)) throw new CliError(`"${ctx.args.id}" isn't installed`, "not_found");
     return { forgot: ctx.args.id };
+  },
+});
+
+command({
+  name: "market batches",
+  summary: "Inspect or download progressive offline media batches for installed market decks.",
+  flags: [
+    { name: "deck", type: "string", description: "Filter by deck name.", placeholder: "DECK" },
+    { name: "id", type: "string", description: "Filter by market entry id.", placeholder: "ID" },
+    { name: "prefetch", type: "boolean", description: "Download the next batch only when usage crosses the prefetch threshold." },
+    { name: "download", type: "boolean", description: "Force-download the next pending batch." },
+    { name: "all", type: "boolean", description: "Download all remaining pending batches." },
+    URL_FLAG,
+  ],
+  writes: true,
+  examples: ["etude market batches", "etude market batches --prefetch --deck \"التجويد::التجويد السمعي التطبيقي\"", "etude market batches --download --id quran-tajweed"],
+  output: "{ entries, downloaded?, offline?, errors? }",
+  async run(ctx) {
+    if (ctx.flags.prefetch || ctx.flags.download || ctx.flags.all) {
+      return syncMediaBatches(ctx.e, {
+        deck: ctx.flags.deck,
+        id: ctx.flags.id,
+        url: ctx.flags.url,
+        force: !!ctx.flags.download,
+        all: !!ctx.flags.all,
+      });
+    }
+    return { entries: mediaBatchStatus(ctx.e, { deck: ctx.flags.deck, id: ctx.flags.id }) };
   },
 });
 

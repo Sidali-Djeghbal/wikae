@@ -2372,6 +2372,22 @@ export class Etude {
     return this.adaptive.learnerSummary(deck);
   }
 
+  /** Items waiting for a progressive market media batch to be downloaded locally on this device. */
+  pendingMediaItemIds(): Set<string> {
+    const batches = this.db.setting<{ batches?: Record<string, { batches?: { itemIds?: string[]; downloaded?: boolean; media?: string[] }[] }> }>("market", {}).batches;
+    if (!batches) return new Set();
+    const pending = new Set<string>();
+    for (const entry of Object.values(batches)) {
+      for (const b of entry?.batches ?? []) {
+        if (b.downloaded) continue;
+        const ready = Array.isArray(b.media) && b.media.length > 0 && b.media.every((m) => typeof m === "string" && m.startsWith("/media/") && existsSync(join(this.mediaDir, m.slice("/media/".length))));
+        if (ready) continue;
+        for (const id of b.itemIds ?? []) pending.add(id);
+      }
+    }
+    return pending;
+  }
+
   /** The queue for a deck or search right now: learning, due reviews and today's new cards, in order. */
   queue(scope: StudyScope) {
     const t = now();
@@ -2389,7 +2405,8 @@ export class Etude {
       if (!watching.has(deck)) watching.set(deck, this.configFor(deck).mode === "watch");
       return watching.get(deck)!;
     };
-    for (let i = rows.length - 1; i >= 0; i--) if (watch(rows[i].deck)) rows.splice(i, 1);
+    const pendingMedia = this.pendingMediaItemIds();
+    for (let i = rows.length - 1; i >= 0; i--) if (watch(rows[i].deck) || pendingMedia.has(rows[i].item_id)) rows.splice(i, 1);
     const dayStart = iso(this.dayStart(t));
     const done = this.db.get(
       `SELECT SUM(r.state = 0) AS new, SUM(r.state = 2) AS rev FROM reviews r JOIN cards c ON c.id = r.card_id JOIN items i ON i.id = c.item_id JOIN decks d ON d.id = i.deck_id WHERE r.practice = 0 AND r.ts >= ? AND ${where}`,
@@ -2407,11 +2424,16 @@ export class Etude {
     }
 
     if (scope.ahead) {
-      // Study ahead: everything in scope, soonest due first, no daily limits. FSRS scales the gain for an early review.
+      // Study ahead: everything in scope, soonest due first (or randomized when configured), no daily limits. FSRS scales the gain for an early review.
+      const day = dayStart.slice(0, 10);
       const byDue = (a: CardRow, b: CardRow) => a.due.localeCompare(b.due);
       const learning = rows.filter((c) => c.state === 1 || c.state === 3).sort(byDue);
-      const reviews = rows.filter((c) => c.state === 2).sort(byDue);
-      const news = rows.filter((c) => c.state === 0).sort((a, b) => a.ord - b.ord || a.id - b.id);
+      const reviews = rows.filter((c) => c.state === 2);
+      if (cfg.reviewOrder === "random") reviews.sort((a, b) => hashString(day + a.id) - hashString(day + b.id));
+      else reviews.sort(byDue);
+      const news = rows.filter((c) => c.state === 0);
+      if (cfg.newOrder === "random") news.sort((a, b) => hashString(day + a.id) - hashString(day + b.id));
+      else news.sort((a, b) => a.ord - b.ord || a.id - b.id);
       return { learning, reviews, news, doneNew, doneRev, cfg, nowIso, nextLater: null as string | null, ahead: true };
     }
     const learning = rows.filter((c) => (c.state === 1 || c.state === 3) && c.due <= aheadIso).sort((a, b) => a.due.localeCompare(b.due));
@@ -2498,21 +2520,32 @@ export class Etude {
       doneToday: q.doneNew + q.doneRev,
       nextDue: q.nextLater,
     };
-    const not = (list: CardRow[]) => list.filter((c) => c.id !== opts.exclude);
+    const not = <T extends CardRow>(list: T[]) => list.filter((c) => c.id !== opts.exclude);
     const learningNow = not(q.ahead ? q.learning : q.learning.filter((c) => c.due <= q.nowIso));
     const reviews = not(q.reviews);
     const news = not(q.news);
-    let pick: CardRow | undefined = learningNow[0];
+    let pick: (typeof news)[number] | undefined = learningNow[0];
+    const pickByOrder = (list: typeof news, key: "newOrder" | "reviewOrder") => {
+      if (scope.placement || list.length <= 1) return list[0];
+      const lead = list[0];
+      const order = q.cfg[key] === "random" ? "random" : this.cardConfig(lead.deck, lead.type)[key];
+      if (order !== "random") return lead;
+      const pool = q.cfg[key] === "random" ? list : list.filter((c) => this.cardConfig(c.deck, c.type)[key] === "random");
+      const active = pool.length ? pool : list;
+      return active[Math.floor(Math.random() * active.length)];
+    };
+    const pickNew = () => pickByOrder(news, "newOrder");
+    const pickRev = () => pickByOrder(reviews, "reviewOrder");
     if (!pick && (reviews.length || news.length)) {
-      if (!news.length) pick = reviews[0];
-      else if (!reviews.length) pick = news[0];
-      else if (q.cfg.newMix === "first") pick = news[0];
-      else if (q.cfg.newMix === "last") pick = reviews[0];
+      if (!news.length) pick = pickRev();
+      else if (!reviews.length) pick = pickNew();
+      else if (q.cfg.newMix === "first") pick = pickNew();
+      else if (q.cfg.newMix === "last") pick = pickRev();
       else {
         // Interleave so both piles finish together.
         const newProgress = q.doneNew / (q.doneNew + news.length);
         const revProgress = q.doneRev / (q.doneRev + reviews.length);
-        pick = newProgress < revProgress ? news[0] : reviews[0];
+        pick = newProgress < revProgress ? pickNew() : pickRev();
       }
     }
     pick ??= not(q.learning)[0];

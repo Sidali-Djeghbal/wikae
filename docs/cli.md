@@ -383,6 +383,7 @@ These work on every command, before or after the command words.
   - [`market install`](#market-install) Add an entry to your collection. Installing again updates it; decks keep your scheduling.
   - [`market installed`](#market-installed) What you installed from the market, with what each put in your collection.
   - [`market forget`](#market-forget) Stop tracking an installed entry. What it added stays in your collection; delete that with `theme delete`, `deck delete` or `type delete`.
+  - [`market batches`](#market-batches) Inspect or download progressive offline media batches for installed market decks.
   - [`market publish`](#market-publish) Share a theme, deck or card type: opens a pull request on the market repository with your GitHub account.
   - [`market check`](#market-check) Validate market entry files without a database. Exits 4 on problems.
   - [`market index`](#market-index) For the market repository: check every file under entries/ (each deck and type is dry-run imported) and write index.json.
@@ -4490,6 +4491,35 @@ etude market forget <id>
 | `id` | Entry id. |
 
 Output: { forgot: id }
+
+### etude market batches
+
+<a id="market-batches"></a>
+
+Inspect or download progressive offline media batches for installed market decks.
+
+```
+etude market batches [flags]
+```
+
+*writes*
+
+| Flag | Type | Description |
+| --- | --- | --- |
+| `--deck <DECK>` | string | Filter by deck name. |
+| `--id <ID>` | string | Filter by market entry id. |
+| `--prefetch` | boolean | Download the next batch only when usage crosses the prefetch threshold. |
+| `--download` | boolean | Force-download the next pending batch. |
+| `--all` | boolean | Download all remaining pending batches. |
+| `--url <URL>` | string | Read the market from this URL or folder instead of the configured one (`settings set market.url=…`). |
+
+Output: { entries, downloaded?, offline?, errors? }
+
+```sh
+etude market batches
+etude market batches --prefetch --deck "التجويد::التجويد السمعي التطبيقي"
+etude market batches --download --id quran-tajweed
+```
 
 ### etude market publish
 

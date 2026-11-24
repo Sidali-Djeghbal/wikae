@@ -2412,6 +2412,17 @@ const ar: Record<string, string> = {
   "is:due · is:new · tag:x · rated:1:1 · prop:lapses>=2 · type:numeric": "is:due · is:new · tag:x · rated:1:1 · prop:lapses>=2 · type:numeric",
   "/* Styles scoped to this card's frame */": "/* Styles scoped to this card's frame */",
   "// Runs in the card frame with `etude` in scope": "// Runs in the card frame with `etude` in scope",
+  "Downloaded {count} new offline audio clips ({done}/{total} batches)": "تم تحميل {count} مقاطع صوتية جديدة دون اتصال (الدفعة {done} من {total})",
+  "Downloaded {count} new offline audio clips": "تم تحميل {count} مقاطع صوتية جديدة للعمل دون اتصال",
+  "You appear to be offline": "يبدو أنك غير متصل بالإنترنت حالياً",
+  "More offline audio clips are available ({n} clips in the next batch).": "توجد مقاطع صوتية إضافية جاهزة للتحميل ({n} مقطعاً في الدفعة التالية).",
+  "Download next batch": "تحميل الدفعة التالية",
+  "Download all": "تحميل الكل",
+  "Download failed": "فشل التحميل",
+  "Offline audio: {downloaded}/{total} clips": "المقاطع الصوتية دون اتصال: {downloaded} من {total}",
+  "Batch {done}/{all}": "الدفعة {done} من {all}",
+  "New audio batches download automatically in the background as you complete the current ones.": "تُحمَّل الدفعات الصوتية الجديدة تلقائياً في الخلفية كلما أتممت المقاطع الحالية.",
+  "All audio clips in this deck are stored locally for offline study.": "جميع المقاطع الصوتية في هذه الحزمة محفوظة محلياً للعمل دون اتصال.",
 };
 
 export default ar;

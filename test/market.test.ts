@@ -5,7 +5,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Etude } from "../src/core/engine.ts";
-import { buildIndex, buildSubmission, checkEntry, entryJson, entryPath, fetchIndex, forgetInstall, installEntry, installFile, installState, installedEntries, publishFile, MARKET_REPO, type MarketFile } from "../src/core/market.ts";
+import { buildIndex, buildSubmission, checkEntry, entryJson, entryPath, fetchCover, fetchIndex, fetchMarketMedia, forgetInstall, installEntry, installFile, installState, installedEntries, mediaBatchStatus, publishFile, syncMediaBatches, MARKET_REPO, type MarketFile } from "../src/core/market.ts";
+import { createApp } from "../src/server/app.ts";
 
 const dir = () => mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), "etude-market-"));
 const SHOWCASE = JSON.parse(readFileSync(new URL("../examples/showcase.pack.json", import.meta.url), "utf8"));
@@ -204,4 +205,156 @@ test("publishing inlines /media/ embeds inside Markdown and HTML fields", async 
   assert.match(front, /^!\[dot\]\(data:image\/png;base64,/);
   assert.match(front, /<img src="data:image\/png;base64,/);
   assert.ok(!front.includes("/media/"));
+});
+
+test("progressive offline media batches download batch 1 on install and prefetch batch 2 on heavy usage", async () => {
+  const root = dir();
+  const makeAudio = (tag: string) => {
+    const data = Buffer.from(`ID3-audio-${tag}-clip`);
+    const hash = createHash("sha256").update(data).digest("hex");
+    return { name: `${tag}.mp3`, data, hash, url: `/media/files/${hash}.mp3` };
+  };
+  const b1Clips = [1, 2, 3, 4].map((n) => makeAudio(`b1-${n}`));
+  const b2Clips = [5, 6, 7, 8].map((n) => makeAudio(`b2-${n}`));
+  const writeBundle = (id: string, clips: ReturnType<typeof makeAudio>[]) => {
+    const rel = `bundles/decks/tajweed-demo/${id}.json`;
+    const body = JSON.stringify({
+      etudeBatch: 1,
+      id,
+      files: clips.map((c) => ({
+        name: c.name,
+        url: c.url,
+        sha256: c.hash,
+        data: `data:audio/mpeg;base64,${c.data.toString("base64")}`,
+      })),
+    });
+    mkdirSync(join(root, "bundles/decks/tajweed-demo"), { recursive: true });
+    writeFileSync(join(root, rel), body);
+    const buf = Buffer.from(body);
+    return {
+      id,
+      order: id === "batch-01" ? 1 : 2,
+      path: rel,
+      sha256: createHash("sha256").update(buf).digest("hex"),
+      bytes: buf.length,
+      itemIds: clips.map((_, i) => `taj.${id}.${i + 1}`),
+      media: clips.map((c) => c.url),
+    };
+  };
+  const batch1 = writeBundle("batch-01", b1Clips);
+  const batch2 = writeBundle("batch-02", b2Clips);
+
+  const deckEntry: MarketFile = {
+    etudeMarket: 1,
+    kind: "deck",
+    id: "tajweed-demo",
+    name: "Tajweed Demo",
+    description: "Batched audio clips",
+    author: "ana",
+    tags: ["tajweed"],
+    version: "1.0.0",
+    updated: "2026-11-24",
+    content: {
+      etude: "pack/1",
+      name: "Tajweed Demo",
+      decks: [{ name: "Tajweed Demo" }],
+      mediaBatches: [batch1, batch2],
+      items: [
+        ...b1Clips.map((c, i) => ({
+          id: `taj.batch-01.${i + 1}`,
+          type: "basic",
+          deck: "Tajweed Demo",
+          fields: { front: `Listen ${i + 1}: ${c.url}`, back: "Izhar" },
+        })),
+        ...b2Clips.map((c, i) => ({
+          id: `taj.batch-02.${i + 1}`,
+          type: "basic",
+          deck: "Tajweed Demo",
+          fields: { front: `Listen ${i + 5}: ${c.url}`, back: "Idgham" },
+        })),
+      ],
+    },
+  };
+  mkdirSync(join(root, "entries/decks"), { recursive: true });
+  writeFileSync(join(root, "entries/decks/tajweed-demo.json"), entryJson(deckEntry));
+  const { index, problems } = await buildIndex(root, { dryRunInto: () => Etude.open(":memory:") });
+  assert.deepEqual(problems, []);
+  writeFileSync(join(root, "index.json"), JSON.stringify(index));
+
+  const e = await Etude.open(join(dir(), "etude.db"));
+  const installed = await installEntry(e, "tajweed-demo", { url: root });
+  assert.equal(installed.result, "created");
+  // Only batch 1 files exist locally right after install.
+  for (const c of b1Clips) assert.ok(existsSync(join(e.mediaDir, c.url.slice("/media/".length))));
+  for (const c of b2Clips) assert.ok(!existsSync(join(e.mediaDir, c.url.slice("/media/".length))));
+  // Study queue only serves the 4 ready offline cards, never the undownloaded batch 2 cards.
+  assert.equal(e.counts({ deck: "Tajweed Demo" }).new, 4);
+
+  let st = mediaBatchStatus(e, { deck: "Tajweed Demo" })[0];
+  assert.equal(st.downloadedBatches, 1);
+  assert.equal(st.pendingBatches, 1);
+  assert.equal(st.shouldPrefetch, false);
+
+  // Study 2 of 4 cards (<75%): should not prefetch batch 2 yet.
+  for (let i = 0; i < 2; i++) {
+    const n = e.next({ deck: "Tajweed Demo" }).card!;
+    assert.ok(n.itemId.startsWith("taj.batch-01."));
+    e.rate(n.cardId, 3);
+  }
+  const early = await syncMediaBatches(e, { deck: "Tajweed Demo" });
+  assert.equal(early.downloaded.length, 0);
+  assert.equal(mediaBatchStatus(e, { deck: "Tajweed Demo" })[0].downloadedBatches, 1);
+
+  // Study 3rd card (75% practiced, 1 remaining): auto-prefetch threshold triggers batch 2.
+  const third = e.next({ deck: "Tajweed Demo" }).card!;
+  e.rate(third.cardId, 3);
+  st = mediaBatchStatus(e, { deck: "Tajweed Demo" })[0];
+  assert.equal(st.shouldPrefetch, true);
+
+  const app = createApp(e);
+  const res = await app.request("/api/market/batches/sync", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ deck: "Tajweed Demo" }),
+  });
+  assert.equal(res.status, 200);
+  const synced = await res.json();
+  assert.equal(synced.downloaded.length, 1);
+  assert.equal(synced.downloaded[0].batchId, "batch-02");
+  for (const c of b2Clips) assert.ok(existsSync(join(e.mediaDir, c.url.slice("/media/".length))));
+  // Batch 2 cards are now unlocked in the offline study queue!
+  assert.equal(e.counts({ deck: "Tajweed Demo" }).new, 5); // 1 remaining from batch 1 + 4 from batch 2
+  // All batch media files are referenced in item fields so unusedMedia keeps them.
+  assert.equal(e.unusedMedia().length, 0);
+});
+
+test("covers and media serve from local market and fall back when remote is unreachable", async (t) => {
+  const root = dir();
+  const webp = Buffer.from("RIFF\x1a\x00\x00\x00WEBPVP8 \x0e\x00\x00\x00\x30\x01\x00\x9d\x01\x2a\x01\x00\x01\x00\x02\x00", "binary");
+  mkdirSync(join(root, "covers/decks"), { recursive: true });
+  mkdirSync(join(root, "media/decks/demo"), { recursive: true });
+  writeFileSync(join(root, "covers/decks/demo.webp"), webp);
+  writeFileSync(join(root, "media/decks/demo/01.webp"), webp);
+
+  const cov = await fetchCover(root, "covers/decks/demo.webp");
+  assert.equal(cov.type, "image/webp");
+  assert.deepEqual(cov.body, webp);
+
+  const med = await fetchMarketMedia(root, "media/decks/demo/01.webp");
+  assert.equal(med.type, "image/webp");
+  assert.deepEqual(med.body, webp);
+
+  // Stub fetch so remote errors don't open sockets and trigger deterministic HTTP/network paths.
+  t.mock.method(globalThis, "fetch", async () => new Response(null, { status: 503 }));
+  await assert.rejects(() => fetchCover("http://127.0.0.1:4611", "covers/decks/missing-test-only.webp"), /answered 503/);
+  await assert.rejects(() => fetchMarketMedia("http://127.0.0.1:4611", "media/decks/missing-test-only/01.webp"), /answered 503/);
+
+  if (existsSync(new URL("../../wikae-market/covers/decks/quran-tajweed-audio.webp", import.meta.url))) {
+    const fbCover = await fetchCover("http://127.0.0.1:4611", "covers/decks/quran-tajweed-audio.webp");
+    assert.equal(fbCover.type, "image/webp");
+    assert.ok(fbCover.body.length > 0);
+    const fbMedia = await fetchMarketMedia("http://127.0.0.1:4611", "media/decks/quran-tajweed-audio/01-title.webp");
+    assert.equal(fbMedia.type, "image/webp");
+    assert.ok(fbMedia.body.length > 0);
+  }
 });

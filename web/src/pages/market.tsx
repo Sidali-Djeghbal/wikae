@@ -248,7 +248,7 @@ function metaLine(entry: MarketEntry): string {
   const s = entry.summary as any;
   if (entry.kind === "theme") return `${t("Theme")} · ${s.theme.scheme}`;
   if (entry.kind === "deck") return `${t("Deck")} · ${plural(s.items, "card")}${s.watch ? ` · ${t("tour")}` : ""}`;
-  return `${t("Card type")} · ${(s.types as any[]).map((t) => GRADER_WORD[t.grader] ?? t.grader).join(", ")}`;
+  return `${t("Card type")} · ${(s.types as any[]).map((tp) => GRADER_WORD[tp.grader] ?? tp.grader).join(", ")}`;
 }
 
 function EntryTile({ entry, onOpen }: { entry: MarketEntry; onOpen(): void }) {
@@ -293,11 +293,14 @@ function EntryDialog({ entry, repo, inUse, onClose, onInstalled }: { entry: Mark
         if (sel) applyTheme(sel);
       }
       const what = entry.kind === "theme" ? "theme" : entry.kind === "deck" ? "deck" : "card type";
+      const batchNote = r.report?.initialBatch
+        ? ` · ${r.report.initialBatch.files} offline clips ready (more load automatically as you study)`
+        : "";
       toast.success(r.result === "unchanged" ? `You already have the latest ${what}` : `${r.result === "updated" ? "Updated" : "Installed"} ${entry.name}`, {
         description:
           entry.kind === "theme"
             ? use ? "It's on now." : "Pick it in Settings → Appearance."
-            : `${r.report.items.created} new, ${r.report.items.updated} updated item${r.report.items.updated === 1 ? "" : "s"}${r.report.types.created ? `, ${plural(r.report.types.created, "card type")}` : ""}.`,
+            : `${r.report.items.created} new, ${r.report.items.updated} updated item${r.report.items.updated === 1 ? "" : "s"}${r.report.types.created ? `, ${plural(r.report.types.created, "card type")}` : ""}${batchNote}.`,
       });
       onInstalled();
     } catch (e) {
@@ -353,14 +356,14 @@ function EntryDialog({ entry, repo, inUse, onClose, onInstalled }: { entry: Mark
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-muted-foreground">
           {entry.kind === "deck" && (
             <>
-              {s.types.length > 0 && <span>{t("Includes {types}", { types: s.types.map((t: any) => t.name).join(", ") })}</span>}
+              {s.types.length > 0 && <span>{t("Includes {types}", { types: s.types.map((tp: any) => tp.name).join(", ") })}</span>}
               {s.watch && <span>{t("Watch tour")}</span>}
             </>
           )}
           {entry.kind === "type" &&
-            s.types.map((t: any) => (
-              <span key={t.id}>
-                <code className="text-foreground">{t.id}</code> · {GRADER_WORD[t.grader] ?? t.grader} · {t("fields {fields}", { fields: t.fields.join(", ") })}
+            s.types.map((tp: any) => (
+              <span key={tp.id}>
+                <code className="text-foreground">{tp.id}</code> · {GRADER_WORD[tp.grader] ?? tp.grader} · {t("fields {fields}", { fields: tp.fields.join(", ") })}
               </span>
             ))}
           {entry.kind === "type" && s.items > 0 && <span>{s.items === 1 ? t("1 example card") : t("{n} example cards", { n: s.items })}</span>}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Archive, ArchiveRestore, ArrowUpToLine, BarChart3, CalendarClock, Check, ChevronDown, ChevronRight, Download, Eye, FastForward, FolderInput, Library, Pencil, Play, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpToLine, BarChart3, CalendarClock, Check, ChevronDown, ChevronRight, Download, Eye, FastForward, FolderInput, Library, Loader2, Pencil, Play, Plus, Search, Sparkles, Trash2, Volume2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/
 import { BulkBar, CheckBox, groupItems, ItemEditor, ItemRow, NewItemDialog, OrderSelect, SearchHints } from "@/components/item-editor";
 import { AiGenerateDialog } from "@/components/ai-generate-dialog";
 import { DeckOptions, formatDeadline, type DeckFull } from "@/components/deck-options";
-import { api, type DeckNode, type LearnerSummary, type Preset, type SearchRow, type TypeSummary } from "@/lib/api";
+import { api, type DeckNode, type LearnerSummary, type MediaBatchEntryStatus, type Preset, type SearchRow, type TypeSummary } from "@/lib/api";
 import { navigate } from "@/lib/router";
 import { cn } from "@/lib/utils";
 import { Block, Breadcrumb, EmptyState, LinkRow, Page, Section } from "@/components/page";
@@ -147,7 +147,7 @@ export function DeckPage({ name }: { name: string }) {
           className="pb-3"
         />
         <div className="px-5">
-          <Header deck={deck} node={node} work={work} tags={tags} phone onRenamed={(to) => navigate(`/deck?name=${enc(to)}`, { replace: true })} onAddCards={tab === "cards" ? undefined : () => switchTab("cards")} />
+          <Header deck={deck} node={node} work={work} tags={tags} phone onRenamed={(to) => navigate(`/deck?name=${enc(to)}`, { replace: true })} onAddCards={tab === "cards" ? undefined : () => switchTab("cards")} onChanged={reload} />
         </div>
         <Tabs value={tab} onValueChange={switchTab} className="mt-7">
           <div className="sticky top-[calc(3rem+env(safe-area-inset-top))] z-10 border-b bg-background/95 px-5 backdrop-blur">
@@ -173,7 +173,7 @@ export function DeckPage({ name }: { name: string }) {
   return (
     <Page>
       <Breadcrumb items={[{ label: deck.archived ? t("Archive") : t("Decks"), onClick: () => navigate(deck.archived ? "/archive" : "/") }, ...parts.slice(0, -1).map((p, i) => ({ label: p, onClick: () => navigate(`/deck?name=${enc(parts.slice(0, i + 1).join("::"))}`) }))]} />
-      <Header deck={deck} node={node} work={work} tags={tags} onRenamed={(to) => navigate(`/deck?name=${enc(to)}`, { replace: true })} onAddCards={tab === "cards" ? undefined : () => switchTab("cards")} />
+      <Header deck={deck} node={node} work={work} tags={tags} onRenamed={(to) => navigate(`/deck?name=${enc(to)}`, { replace: true })} onAddCards={tab === "cards" ? undefined : () => switchTab("cards")} onChanged={reload} />
 
       <Tabs value={tab} onValueChange={switchTab} className="mt-8">
         <TabsList className="w-full sm:w-auto">
@@ -403,7 +403,7 @@ function DeckCards({ deck, hasChildren, active, onChanged }: { deck: string; has
   );
 }
 
-function Header({ deck, node, work, tags, onRenamed, onAddCards, phone }: { deck: DeckFull; node?: DeckNode; work: number; tags: string[]; onRenamed(to: string): void; onAddCards?(): void; phone?: boolean }) {
+function Header({ deck, node, work, tags, onRenamed, onAddCards, onChanged, phone }: { deck: DeckFull; node?: DeckNode; work: number; tags: string[]; onRenamed(to: string): void; onAddCards?(): void; onChanged(): void; phone?: boolean }) {
   // The deck list's ⋯ → Rename lands here with ?rename=1.
   const [editing, setEditing] = useState(() => new URLSearchParams(location.search).has("rename"));
   useEffect(() => {
@@ -503,6 +503,7 @@ function Header({ deck, node, work, tags, onRenamed, onAddCards, phone }: { deck
 
       {!deck.archived && deadline && <Countdown deadline={deadline} margin={deck.resolved.deadlineMargin} />}
       {!deck.archived && deck.resolved.mode !== "watch" && (deck.resolved.adaptiveChallenge || deck.resolved.adaptivePace) && <AdaptiveSummary deck={deck.name} hasNew={(node?.new ?? 0) > 0} />}
+      {!deck.archived && <MediaBatchesBanner deck={deck.name} onChanged={onChanged} />}
       {node && node.cards === 0 && onAddCards && (
         <Section className="mt-6">
           <Block title={t("No cards yet")} description={t("Add cards in the Cards tab, or import a pack from the Decks page.")} aside={<Button size="sm" onClick={onAddCards}>{t("Add cards")}</Button>} stackAside />
@@ -561,6 +562,84 @@ function Count({ label, value, cls }: { label: string; value: number; cls: strin
     <div>
       <div className={cn("tabular text-3xl leading-none font-semibold", value ? cls : "text-muted-foreground/40")}>{value}</div>
       <div className="mt-1.5 text-xs text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function MediaBatchesBanner({ deck, onChanged }: { deck: string; onChanged(): void }) {
+  const { t } = useLocale();
+  const [status, setStatus] = useState<MediaBatchEntryStatus | null>(null);
+  const [busy, setBusy] = useState<null | "next" | "all">(null);
+
+  const load = useCallback(() => {
+    api.marketBatches({ deck }).then((r) => {
+      setStatus(r.entries[0] ?? null);
+    }).catch(() => {});
+  }, [deck]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (!status || status.totalBatches === 0) return null;
+
+  const download = async (all: boolean) => {
+    setBusy(all ? "all" : "next");
+    try {
+      const r = await api.marketSyncBatches({ deck, force: !all, all });
+      if (r.entries[0]) setStatus(r.entries[0]);
+      if (r.downloaded.length > 0) {
+        const added = r.downloaded.reduce((n, b) => n + b.items, 0);
+        toast.success(t("Downloaded {count} new offline audio clips", { count: added }));
+        onChanged();
+      } else if (r.errors.length > 0) {
+        toast.error(t("Download failed"), { description: r.errors[0].error });
+      }
+    } catch (e) {
+      toast.error(t("Download failed"), { description: (e as Error).message });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const pct = status.totalItems > 0 ? Math.round((status.downloadedItems / status.totalItems) * 100) : 100;
+  const mb = (bytes: number) => `${Math.max(0.1, bytes / 1e6).toFixed(1)} MB`;
+
+  return (
+    <div className="mt-5 flex flex-col gap-2.5 rounded-xl border bg-card/70 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <Volume2 className="size-4 shrink-0 text-highlight" />
+        <div className="min-w-0 flex-1 text-sm">
+          <span className="font-medium">
+            {t("Offline audio: {downloaded}/{total} clips", { downloaded: status.downloadedItems, total: status.totalItems })}
+          </span>
+          <span className="text-muted-foreground">
+            {" · "}
+            {t("Batch {done}/{all}", { done: status.downloadedBatches, all: status.totalBatches })}
+          </span>
+        </div>
+        {status.nextBatch && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" disabled={!!busy} onClick={() => download(false)}>
+              {busy === "next" ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+              {t("Download next batch")} ({mb(status.nextBatch.bytes)})
+            </Button>
+            {status.pendingBatches > 1 && (
+              <Button size="sm" variant="ghost" className="h-8 text-xs text-muted-foreground" disabled={!!busy} onClick={() => download(true)}>
+                {busy === "all" && <Loader2 className="mr-1 size-3.5 animate-spin" />}
+                {t("Download all")}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-highlight transition-all duration-300" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="text-xs text-muted-foreground">
+        {status.nextBatch
+          ? t("New audio batches download automatically in the background as you complete the current ones.")
+          : t("All audio clips in this deck are stored locally for offline study.")}
+        {status.lastError && <span className="text-destructive"> · {status.lastError}</span>}
+      </div>
     </div>
   );
 }

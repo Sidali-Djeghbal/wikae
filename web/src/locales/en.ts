@@ -2405,6 +2405,17 @@ const en: Record<string, string> = {
   "is:due · is:new · tag:x · rated:1:1 · prop:lapses>=2 · type:numeric": "is:due · is:new · tag:x · rated:1:1 · prop:lapses>=2 · type:numeric",
   "/* Styles scoped to this card's frame */": "/* Styles scoped to this card's frame */",
   "// Runs in the card frame with `etude` in scope": "// Runs in the card frame with `etude` in scope",
+  "Downloaded {count} new offline audio clips ({done}/{total} batches)": "Downloaded {count} new offline audio clips ({done}/{total} batches)",
+  "Downloaded {count} new offline audio clips": "Downloaded {count} new offline audio clips",
+  "You appear to be offline": "You appear to be offline",
+  "More offline audio clips are available ({n} clips in the next batch).": "More offline audio clips are available ({n} clips in the next batch).",
+  "Download next batch": "Download next batch",
+  "Download all": "Download all",
+  "Download failed": "Download failed",
+  "Offline audio: {downloaded}/{total} clips": "Offline audio: {downloaded}/{total} clips",
+  "Batch {done}/{all}": "Batch {done}/{all}",
+  "New audio batches download automatically in the background as you complete the current ones.": "New audio batches download automatically in the background as you complete the current ones.",
+  "All audio clips in this deck are stored locally for offline study.": "All audio clips in this deck are stored locally for offline study.",
 };
 
 export default en;

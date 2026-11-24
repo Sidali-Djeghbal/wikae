@@ -19,7 +19,7 @@ import { ASSET_NAME, assetMime } from "../core/assets.ts";
 import { agentFor, AgentError, AGENT_MAX_ATTACHMENT_BYTES, type AgentEvent } from "../core/agent.ts";
 import { streamSSE } from "hono/streaming";
 import { applyUpdate, updateStatus, UpdateError } from "../core/update.ts";
-import { buildSubmission, fetchMarketMedia, fetchCover, fetchEntry, fetchIndex, ghStatus, installEntry, installState, installedEntries, installedRec, manualPublishUrl, marketSettings, publishFile, summarize, entryPath, entryJson, forgetInstall, type MarketKind } from "../core/market.ts";
+import { buildSubmission, fetchMarketMedia, fetchCover, fetchEntry, fetchIndex, ghStatus, installEntry, installState, installedEntries, installedRec, manualPublishUrl, marketSettings, mediaBatchStatus, publishFile, summarize, syncMediaBatches, entryPath, entryJson, forgetInstall, type MarketKind } from "../core/market.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const require = createRequire(import.meta.url);
@@ -706,6 +706,13 @@ export function createApp(etude: Etude, opts: AppOptions = {}) {
     const out = await installEntry(etude, String(b.id ?? ""), { kind: b.kind, dryRun: !!b.dryRun });
     if (b.use && out.entry.kind === "theme" && !b.dryRun) etude.selectTheme(out.ids[0]);
     return c.json(out);
+  });
+  app.get("/api/market/batches", (c) =>
+    c.json({ entries: mediaBatchStatus(etude, { deck: c.req.query("deck") || undefined, id: c.req.query("id") || undefined }) }),
+  );
+  app.post("/api/market/batches/sync", async (c) => {
+    const b = await body(c);
+    return c.json(await syncMediaBatches(etude, { deck: b.deck || undefined, id: b.id || undefined, force: !!b.force, all: !!b.all }));
   });
   app.post("/api/market/forget", async (c) => c.json({ forgot: forgetInstall(etude, String((await body(c)).id ?? "")) }));
   app.get("/api/market/publish/status", (c) => c.json({ ...ghStatus(), repo: marketSettings(etude).repo }));
