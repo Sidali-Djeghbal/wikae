@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.11.0](https://github.com/Sidali-Djeghbal/wikae/compare/v2.10.2...v2.11.0) (2026-11-24)
+
+
+### Features
+
+* add progressive market media batches, random study ordering, and market cover fallback ([781209a](https://github.com/Sidali-Djeghbal/wikae/commit/781209a732b9c329e6e734065867afbbb2655cac))
+
 ## [2.10.2](https://github.com/Sidali-Djeghbal/wikae/compare/v2.10.1...v2.10.2) (2026-11-23)
 
 
